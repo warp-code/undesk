@@ -1,65 +1,157 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
+import { useState, useMemo } from "react";
+
+const TOKENS = ["META", "USDC"] as const;
+type Token = (typeof TOKENS)[number];
+
+export default function OTCPage() {
+  const [mode, setMode] = useState<"buy" | "sell">("sell");
+  const [sellToken, setSellToken] = useState<Token>("USDC");
+  const [sellAmount, setSellAmount] = useState("");
+  const [buyToken, setBuyToken] = useState<Token>("META");
+  const [buyAmount, setBuyAmount] = useState("");
+
+  // Calculate price per unit (quote token per base token)
+  const pricePerUnit = useMemo(() => {
+    const sell = parseFloat(sellAmount) || 0;
+    const buy = parseFloat(buyAmount) || 0;
+    if (buy === 0) return 0;
+    return sell / buy;
+  }, [sellAmount, buyAmount]);
+
+  // Format number with commas
+  const formatNumber = (value: string) => {
+    const num = parseFloat(value);
+    if (isNaN(num)) return "";
+    return num.toLocaleString("en-US");
+  };
+
+  // Handle amount input - allow only valid numbers
+  const handleAmountChange = (
+    value: string,
+    setter: (val: string) => void
+  ) => {
+    // Remove commas for processing
+    const cleaned = value.replace(/,/g, "");
+    // Allow empty, or valid positive numbers
+    if (cleaned === "" || /^\d*\.?\d*$/.test(cleaned)) {
+      setter(cleaned);
+    }
+  };
+
+  const handleSubmit = () => {
+    console.log({
+      mode,
+      sellToken,
+      sellAmount: parseFloat(sellAmount),
+      buyToken,
+      buyAmount: parseFloat(buyAmount),
+      pricePerUnit,
+    });
+  };
+
+  const canSubmit =
+    sellAmount && buyAmount && parseFloat(sellAmount) > 0 && parseFloat(buyAmount) > 0;
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+    <div className="min-h-screen bg-gray-100 bg-dots flex items-center justify-center p-4">
+      <div className="bg-white rounded-3xl shadow-lg p-8 w-full max-w-md">
+        {/* Buy/Sell Toggle */}
+        <div className="flex gap-2 mb-8">
+          <button
+            onClick={() => setMode("buy")}
+            className={`flex-1 rounded-full py-3 font-semibold text-lg transition-colors ${
+              mode === "buy"
+                ? "bg-cyan-400 text-white"
+                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+            }`}
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
+            Buy
+          </button>
+          <button
+            onClick={() => setMode("sell")}
+            className={`flex-1 rounded-full py-3 font-semibold text-lg transition-colors ${
+              mode === "sell"
+                ? "bg-cyan-400 text-white"
+                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+            }`}
+          >
+            Sell
+          </button>
+        </div>
+
+        {/* Selling Section */}
+        <div className="mb-6">
+          <label className="block text-gray-700 mb-3 text-lg">
+            I&apos;m {mode === "sell" ? "selling" : "paying"}
+          </label>
+          <div className="flex gap-3">
+            <input
+              type="text"
+              inputMode="decimal"
+              value={formatNumber(sellAmount)}
+              onChange={(e) => handleAmountChange(e.target.value, setSellAmount)}
+              placeholder="0"
+              className="flex-1 rounded-full px-6 py-4 bg-cyan-300 text-gray-900 text-xl font-medium text-center focus:outline-none focus:ring-2 focus:ring-cyan-500 placeholder-gray-500"
             />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+            <select
+              value={sellToken}
+              onChange={(e) => setSellToken(e.target.value as Token)}
+              className="rounded-full px-6 py-4 bg-cyan-300 text-gray-900 text-xl font-medium focus:outline-none focus:ring-2 focus:ring-cyan-500 cursor-pointer appearance-none text-center min-w-[110px]"
+            >
+              {TOKENS.map((token) => (
+                <option key={token} value={token}>
+                  {token}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
-      </main>
+
+        {/* Receiving Section */}
+        <div className="mb-6">
+          <label className="block text-gray-700 mb-3 text-lg">For</label>
+          <div className="flex gap-3">
+            <input
+              type="text"
+              inputMode="decimal"
+              value={formatNumber(buyAmount)}
+              onChange={(e) => handleAmountChange(e.target.value, setBuyAmount)}
+              placeholder="0"
+              className="flex-1 rounded-full px-6 py-4 bg-cyan-300 text-gray-900 text-xl font-medium text-center focus:outline-none focus:ring-2 focus:ring-cyan-500 placeholder-gray-500"
+            />
+            <select
+              value={buyToken}
+              onChange={(e) => setBuyToken(e.target.value as Token)}
+              className="rounded-full px-6 py-4 bg-cyan-300 text-gray-900 text-xl font-medium focus:outline-none focus:ring-2 focus:ring-cyan-500 cursor-pointer appearance-none text-center min-w-[110px]"
+            >
+              {TOKENS.map((token) => (
+                <option key={token} value={token}>
+                  {token}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        {/* Price Display */}
+        <div className="text-gray-600 text-lg mb-8">
+          Price:{" "}
+          {pricePerUnit > 0
+            ? `${pricePerUnit.toLocaleString("en-US", { maximumFractionDigits: 6 })} ${sellToken}/${buyToken}`
+            : `- ${sellToken}/${buyToken}`}
+        </div>
+
+        {/* Submit Button */}
+        <button
+          onClick={handleSubmit}
+          disabled={!canSubmit}
+          className="w-full rounded-full py-4 bg-green-400 hover:bg-green-500 text-white font-semibold text-xl transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
+        >
+          Place request
+        </button>
+      </div>
     </div>
   );
 }
