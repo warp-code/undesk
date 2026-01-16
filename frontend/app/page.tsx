@@ -1,43 +1,21 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
 
 const PAIRS = [{ base: "META", quote: "USDC", label: "META/USDC" }] as const;
 
 type Pair = (typeof PAIRS)[number];
 
-interface Quote {
+interface Order {
   id: string;
+  type: "buy" | "sell";
+  pair: string;
+  amount: number;
   price: number;
-  size: number;
-  expiresAt: number;
-  status: "pending" | "accepted" | "rejected" | "expired";
+  total: number;
+  status: "open" | "filled" | "partial";
+  createdAt: number;
 }
-
-// Mock quote data generator
-const generateMockQuotes = (basePrice: number): Quote[] => [
-  {
-    id: "1",
-    price: basePrice * (1 + 0.004),
-    size: 10000,
-    expiresAt: Date.now() + 25000,
-    status: "pending",
-  },
-  {
-    id: "2",
-    price: basePrice * (1 - 0.004),
-    size: 15000,
-    expiresAt: Date.now() + 20000,
-    status: "pending",
-  },
-  {
-    id: "3",
-    price: basePrice * (1 + 0.01),
-    size: 8000,
-    expiresAt: Date.now() + 15000,
-    status: "pending",
-  },
-];
 
 export default function OTCPage() {
   const [mode, setMode] = useState<"buy" | "sell">("buy");
@@ -46,8 +24,7 @@ export default function OTCPage() {
   const [pricePerUnit, setPricePerUnit] = useState("");
   const [isLocked, setIsLocked] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [quotes, setQuotes] = useState<Quote[]>([]);
-  const [, setTick] = useState(0); // Force re-render for countdown
+  const [orders, setOrders] = useState<Order[]>([]);
 
   // Calculate the total (quote amount) from base amount * price
   const calculatedTotal = useMemo(() => {
@@ -70,45 +47,26 @@ export default function OTCPage() {
     setIsLocked(true);
     setIsLoading(true);
 
-    // Simulate network delay before quotes arrive
+    // Simulate network delay
     setTimeout(() => {
       setIsLoading(false);
-      const basePrice = parseFloat(pricePerUnit) || 5;
-      setQuotes(generateMockQuotes(basePrice));
-    }, 2000);
-  };
-
-  // Expiry countdown effect
-  useEffect(() => {
-    if (quotes.length === 0) return;
-
-    const interval = setInterval(() => {
-      setTick((t) => t + 1); // Force re-render
-
-      setQuotes((prev) =>
-        prev.map((q) => {
-          if (q.status !== "pending") return q;
-          if (Date.now() > q.expiresAt) {
-            return { ...q, status: "expired" };
-          }
-          return q;
-        })
-      );
+      const newOrder: Order = {
+        id: crypto.randomUUID().slice(0, 8),
+        type: mode,
+        pair: selectedPair.label,
+        amount: parseFloat(baseAmount),
+        price: parseFloat(pricePerUnit),
+        total: calculatedTotal,
+        status: "open",
+        createdAt: Date.now(),
+      };
+      setOrders([newOrder]);
     }, 1000);
-
-    return () => clearInterval(interval);
-  }, [quotes.length]);
-
-  const handleAcceptQuote = (id: string) => {
-    setQuotes((prev) =>
-      prev.map((q) => (q.id === id ? { ...q, status: "accepted" } : q))
-    );
   };
 
-  const handleRejectQuote = (id: string) => {
-    setQuotes((prev) =>
-      prev.map((q) => (q.id === id ? { ...q, status: "rejected" } : q))
-    );
+  const handleCopyLink = (orderId: string) => {
+    const url = `${window.location.origin}/order/${orderId}`;
+    navigator.clipboard.writeText(url);
   };
 
   const canSubmit =
@@ -121,12 +79,6 @@ export default function OTCPage() {
   // Labels based on mode
   const baseLabel = mode === "buy" ? "Buy amount" : "Sell amount";
   const totalLabel = mode === "buy" ? "Total cost" : "You receive";
-
-  // Get remaining seconds for a quote
-  const getExpirySeconds = (expiresAt: number) => {
-    const remaining = Math.max(0, Math.ceil((expiresAt - Date.now()) / 1000));
-    return remaining;
-  };
 
   return (
     <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-start p-4 pt-16">
@@ -295,12 +247,12 @@ export default function OTCPage() {
         </button>
       </div>
 
-      {/* Quotes Section */}
+      {/* Orders Section */}
       {isLocked && (
-        <div className="bg-slate-900 border border-slate-700/50 rounded-2xl p-6 w-full max-w-md mt-4">
-          <h2 className="text-white text-lg font-semibold mb-4">Quotes</h2>
+        <div className="bg-slate-900 border border-slate-700/50 rounded-2xl p-6 w-full max-w-3xl mt-4">
+          <h2 className="text-white text-lg font-semibold mb-4">Your Orders</h2>
 
-          {isLoading || quotes.length === 0 ? (
+          {isLoading || orders.length === 0 ? (
             <div className="text-slate-500 text-sm text-center py-8 flex items-center justify-center gap-2">
               <svg
                 className="animate-spin h-4 w-4"
@@ -322,83 +274,66 @@ export default function OTCPage() {
                   d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                 />
               </svg>
-              Waiting for market makers…
+              Creating order…
             </div>
           ) : (
-            <div className="space-y-3">
-              {quotes.map((quote) => {
-                const expirySeconds = getExpirySeconds(quote.expiresAt);
-                const isExpired = quote.status === "expired";
-                const isAccepted = quote.status === "accepted";
-                const isRejected = quote.status === "rejected";
-                const isPending = quote.status === "pending";
-
-                return (
-                  <div
-                    key={quote.id}
-                    className={`bg-slate-800/50 border rounded-xl p-4 transition-all ${
-                      isAccepted
-                        ? "border-emerald-500/50"
-                        : isExpired || isRejected
-                          ? "border-slate-700/30 opacity-50"
-                          : "border-slate-700/50"
-                    }`}
-                  >
-                    <div className="flex justify-between items-start mb-3">
-                      <div>
-                        <div className="text-white font-medium">
-                          {quote.price.toLocaleString("en-US", {
-                            maximumFractionDigits: 4,
-                          })}{" "}
-                          {selectedPair.quote}/{selectedPair.base}
-                        </div>
-                        <div className="text-slate-400 text-sm">
-                          {quote.size.toLocaleString("en-US")}{" "}
-                          {selectedPair.base} available
-                        </div>
-                      </div>
-                      <div
-                        className={`text-xs font-medium ${
-                          isAccepted
-                            ? "text-emerald-400"
-                            : isRejected
-                              ? "text-slate-500"
-                              : isExpired
-                                ? "text-red-400"
-                                : expirySeconds <= 5
-                                  ? "text-red-400"
-                                  : "text-amber-400"
-                        }`}
-                      >
-                        {isAccepted
-                          ? "Accepted"
-                          : isRejected
-                            ? "Rejected"
-                            : isExpired
-                              ? "Expired"
-                              : `Expires in ${expirySeconds}s`}
-                      </div>
-                    </div>
-
-                    {isPending && (
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => handleAcceptQuote(quote.id)}
-                          className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg py-2 text-sm font-medium transition-colors"
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="text-slate-400 text-xs border-b border-slate-700/50">
+                    <th className="text-left py-3 font-medium">Type</th>
+                    <th className="text-left py-3 font-medium">Pair</th>
+                    <th className="text-right py-3 font-medium">Amount</th>
+                    <th className="text-right py-3 font-medium">Price</th>
+                    <th className="text-right py-3 font-medium">Total</th>
+                    <th className="text-center py-3 font-medium">Status</th>
+                    <th className="text-right py-3 font-medium">Link</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {orders.map((order) => (
+                    <tr
+                      key={order.id}
+                      className="border-b border-slate-700/30 last:border-b-0"
+                    >
+                      <td className="py-3">
+                        <span
+                          className={
+                            order.type === "buy"
+                              ? "text-emerald-400 font-medium"
+                              : "text-red-400 font-medium"
+                          }
                         >
-                          Accept
-                        </button>
+                          {order.type.toUpperCase()}
+                        </span>
+                      </td>
+                      <td className="py-3 text-white">{order.pair}</td>
+                      <td className="py-3 text-right text-white">
+                        {order.amount.toLocaleString()}
+                      </td>
+                      <td className="py-3 text-right text-white">
+                        {order.price.toLocaleString()}
+                      </td>
+                      <td className="py-3 text-right text-white">
+                        {order.total.toLocaleString()}
+                      </td>
+                      <td className="py-3 text-center">
+                        <span className="px-2 py-1 rounded text-xs bg-emerald-500/20 text-emerald-400">
+                          {order.status}
+                        </span>
+                      </td>
+                      <td className="py-3 text-right">
                         <button
-                          onClick={() => handleRejectQuote(quote.id)}
-                          className="flex-1 bg-slate-700 hover:bg-slate-600 text-slate-300 rounded-lg py-2 text-sm font-medium transition-colors"
+                          onClick={() => handleCopyLink(order.id)}
+                          className="text-purple-400 hover:text-purple-300 text-xs font-medium"
                         >
-                          Reject
+                          Copy
                         </button>
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           )}
         </div>
