@@ -2,39 +2,30 @@
 
 import { useState, useMemo } from "react";
 
-const TOKENS = ["META", "USDC"] as const;
-type Token = (typeof TOKENS)[number];
+const PAIRS = [{ base: "META", quote: "USDC", label: "META/USDC" }] as const;
+
+type Pair = (typeof PAIRS)[number];
 
 export default function OTCPage() {
-  const [mode, setMode] = useState<"buy" | "sell">("sell");
-  const [sellToken, setSellToken] = useState<Token>("USDC");
-  const [sellAmount, setSellAmount] = useState("");
-  const [buyToken, setBuyToken] = useState<Token>("META");
-  const [buyAmount, setBuyAmount] = useState("");
+  const [mode, setMode] = useState<"buy" | "sell">("buy");
+  const [selectedPair, setSelectedPair] = useState<Pair>(PAIRS[0]);
+  const [quantity, setQuantity] = useState("");
+  const [amount, setAmount] = useState("");
 
-  // Calculate price per unit (quote token per base token)
+  // Calculate price per unit (quote per base)
   const pricePerUnit = useMemo(() => {
-    const sell = parseFloat(sellAmount) || 0;
-    const buy = parseFloat(buyAmount) || 0;
-    if (buy === 0) return 0;
-    return sell / buy;
-  }, [sellAmount, buyAmount]);
-
-  // Format number with commas
-  const formatNumber = (value: string) => {
-    const num = parseFloat(value);
-    if (isNaN(num)) return "";
-    return num.toLocaleString("en-US");
-  };
+    const qty = parseFloat(quantity) || 0;
+    const amt = parseFloat(amount) || 0;
+    if (qty === 0) return 0;
+    return amt / qty;
+  }, [quantity, amount]);
 
   // Handle amount input - allow only valid numbers
-  const handleAmountChange = (
+  const handleNumberInput = (
     value: string,
     setter: (val: string) => void
   ) => {
-    // Remove commas for processing
     const cleaned = value.replace(/,/g, "");
-    // Allow empty, or valid positive numbers
     if (cleaned === "" || /^\d*\.?\d*$/.test(cleaned)) {
       setter(cleaned);
     }
@@ -43,113 +34,116 @@ export default function OTCPage() {
   const handleSubmit = () => {
     console.log({
       mode,
-      sellToken,
-      sellAmount: parseFloat(sellAmount),
-      buyToken,
-      buyAmount: parseFloat(buyAmount),
+      pair: selectedPair.label,
+      quantity: parseFloat(quantity),
+      amount: parseFloat(amount),
       pricePerUnit,
     });
   };
 
   const canSubmit =
-    sellAmount && buyAmount && parseFloat(sellAmount) > 0 && parseFloat(buyAmount) > 0;
+    quantity && amount && parseFloat(quantity) > 0 && parseFloat(amount) > 0;
 
   return (
-    <div className="min-h-screen bg-gray-100 bg-dots flex items-center justify-center p-4">
-      <div className="bg-white rounded-3xl shadow-lg p-8 w-full max-w-md">
-        {/* Buy/Sell Toggle */}
-        <div className="flex gap-2 mb-8">
-          <button
-            onClick={() => setMode("buy")}
-            className={`flex-1 rounded-full py-3 font-semibold text-lg transition-colors ${
-              mode === "buy"
-                ? "bg-cyan-400 text-white"
-                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-            }`}
+    <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4">
+      <div className="bg-slate-900 border border-slate-700/50 rounded-2xl p-6 w-full max-w-md">
+        {/* Title */}
+        <h1 className="text-white text-xl font-semibold mb-6">
+          Request for quote
+        </h1>
+
+        {/* Buy/Sell Toggle + Pair Selector Row */}
+        <div className="flex gap-3 mb-6">
+          {/* Buy/Sell Toggle */}
+          <div className="flex bg-slate-800 rounded-lg p-1">
+            <button
+              onClick={() => setMode("buy")}
+              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                mode === "buy"
+                  ? "bg-emerald-600 text-white"
+                  : "text-slate-400 hover:text-slate-300"
+              }`}
+            >
+              Buy
+            </button>
+            <button
+              onClick={() => setMode("sell")}
+              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                mode === "sell"
+                  ? "bg-emerald-600 text-white"
+                  : "text-slate-400 hover:text-slate-300"
+              }`}
+            >
+              Sell
+            </button>
+          </div>
+
+          {/* Pair Selector */}
+          <select
+            value={selectedPair.label}
+            onChange={(e) => {
+              const pair = PAIRS.find((p) => p.label === e.target.value);
+              if (pair) setSelectedPair(pair);
+            }}
+            className="flex-1 bg-slate-800 border border-slate-700/50 rounded-lg px-4 py-2 text-white text-sm font-medium focus:outline-none focus:ring-2 focus:ring-purple-500/50 cursor-pointer appearance-none"
           >
-            Buy
-          </button>
-          <button
-            onClick={() => setMode("sell")}
-            className={`flex-1 rounded-full py-3 font-semibold text-lg transition-colors ${
-              mode === "sell"
-                ? "bg-cyan-400 text-white"
-                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-            }`}
-          >
-            Sell
-          </button>
+            {PAIRS.map((pair) => (
+              <option key={pair.label} value={pair.label}>
+                {pair.label}
+              </option>
+            ))}
+          </select>
         </div>
 
-        {/* Selling Section */}
-        <div className="mb-6">
-          <label className="block text-gray-700 mb-3 text-lg">
-            I&apos;m {mode === "sell" ? "selling" : "paying"}
-          </label>
-          <div className="flex gap-3">
-            <input
-              type="text"
-              inputMode="decimal"
-              value={formatNumber(sellAmount)}
-              onChange={(e) => handleAmountChange(e.target.value, setSellAmount)}
-              placeholder="0"
-              className="flex-1 rounded-full px-6 py-4 bg-cyan-300 text-gray-900 text-xl font-medium text-center focus:outline-none focus:ring-2 focus:ring-cyan-500 placeholder-gray-500"
-            />
-            <select
-              value={sellToken}
-              onChange={(e) => setSellToken(e.target.value as Token)}
-              className="rounded-full px-6 py-4 bg-cyan-300 text-gray-900 text-xl font-medium focus:outline-none focus:ring-2 focus:ring-cyan-500 cursor-pointer appearance-none text-center min-w-[110px]"
-            >
-              {TOKENS.map((token) => (
-                <option key={token} value={token}>
-                  {token}
-                </option>
-              ))}
-            </select>
-          </div>
+        {/* Quantity Input */}
+        <div className="bg-slate-800 border border-slate-700/50 rounded-lg px-4 py-3 mb-3 flex items-center">
+          <input
+            type="text"
+            inputMode="decimal"
+            value={quantity}
+            onChange={(e) => handleNumberInput(e.target.value, setQuantity)}
+            placeholder="Quantity"
+            className="flex-1 bg-transparent text-white text-sm placeholder-slate-500 outline-none"
+          />
+          <span className="text-slate-400 text-sm font-medium ml-3">
+            {selectedPair.base}
+          </span>
         </div>
 
-        {/* Receiving Section */}
-        <div className="mb-6">
-          <label className="block text-gray-700 mb-3 text-lg">For</label>
-          <div className="flex gap-3">
-            <input
-              type="text"
-              inputMode="decimal"
-              value={formatNumber(buyAmount)}
-              onChange={(e) => handleAmountChange(e.target.value, setBuyAmount)}
-              placeholder="0"
-              className="flex-1 rounded-full px-6 py-4 bg-cyan-300 text-gray-900 text-xl font-medium text-center focus:outline-none focus:ring-2 focus:ring-cyan-500 placeholder-gray-500"
-            />
-            <select
-              value={buyToken}
-              onChange={(e) => setBuyToken(e.target.value as Token)}
-              className="rounded-full px-6 py-4 bg-cyan-300 text-gray-900 text-xl font-medium focus:outline-none focus:ring-2 focus:ring-cyan-500 cursor-pointer appearance-none text-center min-w-[110px]"
-            >
-              {TOKENS.map((token) => (
-                <option key={token} value={token}>
-                  {token}
-                </option>
-              ))}
-            </select>
-          </div>
+        {/* Amount Input */}
+        <div className="bg-slate-800 border border-slate-700/50 rounded-lg px-4 py-3 mb-6 flex items-center">
+          <input
+            type="text"
+            inputMode="decimal"
+            value={amount}
+            onChange={(e) => handleNumberInput(e.target.value, setAmount)}
+            placeholder="Amount"
+            className="flex-1 bg-transparent text-white text-sm placeholder-slate-500 outline-none"
+          />
+          <span className="text-slate-400 text-sm font-medium ml-3">
+            {selectedPair.quote}
+          </span>
         </div>
 
         {/* Price Display */}
-        <div className="text-gray-600 text-lg mb-8">
+        <div className="text-slate-400 text-sm mb-6">
           Price:{" "}
           {pricePerUnit > 0
-            ? `${pricePerUnit.toLocaleString("en-US", { maximumFractionDigits: 6 })} ${sellToken}/${buyToken}`
-            : `- ${sellToken}/${buyToken}`}
+            ? `${pricePerUnit.toLocaleString("en-US", { maximumFractionDigits: 6 })} ${selectedPair.quote}/${selectedPair.base}`
+            : `- ${selectedPair.quote}/${selectedPair.base}`}
         </div>
 
         {/* Submit Button */}
         <button
           onClick={handleSubmit}
           disabled={!canSubmit}
-          className="w-full rounded-full py-4 bg-green-400 hover:bg-green-500 text-white font-semibold text-xl transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
+          className={`w-full rounded-lg py-3 text-sm font-medium transition-colors ${
+            canSubmit
+              ? "bg-purple-600 hover:bg-purple-700 text-white"
+              : "bg-slate-700 text-slate-500 cursor-not-allowed"
+          }`}
         >
-          Place request
+          Get quote
         </button>
       </div>
     </div>
