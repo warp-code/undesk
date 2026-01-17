@@ -193,3 +193,104 @@ ArgBuilder::new()
     .plaintext_u128(recipient_nonce) // For recipient
     .build();
 ```
+
+---
+
+## Mixed Encrypted and Plaintext Callback Returns
+
+Arcium callbacks **can return both encrypted and unencrypted data simultaneously** by using tuples or custom structs as the return type.
+
+### How It Works
+
+The return type of your encrypted instruction determines what the callback receives. Each field in a tuple or struct can be independently encrypted or plaintext:
+
+```rust
+// Encrypted instruction returning mixed types
+#[instruction]
+fn my_computation(
+    input: Enc<Shared, u64>
+) -> (Enc<Shared, u64>, bool, u16) {
+    //    ^^^^^^^^^^^^^^  ^^^^  ^^^
+    //    encrypted       plain plain
+    let value = input.to_arcis();
+    let is_valid = value > 100;
+    let count = 42u16;
+    (Enc::<Shared, u64>::from_arcis(input.owner, value), is_valid, count)
+}
+```
+
+### Generated Output Types
+
+Arcium automatically generates typed structs based on your return type:
+
+| Return Type | Generated Struct | Fields |
+|-------------|------------------|--------|
+| `Enc<Shared, T>` | `SharedEncryptedStruct<1>` | `encryption_key`, `nonce`, `ciphertexts[0]` |
+| `Enc<Mxe, T>` | `MXEEncryptedStruct<1>` | `nonce`, `ciphertexts[0]` |
+| `(Enc<Shared, u64>, bool, u16)` | `{CircuitName}OutputStruct0` | `field_0: SharedEncryptedStruct<1>`, `field_1: bool`, `field_2: u16` |
+| Custom struct | `{CircuitName}OutputStruct0` | Named fields matching struct definition |
+
+### Callback Implementation
+
+```rust
+#[arcium_callback(encrypted_ix = "my_computation")]
+pub fn my_computation_callback(
+    ctx: Context<MyComputationCallback>,
+    output: SignedComputationOutputs<MyComputationOutput>,
+) -> Result<()> {
+    let o = match output.verify_output(
+        &ctx.accounts.cluster_account,
+        &ctx.accounts.computation_account
+    ) {
+        Ok(MyComputationOutput { field_0, field_1, field_2 }) => (field_0, field_1, field_2),
+        Err(_) => return Err(ErrorCode::AbortedComputation.into()),
+    };
+
+    // Encrypted field - client decrypts with shared secret
+    let encrypted_value = o.0.ciphertexts[0];
+    let nonce = o.0.nonce;
+    let encryption_key = o.0.encryption_key;  // Your pubkey echoed back
+
+    // Plaintext fields - immediately usable on-chain
+    let is_valid: bool = o.1;
+    let count: u16 = o.2;
+
+    // Can use plaintext values for on-chain logic
+    if is_valid {
+        // Do something...
+    }
+
+    // Emit event with both types
+    emit!(MyEvent {
+        encrypted_result: encrypted_value,
+        nonce: nonce.to_le_bytes(),
+        is_valid,
+        count,
+    });
+
+    Ok(())
+}
+```
+
+### Use Cases
+
+Mixed returns are useful for:
+
+1. **Result + metadata**: Return encrypted computation result alongside plaintext success/failure flag
+2. **Encrypted value + plaintext count**: Return encrypted data with plaintext length/count for validation
+3. **Privacy-preserving verification**: Return encrypted details but plaintext boolean for on-chain branching
+4. **Batched operations**: Return multiple encrypted values with plaintext indices or statuses
+
+### Key Constraints
+
+1. **Fixed at compile time** - The mix of encrypted vs plaintext is determined by the return type signature; you cannot dynamically choose at runtime
+2. **Each field is one or the other** - A single field cannot be "sometimes encrypted, sometimes plaintext"
+3. **Size limits apply** - Results over ~1KB require a callback server for overflow data
+4. **Type generation is automatic** - Arcium's macros handle struct generation from your return type
+
+### References
+
+- [Callback Type Generation](https://docs.arcium.com/developers/program/callback-type-generation) - How output types are generated
+- [Input/Output in Arcis](https://docs.arcium.com/developers/arcis/input-output) - Encrypted data handling
+- [The Basics](https://docs.arcium.com/developers/program) - Program invocation fundamentals
+- [Callback Server](https://docs.arcium.com/developers/callback-server) - Handling large outputs
