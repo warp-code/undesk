@@ -161,10 +161,10 @@ export default function OTCPage() {
     parseFloat(expiresIn) > 0;
 
   return (
-    <div className="min-h-screen bg-gray-900">
+    <div className="min-h-screen bg-slate-900">
       {/* Navbar */}
       <nav className="border-b border-gray-700 bg-gray-800/50">
-        <div className="max-w-5xl mx-auto px-6 py-3 flex items-center justify-between">
+        <div className="px-6 py-3 flex items-center justify-between">
           <div className="flex items-center gap-6">
             {/* Logo */}
             <div className="text-white font-semibold text-lg">Veil OTC</div>
@@ -185,16 +185,17 @@ export default function OTCPage() {
             </div>
           </div>
           {/* Connect Wallet Button */}
-          <button className="bg-emerald-500 hover:bg-emerald-600 text-white px-3 py-1.5 rounded font-medium text-sm transition-colors">
+          <button className="bg-sky-500 hover:bg-sky-600 text-white px-3 py-1.5 rounded font-medium text-sm transition-colors">
             Connect Wallet
           </button>
         </div>
       </nav>
 
-      <div className="max-w-5xl mx-auto p-6 space-y-6">
-        {/* Create Deal Form */}
-        <div className="max-w-md mx-auto">
-          <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-6">
+      {/* Three-column layout */}
+      <div className="flex h-[calc(100vh-57px)]">
+        {/* Left Panel - RFQ Form */}
+        <div className="w-[440px] shrink-0 border-r border-gray-700 p-4 overflow-y-auto">
+          <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-4">
             <h2 className="text-lg font-semibold text-white mb-4">
               Request for quote
             </h2>
@@ -206,7 +207,7 @@ export default function OTCPage() {
                 disabled={isLocked}
                 className={`px-4 py-1.5 rounded text-sm font-medium transition-colors ${
                   mode === "buy"
-                    ? "bg-emerald-500 text-white"
+                    ? "bg-teal-500 text-white"
                     : "bg-gray-700 text-gray-400"
                 }`}
               >
@@ -217,7 +218,7 @@ export default function OTCPage() {
                 disabled={isLocked}
                 className={`px-4 py-1.5 rounded text-sm font-medium transition-colors ${
                   mode === "sell"
-                    ? "bg-red-500 text-white"
+                    ? "bg-rose-500 text-white"
                     : "bg-gray-700 text-gray-400"
                 }`}
               >
@@ -299,7 +300,7 @@ export default function OTCPage() {
                   checked={allowPartial}
                   onChange={(e) => !isLocked && setAllowPartial(e.target.checked)}
                   disabled={isLocked}
-                  className="w-4 h-4 rounded border-gray-600 bg-gray-700 text-emerald-500 focus:ring-emerald-500 focus:ring-offset-gray-800"
+                  className="w-4 h-4 rounded border-gray-600 bg-gray-700 text-sky-500 focus:ring-sky-500 focus:ring-offset-gray-800"
                 />
                 <span className="text-gray-400 text-sm">Allow partial fill at expiry</span>
               </label>
@@ -331,7 +332,7 @@ export default function OTCPage() {
                 disabled={!canSubmit}
                 className={`w-full py-3 rounded font-medium transition-colors flex items-center justify-center ${
                   canSubmit
-                    ? "bg-emerald-500 hover:bg-emerald-600 text-white"
+                    ? "bg-sky-500 hover:bg-sky-600 text-white"
                     : "bg-gray-700 text-gray-500 cursor-not-allowed"
                 }`}
               >
@@ -363,8 +364,9 @@ export default function OTCPage() {
           </div>
         </div>
 
-        {/* Tabbed Section */}
-        <div className="bg-gray-800/50 border border-gray-700 rounded-lg">
+        {/* Center Panel - Tables */}
+        <div className="flex-1 p-4 overflow-y-auto">
+          <div className="bg-gray-800/50 border border-gray-700 rounded-lg">
           {/* Tab Navigation - underline style */}
           <div className="border-b border-gray-700 px-4">
             <div className="flex gap-2">
@@ -384,7 +386,7 @@ export default function OTCPage() {
                 >
                   {tab.label}
                   {activeTab === tab.id && (
-                    <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-emerald-500" />
+                    <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-sky-500" />
                   )}
                 </button>
               ))}
@@ -423,8 +425,8 @@ export default function OTCPage() {
                           <td
                             className={`py-3 font-medium ${
                               deal.type === "buy"
-                                ? "text-emerald-400"
-                                : "text-red-400"
+                                ? "text-teal-400"
+                                : "text-rose-400"
                             }`}
                           >
                             {deal.type.toUpperCase()}
@@ -445,12 +447,12 @@ export default function OTCPage() {
                           <td className="py-3 text-center">
                             <div className="flex items-center justify-center gap-1">
                               {deal.status === "open" && (
-                                <span className="px-2 py-0.5 rounded text-xs font-medium bg-blue-500/20 text-blue-400 border border-blue-500/30">
+                                <span className="px-2 py-0.5 rounded text-xs font-medium bg-sky-500/20 text-sky-400 border border-sky-500/30">
                                   open
                                 </span>
                               )}
                               {deal.status === "executed" && (
-                                <span className="px-2 py-0.5 rounded text-xs font-medium bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                                <span className="px-2 py-0.5 rounded text-xs font-medium bg-teal-500/20 text-teal-400 border border-teal-500/30">
                                   executed
                                 </span>
                               )}
@@ -468,7 +470,7 @@ export default function OTCPage() {
                           </td>
                           <td className="py-3 text-right">
                             {deal.isPartial && deal.status === "open" && (
-                              <button className="bg-emerald-500 hover:bg-emerald-600 text-white px-3 py-1 text-sm rounded font-medium transition-colors">
+                              <button className="bg-sky-500 hover:bg-sky-600 text-white px-3 py-1 text-sm rounded font-medium transition-colors">
                                 Execute
                               </button>
                             )}
@@ -531,8 +533,8 @@ export default function OTCPage() {
                             <span
                               className={
                                 deal.type === "buy"
-                                  ? "text-emerald-400"
-                                  : "text-red-400"
+                                  ? "text-teal-400"
+                                  : "text-rose-400"
                               }
                             >
                               {deal.type === "buy" ? "Buy" : "Sell"}
@@ -622,8 +624,8 @@ export default function OTCPage() {
                               <span
                                 className={
                                   offer.side === "sell"
-                                    ? "text-red-400"
-                                    : "text-emerald-400"
+                                    ? "text-rose-400"
+                                    : "text-teal-400"
                                 }
                               >
                                 {offer.side === "sell" ? "Selling" : "Buying"}
@@ -637,12 +639,12 @@ export default function OTCPage() {
                             </td>
                             <td className="py-3 text-center">
                               {offer.dealStatus === "open" && (
-                                <span className="px-2 py-0.5 rounded text-xs font-medium bg-blue-500/20 text-blue-400 border border-blue-500/30">
+                                <span className="px-2 py-0.5 rounded text-xs font-medium bg-sky-500/20 text-sky-400 border border-sky-500/30">
                                   open
                                 </span>
                               )}
                               {offer.dealStatus === "executed" && (
-                                <span className="px-2 py-0.5 rounded text-xs font-medium bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                                <span className="px-2 py-0.5 rounded text-xs font-medium bg-teal-500/20 text-teal-400 border border-teal-500/30">
                                   executed
                                 </span>
                               )}
@@ -659,7 +661,7 @@ export default function OTCPage() {
                                 </span>
                               )}
                               {offer.offerStatus === "passed" && (
-                                <span className="px-2 py-0.5 rounded text-xs font-medium bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                                <span className="px-2 py-0.5 rounded text-xs font-medium bg-teal-500/20 text-teal-400 border border-teal-500/30">
                                   passed
                                 </span>
                               )}
@@ -688,6 +690,17 @@ export default function OTCPage() {
                 </div>
               </div>
             )}
+          </div>
+          </div>
+        </div>
+
+        {/* Right Panel - Chat Placeholder */}
+        <div className="w-[380px] shrink-0 border-l border-gray-700 p-4 overflow-y-auto">
+          <h3 className="text-white font-medium mb-4">Negotiation</h3>
+          <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-4 h-[calc(100%-2rem)] flex items-center justify-center">
+            <p className="text-gray-500 text-sm text-center">
+              Select a deal to start negotiating
+            </p>
           </div>
         </div>
       </div>
