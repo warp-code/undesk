@@ -18,7 +18,9 @@ interface Deal {
   amount: number;
   price: number;
   total: number;
-  status: "open" | "partial" | "executed" | "cancelled";
+  status: "open" | "executed" | "expired";
+  isPartial: boolean; // flips true on first valid offer
+  allowPartial: boolean; // if true, execute partial fills at expiry
   expiresAt: number;
   createdAt: number;
 }
@@ -29,7 +31,7 @@ interface MarketDeal {
   type: "buy" | "sell";
   pair: string;
   expiresAt: number;
-  offerCount: number;
+  isPartial: boolean; // the only fill signal exposed publicly
 }
 
 // Your Offers - offers submitted by user
@@ -39,30 +41,31 @@ interface Offer {
   side: "buy" | "sell";
   yourPrice: number;
   submittedAt: string;
-  dealStatus: "active" | "executed" | "expired";
-  offerStatus: "pending" | "passed" | "failed";
+  dealStatus: "open" | "executed" | "expired";
+  offerStatus: "pending" | "passed" | "partial" | "failed";
 }
 
 // Mock data for demonstration
 const MOCK_DEALS: Deal[] = [
-  { id: "d1", type: "buy", pair: "META/USDC", amount: 4444, price: 444, total: 1973136, status: "open", expiresAt: Date.now() + 83640000, createdAt: Date.now() },
-  { id: "d2", type: "sell", pair: "ETH/USDC", amount: 10, price: 3200, total: 32000, status: "partial", expiresAt: Date.now() + 20520000, createdAt: Date.now() - 3600000 },
-  { id: "d3", type: "buy", pair: "META/USDC", amount: 1000, price: 450, total: 450000, status: "executed", expiresAt: 0, createdAt: Date.now() - 86400000 },
+  { id: "d1", type: "buy", pair: "META/USDC", amount: 4444, price: 444, total: 1973136, status: "open", isPartial: false, allowPartial: true, expiresAt: Date.now() + 83640000, createdAt: Date.now() },
+  { id: "d2", type: "sell", pair: "ETH/USDC", amount: 10, price: 3200, total: 32000, status: "open", isPartial: true, allowPartial: true, expiresAt: Date.now() + 20520000, createdAt: Date.now() - 3600000 },
+  { id: "d3", type: "buy", pair: "META/USDC", amount: 1000, price: 450, total: 450000, status: "executed", isPartial: true, allowPartial: false, expiresAt: 0, createdAt: Date.now() - 86400000 },
 ];
 
 const MOCK_MARKET_DEALS: MarketDeal[] = [
-  { id: "mkt001", type: "buy", pair: "META/USDC", expiresAt: Date.now() + 9240000, offerCount: 3 },
-  { id: "mkt002", type: "sell", pair: "META/USDC", expiresAt: Date.now() + 51720000, offerCount: 0 },
-  { id: "mkt003", type: "buy", pair: "ETH/USDC", expiresAt: Date.now() + 22140000, offerCount: 7 },
-  { id: "mkt004", type: "sell", pair: "ETH/USDC", expiresAt: Date.now() + 3900000, offerCount: 2 },
-  { id: "mkt005", type: "buy", pair: "SOL/USDC", expiresAt: Date.now() + 67200000, offerCount: 0 },
+  { id: "mkt001", type: "buy", pair: "META/USDC", expiresAt: Date.now() + 9240000, isPartial: true },
+  { id: "mkt002", type: "sell", pair: "META/USDC", expiresAt: Date.now() + 51720000, isPartial: false },
+  { id: "mkt003", type: "buy", pair: "ETH/USDC", expiresAt: Date.now() + 22140000, isPartial: true },
+  { id: "mkt004", type: "sell", pair: "ETH/USDC", expiresAt: Date.now() + 3900000, isPartial: true },
+  { id: "mkt005", type: "buy", pair: "SOL/USDC", expiresAt: Date.now() + 67200000, isPartial: false },
 ];
 
 const MOCK_OFFERS: Offer[] = [
-  { id: "off001", pair: "META/USDC", side: "sell", yourPrice: 442, submittedAt: "2h ago", dealStatus: "active", offerStatus: "pending" },
+  { id: "off001", pair: "META/USDC", side: "sell", yourPrice: 442, submittedAt: "2h ago", dealStatus: "open", offerStatus: "pending" },
   { id: "off002", pair: "ETH/USDC", side: "sell", yourPrice: 3200, submittedAt: "5h ago", dealStatus: "executed", offerStatus: "passed" },
   { id: "off003", pair: "META/USDC", side: "buy", yourPrice: 448, submittedAt: "1d ago", dealStatus: "expired", offerStatus: "failed" },
-  { id: "off004", pair: "SOL/USDC", side: "sell", yourPrice: 185, submittedAt: "3h ago", dealStatus: "active", offerStatus: "pending" },
+  { id: "off004", pair: "SOL/USDC", side: "sell", yourPrice: 185, submittedAt: "3h ago", dealStatus: "open", offerStatus: "pending" },
+  { id: "off005", pair: "ETH/USDC", side: "buy", yourPrice: 3150, submittedAt: "6h ago", dealStatus: "executed", offerStatus: "partial" },
 ];
 
 export default function OTCPage() {
@@ -71,6 +74,7 @@ export default function OTCPage() {
   const [baseAmount, setBaseAmount] = useState("4444");
   const [pricePerUnit, setPricePerUnit] = useState("444");
   const [expiresIn, setExpiresIn] = useState("24");
+  const [allowPartial, setAllowPartial] = useState(true);
   const [isLocked, setIsLocked] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -113,6 +117,8 @@ export default function OTCPage() {
         price: parseFloat(pricePerUnit),
         total: calculatedTotal,
         status: "open",
+        isPartial: false,
+        allowPartial: allowPartial,
         expiresAt: Date.now() + parseFloat(expiresIn) * 3600000,
         createdAt: Date.now(),
       };
@@ -283,10 +289,22 @@ export default function OTCPage() {
                 </div>
               </div>
 
+              {/* Allow partial fill checkbox */}
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={allowPartial}
+                  onChange={(e) => !isLocked && setAllowPartial(e.target.checked)}
+                  disabled={isLocked}
+                  className="w-4 h-4 rounded border-gray-600 bg-gray-700 text-emerald-500 focus:ring-emerald-500 focus:ring-offset-gray-800"
+                />
+                <span className="text-gray-400 text-sm">Allow partial fill at expiry</span>
+              </label>
+
               {/* Helper text */}
               <p className="text-gray-500 text-sm">
                 Market makers will respond with quotes. Trades auto-execute when
-                fully filled, or you can execute partial fills manually.
+                fully filled{allowPartial ? ", or partial fills execute at expiry" : ""}.
               </p>
 
               {/* Total cost */}
@@ -422,31 +440,33 @@ export default function OTCPage() {
                             {formatTimeRemaining(deal.expiresAt)}
                           </td>
                           <td className="py-3 text-center">
-                            {deal.status === "open" && (
-                              <span className="px-2 py-0.5 rounded text-xs font-medium bg-blue-500/20 text-blue-400 border border-blue-500/30">
-                                open
-                              </span>
-                            )}
-                            {deal.status === "partial" && (
-                              <span className="px-2 py-0.5 rounded text-xs font-medium bg-yellow-500/20 text-yellow-400 border border-yellow-500/30">
-                                partially filled
-                              </span>
-                            )}
-                            {deal.status === "executed" && (
-                              <span className="px-2 py-0.5 rounded text-xs font-medium bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-                                executed
-                              </span>
-                            )}
+                            <div className="flex items-center justify-center gap-1">
+                              {deal.status === "open" && (
+                                <span className="px-2 py-0.5 rounded text-xs font-medium bg-blue-500/20 text-blue-400 border border-blue-500/30">
+                                  open
+                                </span>
+                              )}
+                              {deal.status === "executed" && (
+                                <span className="px-2 py-0.5 rounded text-xs font-medium bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                                  executed
+                                </span>
+                              )}
+                              {deal.status === "expired" && (
+                                <span className="px-2 py-0.5 rounded text-xs font-medium bg-gray-600 text-gray-300">
+                                  expired
+                                </span>
+                              )}
+                              {deal.isPartial && deal.status === "open" && (
+                                <span className="px-2 py-0.5 rounded text-xs font-medium bg-yellow-500/20 text-yellow-400 border border-yellow-500/30">
+                                  has offers
+                                </span>
+                              )}
+                            </div>
                           </td>
                           <td className="py-3 text-right">
-                            {deal.status === "partial" && (
+                            {deal.isPartial && deal.status === "open" && (
                               <button className="bg-emerald-500 hover:bg-emerald-600 text-white px-3 py-1 text-sm rounded font-medium transition-colors">
                                 Execute
-                              </button>
-                            )}
-                            {deal.status === "open" && (
-                              <button className="bg-transparent hover:bg-gray-700 text-gray-400 px-3 py-1 text-sm rounded font-medium transition-colors">
-                                Cancel
                               </button>
                             )}
                           </td>
@@ -490,6 +510,7 @@ export default function OTCPage() {
                       <tr className="text-gray-400 text-sm border-b border-gray-700">
                         <th className="text-left py-3 font-medium">Pair</th>
                         <th className="text-left py-3 font-medium">Looking to</th>
+                        <th className="text-center py-3 font-medium">Status</th>
                         <th className="text-center py-3 font-medium">Expires</th>
                         <th className="text-right py-3 font-medium"></th>
                       </tr>
@@ -516,6 +537,15 @@ export default function OTCPage() {
                             <span className="text-gray-500 ml-1">
                               ({deal.type === "buy" ? "you sell" : "you buy"})
                             </span>
+                          </td>
+                          <td className="py-3 text-center">
+                            {deal.isPartial ? (
+                              <span className="px-2 py-0.5 rounded text-xs font-medium bg-yellow-500/20 text-yellow-400 border border-yellow-500/30">
+                                has offers
+                              </span>
+                            ) : (
+                              <span className="text-gray-500 text-sm">—</span>
+                            )}
                           </td>
                           <td className="py-3 text-center">
                             <span
@@ -603,9 +633,9 @@ export default function OTCPage() {
                               {offer.submittedAt}
                             </td>
                             <td className="py-3 text-center">
-                              {offer.dealStatus === "active" && (
+                              {offer.dealStatus === "open" && (
                                 <span className="px-2 py-0.5 rounded text-xs font-medium bg-blue-500/20 text-blue-400 border border-blue-500/30">
-                                  active
+                                  open
                                 </span>
                               )}
                               {offer.dealStatus === "executed" && (
@@ -627,7 +657,12 @@ export default function OTCPage() {
                               )}
                               {offer.offerStatus === "passed" && (
                                 <span className="px-2 py-0.5 rounded text-xs font-medium bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-                                  passed ✓
+                                  passed
+                                </span>
+                              )}
+                              {offer.offerStatus === "partial" && (
+                                <span className="px-2 py-0.5 rounded text-xs font-medium bg-yellow-500/20 text-yellow-400 border border-yellow-500/30">
+                                  partial
                                 </span>
                               )}
                               {offer.offerStatus === "failed" && (
