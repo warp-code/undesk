@@ -48,9 +48,11 @@ pub fn create_deal(
     let input = deal_data.to_arcis();
 
     // Store as MXE-encrypted (for future MPC operations)
-    let state = deal_data.owner.from_arcis(DealState { ... });
+    // Note: Mxe::get() returns the MXE owner, so from_arcis produces Enc<Mxe, T>
+    let state = Mxe::get().from_arcis(DealState { ... });
 
     // Re-encrypt confirmation to creator's key (for event)
+    // Note: creator is Shared, so from_arcis produces Enc<Shared, T>
     let blob = creator.from_arcis(DealCreatedBlob { ... });
 
     (state, blob)
@@ -162,7 +164,7 @@ struct EncryptedDealState {
 
 **Account closure:** When `num_settled == num_offers` and creator is settled, deal account can be closed.
 
-x25519 pubkey is derived from ed25519 pubkey (Solana keypair) — no separate storage needed.
+**Note:** x25519 pubkey is derived from ed25519 pubkey (Solana keypair) — no separate storage needed. See Design Decisions.
 
 ---
 
@@ -361,7 +363,10 @@ for (const event of events) {
 
 ## Design Decisions
 
-1. **x25519 derived from ed25519** — Clients derive x25519 keys from their Solana keypair. MPC does the same conversion when sealing data. No separate key storage needed.
+1. **x25519 derived from ed25519** — Clients derive x25519 keys from their Solana ed25519 keypair using standard conversion (e.g., libsodium's `crypto_sign_ed25519_pk_to_curve25519` or `@noble/curves` equivalent). This means:
+   - No separate x25519 key storage needed — wallet keypair is sufficient
+   - MPC derives x25519 pubkey from the ed25519 pubkey stored in encrypted state (creator/offeror fields)
+   - Client decryption uses the same derivation from their wallet's private key
 
 2. **createKey pattern** — Both deals and offers use an ephemeral signer (`create_key`) for PDA derivation. This:
    - Prevents front-running (attacker can't produce valid signature)
@@ -381,4 +386,16 @@ for (const event of events) {
 
 2. **Settlement trigger** — Permissionless crank at expiry? Auto-trigger when filled?
 
-3. **Blob size in events** — SharedEncryptedStruct includes `encryption_key` (32 bytes) + `nonce` (16 bytes) + ciphertexts. Need to account for this overhead.
+3. **Blob size in events** — `SharedEncryptedStruct<N>` includes:
+   - `encryption_key`: 32 bytes (client's x25519 pubkey echoed back)
+   - `nonce`: 16 bytes (u128)
+   - `ciphertexts`: N × 32 bytes
+
+   **Overhead per blob: 48 bytes + (N × 32 bytes)**
+
+   | Blob | Fields | Ciphertext Size | Total Size |
+   |------|--------|-----------------|------------|
+   | DealCreatedBlob | 6 (creator as 2×u128 + amount + price + total + created_at) | 192 bytes | 240 bytes |
+   | OfferCreatedBlob | 5 (offeror as 2×u128 + price + amount + submitted_at) | 160 bytes | 208 bytes |
+   | DealSettledBlob | 4 (creator as 2×u128 + total_filled + refund_amt) | 128 bytes | 176 bytes |
+   | OfferSettledBlob | 5 (offeror as 2×u128 + outcome + executed_amt + refund_amt) | 160 bytes | 208 bytes |
