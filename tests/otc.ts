@@ -69,6 +69,37 @@ describe("Otc", () => {
     return event;
   };
 
+  const awaitEvents = async <E extends keyof Event>(
+    eventName: E,
+    count: number,
+    timeoutMs: number = 15000
+  ): Promise<Event[E][]> => {
+    const events: Event[E][] = [];
+    let listenerId: number;
+
+    await new Promise<void>((res, rej) => {
+      const timeout = setTimeout(() => {
+        program.removeEventListener(listenerId);
+        rej(
+          new Error(
+            `Expected ${count} '${String(eventName)}' events, got ${events.length}`
+          )
+        );
+      }, timeoutMs);
+
+      listenerId = program.addEventListener(eventName, (event) => {
+        events.push(event);
+        if (events.length === count) {
+          clearTimeout(timeout);
+          res();
+        }
+      });
+    });
+
+    await program.removeEventListener(listenerId);
+    return events;
+  };
+
   const arciumEnv = getArciumEnv();
   const clusterAccount = getClusterAccount();
   const owner = readKpJson(`${os.homedir()}/.config/solana/id.json`);
@@ -199,9 +230,18 @@ describe("Otc", () => {
 
     console.log("MXE x25519 pubkey is", mxePublicKey);
 
-    // Generate keypair for get_counter re-encryption
-    const privateKey = x25519.utils.randomSecretKey();
-    const publicKey = x25519.getPublicKey(privateKey);
+    // Generate keypairs for get_counter re-encryption
+    // First keypair - passed as recipient_pubkey
+    const privateKey1 = x25519.utils.randomSecretKey();
+    const publicKey1 = x25519.getPublicKey(privateKey1);
+
+    // Second keypair - passed as pubkey_hi/pubkey_lo
+    const privateKey2 = x25519.utils.randomSecretKey();
+    const publicKey2 = x25519.getPublicKey(privateKey2);
+
+    // Split second pubkey into hi/lo u128s (first 16 bytes = hi, last 16 bytes = lo)
+    const pubkey_hi = deserializeLE(publicKey2.slice(0, 16));
+    const pubkey_lo = deserializeLE(publicKey2.slice(16, 32));
 
     const computationOffset = new anchor.BN(randomBytes(8), "hex");
     const initNonce = randomBytes(16);
@@ -275,17 +315,20 @@ describe("Otc", () => {
     );
     console.log("Finalize increment sig is ", finalizeIncrementSig);
 
-    // Step 3: Read the counter using get_counter (re-encrypts for us)
+    // Step 3: Read the counter using get_counter (re-encrypts for both users)
     const getComputationOffset = new anchor.BN(randomBytes(8), "hex");
     const recipientNonce = randomBytes(16);
 
-    const counterValueEventPromise = awaitEvent("counterValueEvent");
+    // Await TWO events since get_counter now returns two encrypted outputs
+    const counterValueEventsPromise = awaitEvents("counterValueEvent", 2);
 
     const queueGetSig = await program.methods
       .getCounter(
         getComputationOffset,
-        Array.from(publicKey),
-        new anchor.BN(deserializeLE(recipientNonce).toString())
+        Array.from(publicKey1),
+        new anchor.BN(deserializeLE(recipientNonce).toString()),
+        new anchor.BN(pubkey_hi.toString()),
+        new anchor.BN(pubkey_lo.toString())
       )
       .accountsPartial({
         computationAccount: getComputationAccAddress(
@@ -315,20 +358,33 @@ describe("Otc", () => {
     );
     console.log("Finalize get sig is ", finalizeGetSig);
 
-    // Wait for the event and decrypt the value
-    const counterValueEvent = await counterValueEventPromise;
+    // Wait for both events
+    const counterValueEvents = await counterValueEventsPromise;
+    const [event1, event2] = counterValueEvents;
 
-    // Create cipher with shared secret using the MXE public key
-    const sharedSecret = x25519.getSharedSecret(privateKey, mxePublicKey);
-    const cipher = new RescueCipher(sharedSecret);
-
-    const decrypted = cipher.decrypt(
-      [counterValueEvent.ciphertext],
-      Uint8Array.from(counterValueEvent.nonce)
+    // Decrypt first event with privateKey1 (recipient)
+    const sharedSecret1 = x25519.getSharedSecret(privateKey1, mxePublicKey);
+    const cipher1 = new RescueCipher(sharedSecret1);
+    const decrypted1 = cipher1.decrypt(
+      [event1.ciphertext],
+      Uint8Array.from(event1.nonce)
     );
 
     // After init (0) + increment (1) = 1
-    expect(decrypted[0]).to.equal(BigInt(1));
+    expect(decrypted1[0]).to.equal(BigInt(1));
+    console.log("Decrypted counter value for recipient 1:", decrypted1[0]);
+
+    // Decrypt second event with privateKey2 (pubkey_hi/pubkey_lo user)
+    const sharedSecret2 = x25519.getSharedSecret(privateKey2, mxePublicKey);
+    const cipher2 = new RescueCipher(sharedSecret2);
+    const decrypted2 = cipher2.decrypt(
+      [event2.ciphertext],
+      Uint8Array.from(event2.nonce)
+    );
+
+    // Both should have the same counter value
+    expect(decrypted2[0]).to.equal(BigInt(1));
+    console.log("Decrypted counter value for recipient 2:", decrypted2[0]);
   });
 
   async function initAddTogetherCompDef(

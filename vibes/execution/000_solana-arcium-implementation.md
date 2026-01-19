@@ -129,6 +129,7 @@ PDA seeds: `["deal", create_key.key()]`
 pub struct DealAccount {
     // === Public (plaintext) ===
     pub create_key: Pubkey,       // Ephemeral signer (prevents front-running, enables pre-funding)
+    pub encryption_pubkey: [u8; 32], // Creator's x25519 pubkey (for event routing)
     pub base_mint: Pubkey,        // Token being bought/sold
     pub quote_mint: Pubkey,       // Token used for pricing/payment
     pub side: u8,                 // BUY = 0, SELL = 1
@@ -140,17 +141,13 @@ pub struct DealAccount {
 
     // === MXE-encrypted (raw bytes) ===
     pub nonce: u128,              // 16 bytes
-    pub ciphertexts: [u8; 192],   // 6 fields × 32 bytes
+    pub ciphertexts: [u8; 128],   // 4 fields × 32 bytes
 }
 ```
 
 **Encrypted fields** (interpreted by Arcis circuit):
 ```rust
 struct EncryptedDealState {
-    // Creator identity (for transfers + x25519 derivation)
-    creator_hi: u128,             // Pubkey bytes [0..16]
-    creator_lo: u128,             // Pubkey bytes [16..32]
-
     // Operational data
     amount: u64,                  // Base asset amount
     price: u64,                   // Threshold price
@@ -159,12 +156,10 @@ struct EncryptedDealState {
     // Settlement tracking
     num_settled: u32,             // Incremented as each offer is settled
 }
-// Total: 6 ciphertexts × 32 bytes = 192 bytes
+// Total: 4 ciphertexts × 32 bytes = 128 bytes
 ```
 
 **Account closure:** When `num_settled == num_offers` and creator is settled, deal account can be closed.
-
-**Note:** x25519 pubkey is derived from ed25519 pubkey (Solana keypair) — no separate storage needed. See Design Decisions.
 
 ---
 
@@ -176,33 +171,30 @@ PDA seeds: `["offer", deal.key(), create_key.key()]`
 pub struct OfferAccount {
     // === Public ===
     pub create_key: Pubkey,       // Ephemeral signer (prevents front-running, enables pre-funding)
+    pub encryption_pubkey: [u8; 32], // Offeror's x25519 pubkey (for event routing)
     pub deal: Pubkey,
     pub offer_index: u32,         // FIFO sequence, assigned by MPC (not in PDA seeds)
     pub bump: u8,
 
     // === MXE-encrypted ===
     pub nonce: u128,              // 16 bytes
-    pub ciphertexts: [u8; 160],   // 5 fields × 32 bytes
+    pub ciphertexts: [u8; 96],    // 3 fields × 32 bytes
 }
 ```
 
 **Encrypted fields**:
 ```rust
 struct EncryptedOfferState {
-    // Offeror identity (for transfers + x25519 derivation)
-    offeror_hi: u128,             // Pubkey bytes [0..16]
-    offeror_lo: u128,             // Pubkey bytes [16..32]
-
     // Offer data
     price: u64,                   // Offeror's price
     amount: u64,                  // Amount willing to fill
     amt_to_execute: u64,          // Amount that will actually execute
 }
-// Total: 5 ciphertexts × 32 bytes = 160 bytes
+// Total: 3 ciphertexts × 32 bytes = 96 bytes
 ```
 
 **Field lifecycle:**
-- `offeror`, `price`, `amount` — Set at submission
+- `price`, `amount` — Set at submission
 - `amt_to_execute` — Computed at submission via greedy FIFO:
 
 ```
@@ -330,32 +322,30 @@ struct OfferSettledBlob {
 
 ## Client Decryption
 
-Clients discover their deals/offers by brute-force decrypting all events:
+Clients filter events by comparing `encryption_key` to their own x25519 pubkey:
 
 ```typescript
 // Fetch all DealCreated events from rolling window
 const events = await fetchDealCreatedEvents();
 
+// Derive my x25519 keypair from wallet signature (see ideation/001)
+const { privateKey, publicKey } = await getEncryptionKeypair(wallet);
+
 for (const event of events) {
-    try {
-        // Derive shared secret with MXE
-        const sharedSecret = x25519.getSharedSecret(myPrivateKey, mxePublicKey);
-        const cipher = new RescueCipher(sharedSecret);
-
-        // Attempt decryption
-        const plaintext = cipher.decrypt(event.encrypted_blob, nonce);
-
-        // Check if first 32 bytes match our pubkey
-        const creator = plaintext.slice(0, 32);
-        if (creator.equals(myPublicKey)) {
-            // This is our deal!
-            const amount = readU64(plaintext, 32);
-            const price = readU64(plaintext, 40);
-            // ...
-        }
-    } catch {
-        // Not our event, skip
+    // Filter by encryption_key (no decryption needed for filtering)
+    if (!arraysEqual(event.encryption_key, publicKey)) {
+        continue; // Not our event
     }
+
+    // This event is for us — decrypt it
+    const sharedSecret = x25519.getSharedSecret(privateKey, mxePublicKey);
+    const cipher = new RescueCipher(sharedSecret);
+    const plaintext = cipher.decrypt(event.encrypted_blob, event.nonce);
+
+    // Parse the decrypted blob
+    const amount = readU64(plaintext, 0);
+    const price = readU64(plaintext, 8);
+    // ...
 }
 ```
 
@@ -363,10 +353,12 @@ for (const event of events) {
 
 ## Design Decisions
 
-1. **x25519 derived from ed25519** — Clients derive x25519 keys from their Solana ed25519 keypair using standard conversion (e.g., libsodium's `crypto_sign_ed25519_pk_to_curve25519` or `@noble/curves` equivalent). This means:
-   - No separate x25519 key storage needed — wallet keypair is sufficient
-   - MPC derives x25519 pubkey from the ed25519 pubkey stored in encrypted state (creator/offeror fields)
-   - Client decryption uses the same derivation from their wallet's private key
+1. **Signature-derived x25519 keys** — Clients derive x25519 keys deterministically from a wallet signature (see `vibes/ideation/001_deterministic-encryption-keys.md`). This means:
+   - User signs a deterministic message → hash signature → x25519 private key
+   - Same wallet + same message = same keypair, every time (regenerable on any device)
+   - x25519 pubkey stored publicly on accounts (`encryption_pubkey` field) for event routing
+   - Crank reads pubkey from account, passes to MPC for output encryption
+   - No need for MPC to derive keys — pubkey is plaintext, private key stays client-side
 
 2. **createKey pattern** — Both deals and offers use an ephemeral signer (`create_key`) for PDA derivation. This:
    - Prevents front-running (attacker can't produce valid signature)
@@ -395,7 +387,9 @@ for (const event of events) {
 
    | Blob | Fields | Ciphertext Size | Total Size |
    |------|--------|-----------------|------------|
-   | DealCreatedBlob | 6 (creator as 2×u128 + amount + price + total + created_at) | 192 bytes | 240 bytes |
-   | OfferCreatedBlob | 5 (offeror as 2×u128 + price + amount + submitted_at) | 160 bytes | 208 bytes |
-   | DealSettledBlob | 4 (creator as 2×u128 + total_filled + refund_amt) | 128 bytes | 176 bytes |
-   | OfferSettledBlob | 5 (offeror as 2×u128 + outcome + executed_amt + refund_amt) | 160 bytes | 208 bytes |
+   | DealCreatedBlob | 4 (amount + price + total + created_at) | 128 bytes | 176 bytes |
+   | OfferCreatedBlob | 3 (price + amount + submitted_at) | 96 bytes | 144 bytes |
+   | DealSettledBlob | 2 (total_filled + refund_amt) | 64 bytes | 112 bytes |
+   | OfferSettledBlob | 3 (outcome + executed_amt + refund_amt) | 96 bytes | 144 bytes |
+
+   Note: Creator/offeror identity no longer needed in blobs — recipient is identified by `encryption_pubkey` on the account.

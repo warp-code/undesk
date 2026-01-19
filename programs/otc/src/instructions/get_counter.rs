@@ -19,6 +19,8 @@ pub fn handler(
     computation_offset: u64,
     recipient_pubkey: [u8; 32],
     recipient_nonce: u128,
+    pubkey_hi: u128,
+    pubkey_lo: u128,
 ) -> Result<()> {
     ctx.accounts.sign_pda_account.bump = ctx.bumps.sign_pda_account;
 
@@ -36,6 +38,8 @@ pub fn handler(
         )
         .x25519_pubkey(recipient_pubkey)
         .plaintext_u128(recipient_nonce)
+        .plaintext_u128(pubkey_hi)
+        .plaintext_u128(pubkey_lo)
         .build();
 
     queue_computation(
@@ -59,20 +63,27 @@ pub fn callback_handler(
     ctx: Context<GetCounterCallback>,
     output: SignedComputationOutputs<GetCounterOutput>,
 ) -> Result<()> {
-    let o = match output.verify_output(
+    // Tuple return type is wrapped: field_0 contains the tuple, with field_0/field_1 inside
+    let (o1, o2) = match output.verify_output(
         &ctx.accounts.cluster_account,
         &ctx.accounts.computation_account,
     ) {
-        Ok(GetCounterOutput { field_0 }) => field_0,
+        Ok(GetCounterOutput { field_0 }) => (field_0.field_0, field_0.field_1),
         Err(_) => return Err(ErrorCode::AbortedComputation.into()),
     };
 
-    // Emit an event with the re-encrypted counter value
-    // The caller can decrypt this with their private key
+    // Emit an event with the re-encrypted counter value for the recipient
     emit!(CounterValueEvent {
-        encryption_key: o.encryption_key,
-        nonce: o.nonce.to_le_bytes(),
-        ciphertext: o.ciphertexts[0],
+        encryption_key: o1.encryption_key,
+        nonce: o1.nonce.to_le_bytes(),
+        ciphertext: o1.ciphertexts[0],
+    });
+
+    // Emit a second event for the pubkey_hi/pubkey_lo user
+    emit!(CounterValueEvent {
+        encryption_key: o2.encryption_key,
+        nonce: o2.nonce.to_le_bytes(),
+        ciphertext: o2.ciphertexts[0],
     });
 
     Ok(())

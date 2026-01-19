@@ -96,8 +96,17 @@ pub mod otc {
         computation_offset: u64,
         recipient_pubkey: [u8; 32],
         recipient_nonce: u128,
+        pubkey_hi: u128,
+        pubkey_lo: u128,
     ) -> Result<()> {
-        instructions::get_counter::handler(ctx, computation_offset, recipient_pubkey, recipient_nonce)
+        instructions::get_counter::handler(
+            ctx,
+            computation_offset,
+            recipient_pubkey,
+            recipient_nonce,
+            pubkey_hi,
+            pubkey_lo,
+        )
     }
 
     #[arcium_callback(encrypted_ix = "get_counter")]
