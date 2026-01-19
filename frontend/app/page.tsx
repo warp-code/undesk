@@ -161,9 +161,9 @@ export default function OTCPage() {
     parseFloat(expiresIn) > 0;
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="h-screen flex flex-col bg-background">
       {/* Navbar */}
-      <nav className="border-b border-border bg-card/50">
+      <nav className="border-b border-border bg-card/50 shrink-0">
         <div className="px-6 py-3 flex items-center justify-between">
           <div className="flex items-center gap-6">
             {/* Logo */}
@@ -185,14 +185,14 @@ export default function OTCPage() {
             </div>
           </div>
           {/* Connect Wallet Button */}
-          <button className="bg-primary hover:bg-primary/80 text-primary-foreground px-3 py-1.5 rounded font-medium text-sm transition-colors">
+          <button className="bg-primary/20 hover:bg-primary/30 text-primary border border-primary/50 px-3 py-1.5 rounded font-medium text-sm transition-colors">
             Connect Wallet
           </button>
         </div>
       </nav>
 
       {/* Three-column layout */}
-      <div className="flex h-[calc(100vh-57px)]">
+      <div className="flex flex-1 min-h-0">
         {/* Left Panel - RFQ Form */}
         <div className="w-[440px] shrink-0 border-r border-border p-4 overflow-y-auto">
           <div className="bg-card/50 border border-border rounded-lg p-4">
@@ -447,7 +447,7 @@ export default function OTCPage() {
                           <td className="py-3 text-center">
                             <div className="flex items-center justify-center gap-1">
                               {deal.status === "open" && (
-                                <span className="px-2 py-0.5 rounded text-xs font-medium bg-primary/20 text-primary border border-primary/30">
+                                <span className="px-2 py-0.5 rounded text-xs font-medium bg-sky-500/20 text-sky-400 border border-sky-500/30">
                                   open
                                 </span>
                               )}
@@ -470,7 +470,7 @@ export default function OTCPage() {
                           </td>
                           <td className="py-3 text-right">
                             {deal.isPartial && deal.status === "open" && (
-                              <button className="bg-primary hover:bg-primary/80 text-primary-foreground px-3 py-1 text-sm rounded font-medium transition-colors">
+                              <button className="bg-primary/20 hover:bg-primary/30 text-primary border border-primary/50 px-3 py-1 text-sm rounded font-medium transition-colors">
                                 Execute
                               </button>
                             )}
@@ -639,7 +639,7 @@ export default function OTCPage() {
                             </td>
                             <td className="py-3 text-center">
                               {offer.dealStatus === "open" && (
-                                <span className="px-2 py-0.5 rounded text-xs font-medium bg-primary/20 text-primary border border-primary/30">
+                                <span className="px-2 py-0.5 rounded text-xs font-medium bg-sky-500/20 text-sky-400 border border-sky-500/30">
                                   open
                                 </span>
                               )}
@@ -704,6 +704,9 @@ export default function OTCPage() {
           </div>
         </div>
       </div>
+
+      {/* Footer border */}
+      <div className="border-t border-border h-3 shrink-0" />
     </div>
   );
 }
