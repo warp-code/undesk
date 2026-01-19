@@ -161,31 +161,31 @@ export default function OTCPage() {
     parseFloat(expiresIn) > 0;
 
   return (
-    <div className="min-h-screen bg-slate-900">
+    <div className="min-h-screen bg-background">
       {/* Navbar */}
-      <nav className="border-b border-gray-700 bg-gray-800/50">
+      <nav className="border-b border-border bg-card/50">
         <div className="px-6 py-3 flex items-center justify-between">
           <div className="flex items-center gap-6">
             {/* Logo */}
-            <div className="text-white font-semibold text-lg">Veil OTC</div>
+            <div className="text-foreground font-semibold text-lg">Veil OTC</div>
             {/* Nav Links */}
             <div className="flex gap-4 text-sm">
-              <a href="#" className="text-white font-medium">
+              <a href="#" className="text-foreground font-medium">
                 Trade
               </a>
-              <a href="#" className="text-gray-400 hover:text-gray-200 transition-colors">
+              <a href="#" className="text-muted-foreground hover:text-foreground transition-colors">
                 History
               </a>
-              <a href="#" className="text-gray-400 hover:text-gray-200 transition-colors">
+              <a href="#" className="text-muted-foreground hover:text-foreground transition-colors">
                 FAQ
               </a>
-              <a href="#" className="text-gray-400 hover:text-gray-200 transition-colors">
+              <a href="#" className="text-muted-foreground hover:text-foreground transition-colors">
                 Settings
               </a>
             </div>
           </div>
           {/* Connect Wallet Button */}
-          <button className="bg-sky-500 hover:bg-sky-600 text-white px-3 py-1.5 rounded font-medium text-sm transition-colors">
+          <button className="bg-primary hover:bg-primary/80 text-primary-foreground px-3 py-1.5 rounded font-medium text-sm transition-colors">
             Connect Wallet
           </button>
         </div>
@@ -194,9 +194,9 @@ export default function OTCPage() {
       {/* Three-column layout */}
       <div className="flex h-[calc(100vh-57px)]">
         {/* Left Panel - RFQ Form */}
-        <div className="w-[440px] shrink-0 border-r border-gray-700 p-4 overflow-y-auto">
-          <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-4">
-            <h2 className="text-lg font-semibold text-white mb-4">
+        <div className="w-[440px] shrink-0 border-r border-border p-4 overflow-y-auto">
+          <div className="bg-card/50 border border-border rounded-lg p-4">
+            <h2 className="text-lg font-semibold text-foreground mb-4">
               Request for quote
             </h2>
 
@@ -207,8 +207,8 @@ export default function OTCPage() {
                 disabled={isLocked}
                 className={`px-4 py-1.5 rounded text-sm font-medium transition-colors ${
                   mode === "buy"
-                    ? "bg-teal-500 text-white"
-                    : "bg-gray-700 text-gray-400"
+                    ? "bg-success text-success-foreground"
+                    : "bg-secondary text-muted-foreground"
                 }`}
               >
                 Buy
@@ -218,13 +218,13 @@ export default function OTCPage() {
                 disabled={isLocked}
                 className={`px-4 py-1.5 rounded text-sm font-medium transition-colors ${
                   mode === "sell"
-                    ? "bg-rose-500 text-white"
-                    : "bg-gray-700 text-gray-400"
+                    ? "bg-destructive text-destructive-foreground"
+                    : "bg-secondary text-muted-foreground"
                 }`}
               >
                 Sell
               </button>
-              <div className="flex-1 bg-gray-700/50 rounded px-3 py-1.5 text-gray-300 text-sm">
+              <div className="flex-1 bg-input rounded px-3 py-1.5 text-foreground/80 text-sm">
                 {selectedPair.label}
               </div>
             </div>
@@ -232,10 +232,10 @@ export default function OTCPage() {
             <div className="space-y-4">
               {/* Buy/Sell amount */}
               <div>
-                <label className="text-gray-400 text-sm mb-1 block">
+                <label className="text-muted-foreground text-sm mb-1 block">
                   {mode === "buy" ? "Buy" : "Sell"} amount
                 </label>
-                <div className="bg-gray-700/50 rounded px-3 py-2 flex justify-between">
+                <div className="bg-input rounded px-3 py-2 flex justify-between">
                   <input
                     type="text"
                     inputMode="decimal"
@@ -245,18 +245,18 @@ export default function OTCPage() {
                     }
                     placeholder="0"
                     disabled={isLocked}
-                    className="flex-1 bg-transparent text-white outline-none"
+                    className="flex-1 bg-transparent text-foreground outline-none"
                   />
-                  <span className="text-gray-400">{selectedPair.base}</span>
+                  <span className="text-muted-foreground">{selectedPair.base}</span>
                 </div>
               </div>
 
               {/* Price per unit */}
               <div>
-                <label className="text-gray-400 text-sm mb-1 block">
+                <label className="text-muted-foreground text-sm mb-1 block">
                   Price per {selectedPair.base}
                 </label>
-                <div className="bg-gray-700/50 rounded px-3 py-2 flex justify-between">
+                <div className="bg-input rounded px-3 py-2 flex justify-between">
                   <input
                     type="text"
                     inputMode="decimal"
@@ -266,18 +266,18 @@ export default function OTCPage() {
                     }
                     placeholder="0"
                     disabled={isLocked}
-                    className="flex-1 bg-transparent text-white outline-none"
+                    className="flex-1 bg-transparent text-foreground outline-none"
                   />
-                  <span className="text-gray-400">{selectedPair.quote}</span>
+                  <span className="text-muted-foreground">{selectedPair.quote}</span>
                 </div>
               </div>
 
               {/* Expires in */}
               <div>
-                <label className="text-gray-400 text-sm mb-1 block">
+                <label className="text-muted-foreground text-sm mb-1 block">
                   Expires in
                 </label>
-                <div className="bg-gray-700/50 rounded px-3 py-2 flex justify-between">
+                <div className="bg-input rounded px-3 py-2 flex justify-between">
                   <input
                     type="text"
                     inputMode="decimal"
@@ -287,9 +287,9 @@ export default function OTCPage() {
                     }
                     placeholder="24"
                     disabled={isLocked}
-                    className="flex-1 bg-transparent text-white outline-none"
+                    className="flex-1 bg-transparent text-foreground outline-none"
                   />
-                  <span className="text-gray-400">hours</span>
+                  <span className="text-muted-foreground">hours</span>
                 </div>
               </div>
 
@@ -300,29 +300,29 @@ export default function OTCPage() {
                   checked={allowPartial}
                   onChange={(e) => !isLocked && setAllowPartial(e.target.checked)}
                   disabled={isLocked}
-                  className="w-4 h-4 rounded border-gray-600 bg-gray-700 text-sky-500 focus:ring-sky-500 focus:ring-offset-gray-800"
+                  className="w-4 h-4 rounded border-border bg-input text-primary focus:ring-ring focus:ring-offset-background"
                 />
-                <span className="text-gray-400 text-sm">Allow partial fill at expiry</span>
+                <span className="text-muted-foreground text-sm">Allow partial fill at expiry</span>
               </label>
 
               {/* Helper text */}
-              <p className="text-gray-500 text-sm">
+              <p className="text-muted-foreground/70 text-sm">
                 Market makers will respond with quotes. Trades auto-execute when
                 fully filled{allowPartial ? ", or partial fills execute at expiry" : ""}.
               </p>
 
               {/* Total cost */}
               <div>
-                <label className="text-gray-400 text-sm mb-1 block">
+                <label className="text-muted-foreground text-sm mb-1 block">
                   {mode === "buy" ? "Total cost" : "You receive"}
                 </label>
-                <div className="bg-gray-700/50 rounded px-3 py-2 flex justify-between">
-                  <span className="text-white">
+                <div className="bg-input rounded px-3 py-2 flex justify-between">
+                  <span className="text-foreground">
                     {calculatedTotal > 0
                       ? calculatedTotal.toLocaleString()
                       : "—"}
                   </span>
-                  <span className="text-gray-400">{selectedPair.quote}</span>
+                  <span className="text-muted-foreground">{selectedPair.quote}</span>
                 </div>
               </div>
 
@@ -332,8 +332,8 @@ export default function OTCPage() {
                 disabled={!canSubmit}
                 className={`w-full py-3 rounded font-medium transition-colors flex items-center justify-center ${
                   canSubmit
-                    ? "bg-sky-500 hover:bg-sky-600 text-white"
-                    : "bg-gray-700 text-gray-500 cursor-not-allowed"
+                    ? "bg-primary hover:bg-primary/80 text-primary-foreground"
+                    : "bg-secondary text-muted-foreground cursor-not-allowed"
                 }`}
               >
                 {isLoading && (
@@ -366,9 +366,9 @@ export default function OTCPage() {
 
         {/* Center Panel - Tables */}
         <div className="flex-1 p-4 overflow-y-auto">
-          <div className="bg-gray-800/50 border border-gray-700 rounded-lg">
+          <div className="bg-card/50 border border-border rounded-lg">
           {/* Tab Navigation - underline style */}
-          <div className="border-b border-gray-700 px-4">
+          <div className="border-b border-border px-4">
             <div className="flex gap-2">
               {[
                 { id: "deals" as const, label: "Your Deals" },
@@ -380,13 +380,13 @@ export default function OTCPage() {
                   onClick={() => setActiveTab(tab.id)}
                   className={`px-4 py-2 font-medium transition-colors relative ${
                     activeTab === tab.id
-                      ? "text-white"
-                      : "text-gray-400 hover:text-gray-200"
+                      ? "text-foreground"
+                      : "text-muted-foreground hover:text-foreground"
                   }`}
                 >
                   {tab.label}
                   {activeTab === tab.id && (
-                    <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-sky-500" />
+                    <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />
                   )}
                 </button>
               ))}
@@ -399,13 +399,13 @@ export default function OTCPage() {
             {activeTab === "deals" && (
               <div className="overflow-x-auto">
                 {deals.length === 0 ? (
-                  <div className="text-gray-500 text-sm text-center py-8">
+                  <div className="text-muted-foreground text-sm text-center py-8">
                     No deals yet. Create your first deal above.
                   </div>
                 ) : (
                   <table className="w-full">
                     <thead>
-                      <tr className="text-gray-400 text-sm border-b border-gray-700">
+                      <tr className="text-muted-foreground text-sm border-b border-border">
                         <th className="text-left py-3 font-medium">Type</th>
                         <th className="text-left py-3 font-medium">Pair</th>
                         <th className="text-right py-3 font-medium">Amount</th>
@@ -420,44 +420,44 @@ export default function OTCPage() {
                       {deals.map((deal) => (
                         <tr
                           key={deal.id}
-                          className="border-b border-gray-700/50"
+                          className="border-b border-border/50"
                         >
                           <td
                             className={`py-3 font-medium ${
                               deal.type === "buy"
-                                ? "text-teal-400"
-                                : "text-rose-400"
+                                ? "text-success"
+                                : "text-destructive"
                             }`}
                           >
                             {deal.type.toUpperCase()}
                           </td>
-                          <td className="py-3 text-gray-200">{deal.pair}</td>
-                          <td className="py-3 text-right text-gray-200">
+                          <td className="py-3 text-foreground">{deal.pair}</td>
+                          <td className="py-3 text-right text-foreground">
                             {deal.amount.toLocaleString()}
                           </td>
-                          <td className="py-3 text-right text-gray-200">
+                          <td className="py-3 text-right text-foreground">
                             {deal.price.toLocaleString()}
                           </td>
-                          <td className="py-3 text-right text-gray-200">
+                          <td className="py-3 text-right text-foreground">
                             {deal.total.toLocaleString()}
                           </td>
-                          <td className="py-3 text-center text-gray-400">
+                          <td className="py-3 text-center text-muted-foreground">
                             {formatTimeRemaining(deal.expiresAt)}
                           </td>
                           <td className="py-3 text-center">
                             <div className="flex items-center justify-center gap-1">
                               {deal.status === "open" && (
-                                <span className="px-2 py-0.5 rounded text-xs font-medium bg-sky-500/20 text-sky-400 border border-sky-500/30">
+                                <span className="px-2 py-0.5 rounded text-xs font-medium bg-primary/20 text-primary border border-primary/30">
                                   open
                                 </span>
                               )}
                               {deal.status === "executed" && (
-                                <span className="px-2 py-0.5 rounded text-xs font-medium bg-teal-500/20 text-teal-400 border border-teal-500/30">
+                                <span className="px-2 py-0.5 rounded text-xs font-medium bg-success/20 text-success border border-success/30">
                                   executed
                                 </span>
                               )}
                               {deal.status === "expired" && (
-                                <span className="px-2 py-0.5 rounded text-xs font-medium bg-gray-600 text-gray-300">
+                                <span className="px-2 py-0.5 rounded text-xs font-medium bg-muted text-muted-foreground">
                                   expired
                                 </span>
                               )}
@@ -470,7 +470,7 @@ export default function OTCPage() {
                           </td>
                           <td className="py-3 text-right">
                             {deal.isPartial && deal.status === "open" && (
-                              <button className="bg-sky-500 hover:bg-sky-600 text-white px-3 py-1 text-sm rounded font-medium transition-colors">
+                              <button className="bg-primary hover:bg-primary/80 text-primary-foreground px-3 py-1 text-sm rounded font-medium transition-colors">
                                 Execute
                               </button>
                             )}
@@ -495,15 +495,15 @@ export default function OTCPage() {
                         onClick={() => setPairFilter(f)}
                         className={`px-3 py-1 rounded text-sm transition-colors ${
                           pairFilter === f
-                            ? "bg-gray-600 text-white"
-                            : "bg-gray-700/50 text-gray-400 hover:text-gray-200"
+                            ? "bg-accent text-accent-foreground"
+                            : "bg-secondary/50 text-muted-foreground hover:text-foreground"
                         }`}
                       >
                         {f === "all" ? "All Pairs" : f}
                       </button>
                     ))}
                   </div>
-                  <p className="text-gray-500 text-sm">
+                  <p className="text-muted-foreground/70 text-sm">
                     {filteredMarketDeals.length} active deals
                   </p>
                 </div>
@@ -512,7 +512,7 @@ export default function OTCPage() {
                 <div className="overflow-x-auto">
                   <table className="w-full">
                     <thead>
-                      <tr className="text-gray-400 text-sm border-b border-gray-700">
+                      <tr className="text-muted-foreground text-sm border-b border-border">
                         <th className="text-left py-3 font-medium">Pair</th>
                         <th className="text-left py-3 font-medium">Looking to</th>
                         <th className="text-center py-3 font-medium">Status</th>
@@ -524,22 +524,22 @@ export default function OTCPage() {
                       {filteredMarketDeals.map((deal) => (
                         <tr
                           key={deal.id}
-                          className="border-b border-gray-700/50 hover:bg-gray-700/20"
+                          className="border-b border-border/50 hover:bg-secondary/20"
                         >
-                          <td className="py-3 text-gray-200 font-medium">
+                          <td className="py-3 text-foreground font-medium">
                             {deal.pair}
                           </td>
                           <td className="py-3">
                             <span
                               className={
                                 deal.type === "buy"
-                                  ? "text-teal-400"
-                                  : "text-rose-400"
+                                  ? "text-success"
+                                  : "text-destructive"
                               }
                             >
                               {deal.type === "buy" ? "Buy" : "Sell"}
                             </span>
-                            <span className="text-gray-500 ml-1">
+                            <span className="text-muted-foreground/70 ml-1">
                               ({deal.type === "buy" ? "you sell" : "you buy"})
                             </span>
                           </td>
@@ -549,7 +549,7 @@ export default function OTCPage() {
                                 has offers
                               </span>
                             ) : (
-                              <span className="text-gray-500 text-sm">—</span>
+                              <span className="text-muted-foreground/70 text-sm">—</span>
                             )}
                           </td>
                           <td className="py-3 text-center">
@@ -557,14 +557,14 @@ export default function OTCPage() {
                               className={
                                 isUrgent(deal.expiresAt)
                                   ? "text-yellow-400"
-                                  : "text-gray-400"
+                                  : "text-muted-foreground"
                               }
                             >
                               {formatTimeRemaining(deal.expiresAt)}
                             </span>
                           </td>
                           <td className="py-3 text-right">
-                            <button className="bg-gray-700 hover:bg-gray-600 text-gray-200 px-3 py-1 text-sm rounded font-medium transition-colors">
+                            <button className="bg-secondary hover:bg-secondary/80 text-secondary-foreground px-3 py-1 text-sm rounded font-medium transition-colors">
                               Make Offer
                             </button>
                           </td>
@@ -575,7 +575,7 @@ export default function OTCPage() {
                 </div>
 
                 {/* Hint box */}
-                <div className="mt-4 p-3 bg-gray-700/30 rounded text-sm text-gray-400">
+                <div className="mt-4 p-3 bg-secondary/30 rounded text-sm text-muted-foreground">
                   You won&apos;t know the deal creator&apos;s price. Submit your best
                   price — if it meets their threshold, your offer passes.
                 </div>
@@ -587,14 +587,14 @@ export default function OTCPage() {
               <div>
                 <div className="overflow-x-auto">
                   {offers.length === 0 ? (
-                    <div className="text-gray-500 text-sm text-center py-8">
+                    <div className="text-muted-foreground text-sm text-center py-8">
                       No offers submitted yet. Browse the Open Market to submit
                       offers.
                     </div>
                   ) : (
                     <table className="w-full">
                       <thead>
-                        <tr className="text-gray-400 text-sm border-b border-gray-700">
+                        <tr className="text-muted-foreground text-sm border-b border-border">
                           <th className="text-left py-3 font-medium">Pair</th>
                           <th className="text-left py-3 font-medium">You</th>
                           <th className="text-right py-3 font-medium">
@@ -615,41 +615,41 @@ export default function OTCPage() {
                         {offers.map((offer) => (
                           <tr
                             key={offer.id}
-                            className="border-b border-gray-700/50"
+                            className="border-b border-border/50"
                           >
-                            <td className="py-3 text-gray-200 font-medium">
+                            <td className="py-3 text-foreground font-medium">
                               {offer.pair}
                             </td>
                             <td className="py-3">
                               <span
                                 className={
                                   offer.side === "sell"
-                                    ? "text-rose-400"
-                                    : "text-teal-400"
+                                    ? "text-destructive"
+                                    : "text-success"
                                 }
                               >
                                 {offer.side === "sell" ? "Selling" : "Buying"}
                               </span>
                             </td>
-                            <td className="py-3 text-right text-gray-200">
+                            <td className="py-3 text-right text-foreground">
                               {offer.yourPrice.toLocaleString()}
                             </td>
-                            <td className="py-3 text-center text-gray-400">
+                            <td className="py-3 text-center text-muted-foreground">
                               {offer.submittedAt}
                             </td>
                             <td className="py-3 text-center">
                               {offer.dealStatus === "open" && (
-                                <span className="px-2 py-0.5 rounded text-xs font-medium bg-sky-500/20 text-sky-400 border border-sky-500/30">
+                                <span className="px-2 py-0.5 rounded text-xs font-medium bg-primary/20 text-primary border border-primary/30">
                                   open
                                 </span>
                               )}
                               {offer.dealStatus === "executed" && (
-                                <span className="px-2 py-0.5 rounded text-xs font-medium bg-teal-500/20 text-teal-400 border border-teal-500/30">
+                                <span className="px-2 py-0.5 rounded text-xs font-medium bg-success/20 text-success border border-success/30">
                                   executed
                                 </span>
                               )}
                               {offer.dealStatus === "expired" && (
-                                <span className="px-2 py-0.5 rounded text-xs font-medium bg-gray-600 text-gray-200">
+                                <span className="px-2 py-0.5 rounded text-xs font-medium bg-muted text-muted-foreground">
                                   expired
                                 </span>
                               )}
@@ -661,7 +661,7 @@ export default function OTCPage() {
                                 </span>
                               )}
                               {offer.offerStatus === "passed" && (
-                                <span className="px-2 py-0.5 rounded text-xs font-medium bg-teal-500/20 text-teal-400 border border-teal-500/30">
+                                <span className="px-2 py-0.5 rounded text-xs font-medium bg-success/20 text-success border border-success/30">
                                   passed
                                 </span>
                               )}
@@ -671,7 +671,7 @@ export default function OTCPage() {
                                 </span>
                               )}
                               {offer.offerStatus === "failed" && (
-                                <span className="px-2 py-0.5 rounded text-xs font-medium bg-gray-600 text-gray-200">
+                                <span className="px-2 py-0.5 rounded text-xs font-medium bg-muted text-muted-foreground">
                                   failed
                                 </span>
                               )}
@@ -684,7 +684,7 @@ export default function OTCPage() {
                 </div>
 
                 {/* Hint box */}
-                <div className="mt-4 p-3 bg-gray-700/30 rounded text-sm text-gray-400">
+                <div className="mt-4 p-3 bg-secondary/30 rounded text-sm text-muted-foreground">
                   You&apos;ll only know if your offer passed or failed once the
                   deal concludes (executed or expired).
                 </div>
@@ -695,10 +695,10 @@ export default function OTCPage() {
         </div>
 
         {/* Right Panel - Chat Placeholder */}
-        <div className="w-[380px] shrink-0 border-l border-gray-700 p-4 overflow-y-auto">
-          <h3 className="text-white font-medium mb-4">Negotiation</h3>
-          <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-4 h-[calc(100%-2rem)] flex items-center justify-center">
-            <p className="text-gray-500 text-sm text-center">
+        <div className="w-[380px] shrink-0 border-l border-border p-4 overflow-y-auto">
+          <h3 className="text-foreground font-medium mb-4">Negotiation</h3>
+          <div className="bg-card/50 border border-border rounded-lg p-4 h-[calc(100%-2rem)] flex items-center justify-center">
+            <p className="text-muted-foreground text-sm text-center">
               Select a deal to start negotiating
             </p>
           </div>

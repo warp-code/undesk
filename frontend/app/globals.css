@@ -1,19 +1,56 @@
 @import "tailwindcss";
 
 :root {
-  --background: #0a0f1a;
-  --foreground: #f1f1f1;
+  /* Background hierarchy: background (darkest) → card → secondary → muted (lightest) */
+  --background: 0 0% 4%;           /* #0a0a0a - darkest, page bg */
+  --foreground: 0 0% 98%;          /* #fafafa */
+  --card: 0 0% 9%;                 /* #171717 - panels/cards */
+  --card-foreground: 0 0% 98%;
+  --popover: 0 0% 9%;
+  --popover-foreground: 0 0% 98%;
+  --primary: 24 95% 53%;           /* orange */
+  --primary-foreground: 0 0% 100%;
+  --secondary: 0 0% 14%;           /* #242424 - buttons, filters */
+  --secondary-foreground: 0 0% 90%;
+  --muted: 0 0% 20%;               /* #333333 - hover states, active filters */
+  --muted-foreground: 0 0% 55%;    /* #8c8c8c - dimmed text */
+  --accent: 0 0% 22%;              /* #383838 - active/selected state */
+  --accent-foreground: 0 0% 98%;
+  --destructive: 0 72% 51%;        /* red - sell */
+  --destructive-foreground: 0 0% 98%;
+  --success: 158 64% 42%;          /* teal - buy */
+  --success-foreground: 0 0% 100%;
+  --border: 0 0% 16%;              /* #292929 - borders */
+  --input: 0 0% 12%;               /* #1f1f1f - input backgrounds */
+  --ring: 24 95% 53%;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+  --color-secondary: hsl(var(--secondary));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+  --color-accent: hsl(var(--accent));
+  --color-accent-foreground: hsl(var(--accent-foreground));
+  --color-destructive: hsl(var(--destructive));
+  --color-destructive-foreground: hsl(var(--destructive-foreground));
+  --color-success: hsl(var(--success));
+  --color-success-foreground: hsl(var(--success-foreground));
+  --color-border: hsl(var(--border));
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring));
   --font-sans: var(--font-inter);
   --font-mono: var(--font-jetbrains-mono);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
+  background: hsl(var(--background));
+  color: hsl(var(--foreground));
   font-family: Inter, system-ui, sans-serif;
 }
