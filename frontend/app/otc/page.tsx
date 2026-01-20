@@ -682,52 +682,60 @@ export default function OTCPage() {
                         <table className="w-full">
                           <thead>
                             <tr className="text-muted-foreground text-sm border-b border-border">
-                              <th className="text-left py-3 font-medium">Type</th>
-                              <th className="text-left py-3 font-medium">Pair</th>
+                              <th className="text-left py-3 font-medium">Selling (you receive)</th>
+                              <th className="text-left py-3 font-medium">Buying (you send)</th>
                               <th className="text-right py-3 font-medium">Amount</th>
                               <th className="text-right py-3 font-medium">Price</th>
                               <th className="text-right py-3 font-medium">Total</th>
                               <th className="text-center py-3 font-medium">Expires</th>
                               <th className="text-center py-3 font-medium">Status</th>
-                              <th className="text-right py-3 font-medium">Actions</th>
+                              <th className="py-3"></th>
                             </tr>
                           </thead>
                           <tbody>
-                            {deals.map((deal) => (
-                              <tr key={deal.id} className="border-b border-border/50">
-                                <td className={`py-3 font-medium ${deal.type === "buy" ? "text-success" : "text-destructive"}`}>
-                                  {deal.type.toUpperCase()}
-                                </td>
-                                <td className="py-3 text-foreground">{deal.pair}</td>
-                                <td className="py-3 text-right text-foreground">{deal.amount.toLocaleString()}</td>
-                                <td className="py-3 text-right text-foreground">{deal.price.toLocaleString()}</td>
-                                <td className="py-3 text-right text-foreground">{deal.total.toLocaleString()}</td>
-                                <td className="py-3 text-center text-muted-foreground">{formatTimeRemaining(deal.expiresAt)}</td>
-                                <td className="py-3 text-center">
-                                  <div className="flex items-center justify-center gap-1">
-                                    {deal.status === "open" && (
-                                      <span className="px-2 py-0.5 rounded text-xs font-medium bg-sky-500/20 text-sky-400 border border-sky-500/30">open</span>
-                                    )}
-                                    {deal.status === "executed" && (
-                                      <span className="px-2 py-0.5 rounded text-xs font-medium bg-success/20 text-success border border-success/30">executed</span>
-                                    )}
-                                    {deal.status === "expired" && (
-                                      <span className="px-2 py-0.5 rounded text-xs font-medium bg-muted text-muted-foreground">expired</span>
-                                    )}
+                            {deals.map((deal) => {
+                              const [base, quote] = deal.pair.split("/");
+                              // For your deals: "buy" means you're buying BASE (receiving it), sending QUOTE
+                              // "sell" means you're selling BASE (sending it), receiving QUOTE
+                              const selling = deal.type === "buy" ? base : quote;
+                              const buying = deal.type === "buy" ? quote : base;
+
+                              return (
+                                <tr key={deal.id} className="border-b border-border/50">
+                                  <td className="py-3 text-foreground">{selling}</td>
+                                  <td className="py-3 text-foreground">{buying}</td>
+                                  <td className="py-3 text-right text-foreground">{deal.amount.toLocaleString()}</td>
+                                  <td className="py-3 text-right text-foreground">{deal.price.toLocaleString()}</td>
+                                  <td className="py-3 text-right text-foreground">{deal.total.toLocaleString()}</td>
+                                  <td className="py-3 text-center text-muted-foreground">
+                                    {deal.status === "executed" ? "—" : formatTimeRemaining(deal.expiresAt)}
+                                  </td>
+                                  <td className="py-3 text-center">
+                                    <div className="flex items-center justify-center gap-1">
+                                      {deal.status === "open" && (
+                                        <span className="px-2 py-0.5 rounded text-xs font-medium bg-sky-500/20 text-sky-400 border border-sky-500/30">open</span>
+                                      )}
+                                      {deal.status === "executed" && (
+                                        <span className="px-2 py-0.5 rounded text-xs font-medium bg-success/20 text-success border border-success/30">executed</span>
+                                      )}
+                                      {deal.status === "expired" && (
+                                        <span className="px-2 py-0.5 rounded text-xs font-medium bg-muted text-muted-foreground">expired</span>
+                                      )}
+                                      {deal.isPartial && deal.status === "open" && (
+                                        <span className="px-2 py-0.5 rounded text-xs font-medium bg-yellow-500/20 text-yellow-400 border border-yellow-500/30">has offers</span>
+                                      )}
+                                    </div>
+                                  </td>
+                                  <td className="py-3 text-right">
                                     {deal.isPartial && deal.status === "open" && (
-                                      <span className="px-2 py-0.5 rounded text-xs font-medium bg-yellow-500/20 text-yellow-400 border border-yellow-500/30">has offers</span>
+                                      <button className="bg-success/20 hover:bg-success/30 text-success border border-success/50 px-3 py-1 text-sm rounded-md font-medium transition-colors">
+                                        Execute
+                                      </button>
                                     )}
-                                  </div>
-                                </td>
-                                <td className="py-3 text-right">
-                                  {deal.isPartial && deal.status === "open" && (
-                                    <button className="bg-success/20 hover:bg-success/30 text-success border border-success/50 px-3 py-1 text-sm rounded-md font-medium transition-colors">
-                                      Execute
-                                    </button>
-                                  )}
-                                </td>
-                              </tr>
-                            ))}
+                                  </td>
+                                </tr>
+                              );
+                            })}
                           </tbody>
                         </table>
                       )}
