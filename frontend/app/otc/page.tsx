@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 
 const PAIRS = [
   { base: "META", quote: "USDC", label: "META/USDC" },
@@ -102,6 +102,10 @@ export default function OTCPage() {
   // Negotiation panel state
   const [expandedFaq, setExpandedFaq] = useState<number | null>(null);
 
+  // Tab underline animation
+  const tabRefs = useRef<{ [key: string]: HTMLButtonElement | null }>({});
+  const [underlineStyle, setUnderlineStyle] = useState({ left: 0, width: 0 });
+
   // Real-time countdown state
   const [, setTick] = useState(0);
 
@@ -110,6 +114,17 @@ export default function OTCPage() {
     const interval = setInterval(() => setTick((t) => t + 1), 1000);
     return () => clearInterval(interval);
   }, [selectedMarketDeal]);
+
+  // Update underline position when activeTab changes
+  useEffect(() => {
+    const activeButton = tabRefs.current[activeTab];
+    if (activeButton) {
+      setUnderlineStyle({
+        left: activeButton.offsetLeft,
+        width: activeButton.offsetWidth,
+      });
+    }
+  }, [activeTab]);
 
   // FAQ data for negotiation panel
   const faqItems = [
@@ -645,7 +660,12 @@ export default function OTCPage() {
               <>
                 {/* Tab Navigation */}
                 <div className="border-b border-border px-4">
-                  <div className="flex gap-2">
+                  <div className="relative flex gap-2">
+                    {/* Animated underline */}
+                    <div
+                      className="absolute bottom-0 h-0.5 bg-primary transition-all duration-200 ease-out"
+                      style={{ left: underlineStyle.left, width: underlineStyle.width }}
+                    />
                     {[
                       { id: "deals" as const, label: "Your Deals" },
                       { id: "market" as const, label: "Open Market" },
@@ -653,17 +673,15 @@ export default function OTCPage() {
                     ].map((tab) => (
                       <button
                         key={tab.id}
+                        ref={(el) => { tabRefs.current[tab.id] = el; }}
                         onClick={() => setActiveTab(tab.id)}
-                        className={`px-4 py-2 font-medium transition-colors relative ${
+                        className={`px-4 py-2 font-medium transition-colors ${
                           activeTab === tab.id
                             ? "text-foreground"
                             : "text-muted-foreground hover:text-foreground"
                         }`}
                       >
                         {tab.label}
-                        {activeTab === tab.id && (
-                          <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />
-                        )}
                       </button>
                     ))}
                   </div>
