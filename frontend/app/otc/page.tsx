@@ -762,56 +762,47 @@ export default function OTCPage() {
                         <table className="w-full">
                           <thead>
                             <tr className="text-muted-foreground text-sm border-b border-border">
-                              <th className="text-left py-3 font-medium">Pair</th>
-                              <th className="text-left py-3 font-medium">Looking to</th>
+                              <th className="text-left py-3 font-medium">Selling (you receive)</th>
+                              <th className="text-left py-3 font-medium">Buying (you send)</th>
                               <th className="text-center py-3 font-medium">Status</th>
                               <th className="text-center py-3 font-medium">Expires</th>
-                              <th className="text-right py-3 font-medium"></th>
                             </tr>
                           </thead>
                           <tbody>
-                            {filteredMarketDeals.map((deal) => (
-                              <tr
-                                key={deal.id}
-                                className="border-b border-border/50 hover:bg-secondary/20 cursor-pointer transition-colors"
-                                onClick={() => handleMarketDealClick(deal)}
-                              >
-                                <td className="py-3 text-foreground font-medium">{deal.pair}</td>
-                                <td className="py-3">
-                                  <span className={deal.type === "buy" ? "text-success" : "text-destructive"}>
-                                    {deal.type === "buy" ? "Buy" : "Sell"}
-                                  </span>
-                                  <span className="text-muted-foreground/70 ml-1">
-                                    ({deal.type === "buy" ? "you sell" : "you buy"})
-                                  </span>
-                                </td>
-                                <td className="py-3 text-center">
-                                  {deal.isPartial ? (
-                                    <span className="px-2 py-0.5 rounded text-xs font-medium bg-yellow-500/20 text-yellow-400 border border-yellow-500/30">
-                                      has offers
+                            {filteredMarketDeals.map((deal) => {
+                              const [base, quote] = deal.pair.split("/");
+                              // If deal creator is buying BASE, you're selling BASE (receiving QUOTE)
+                              // If deal creator is selling BASE, you're buying BASE (sending QUOTE)
+                              const selling = deal.type === "buy" ? base : quote;
+                              const buying = deal.type === "buy" ? quote : base;
+
+                              return (
+                                <tr
+                                  key={deal.id}
+                                  className="border-b border-border/50 hover:bg-secondary/20 cursor-pointer transition-colors"
+                                  onClick={() => handleMarketDealClick(deal)}
+                                >
+                                  <td className="py-3 text-foreground">{selling}</td>
+                                  <td className="py-3 text-foreground">{buying}</td>
+                                  <td className="py-3 text-center">
+                                    {deal.offerCount && deal.offerCount > 0 ? (
+                                      <span className="px-2 py-0.5 rounded text-xs font-medium bg-yellow-500/20 text-yellow-400 border border-yellow-500/30">
+                                        has offers
+                                      </span>
+                                    ) : (
+                                      <span className="px-2 py-0.5 rounded text-xs font-medium bg-sky-500/20 text-sky-400 border border-sky-500/30">
+                                        open
+                                      </span>
+                                    )}
+                                  </td>
+                                  <td className="py-3 text-center">
+                                    <span className={isUrgent(deal.expiresAt) ? "text-yellow-400" : "text-muted-foreground"}>
+                                      {formatTimeRemaining(deal.expiresAt)}
                                     </span>
-                                  ) : (
-                                    <span className="text-muted-foreground/70 text-sm">—</span>
-                                  )}
-                                </td>
-                                <td className="py-3 text-center">
-                                  <span className={isUrgent(deal.expiresAt) ? "text-yellow-400" : "text-muted-foreground"}>
-                                    {formatTimeRemaining(deal.expiresAt)}
-                                  </span>
-                                </td>
-                                <td className="py-3 text-right">
-                                  <button
-                                    className="bg-secondary hover:bg-secondary/80 text-secondary-foreground px-3 py-1 text-sm rounded-md font-medium transition-colors"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handleMarketDealClick(deal);
-                                    }}
-                                  >
-                                    Make Offer
-                                  </button>
-                                </td>
-                              </tr>
-                            ))}
+                                  </td>
+                                </tr>
+                              );
+                            })}
                           </tbody>
                         </table>
                       </div>
