@@ -43,6 +43,7 @@ interface Offer {
   id: string;
   pair: string;
   side: "buy" | "sell";
+  amount: number;
   yourPrice: number;
   submittedAt: string;
   dealStatus: "open" | "executed" | "expired";
@@ -65,11 +66,11 @@ const MOCK_MARKET_DEALS: MarketDeal[] = [
 ];
 
 const MOCK_OFFERS: Offer[] = [
-  { id: "off001", pair: "META/USDC", side: "sell", yourPrice: 442, submittedAt: "2h ago", dealStatus: "open", offerStatus: "pending" },
-  { id: "off002", pair: "ETH/USDC", side: "sell", yourPrice: 3200, submittedAt: "5h ago", dealStatus: "executed", offerStatus: "passed" },
-  { id: "off003", pair: "META/USDC", side: "buy", yourPrice: 448, submittedAt: "1d ago", dealStatus: "expired", offerStatus: "failed" },
-  { id: "off004", pair: "SOL/USDC", side: "sell", yourPrice: 185, submittedAt: "3h ago", dealStatus: "open", offerStatus: "pending" },
-  { id: "off005", pair: "ETH/USDC", side: "buy", yourPrice: 3150, submittedAt: "6h ago", dealStatus: "executed", offerStatus: "partial" },
+  { id: "off001", pair: "META/USDC", side: "sell", amount: 10, yourPrice: 442, submittedAt: "2h ago", dealStatus: "open", offerStatus: "pending" },
+  { id: "off002", pair: "ETH/USDC", side: "sell", amount: 2, yourPrice: 3200, submittedAt: "5h ago", dealStatus: "executed", offerStatus: "passed" },
+  { id: "off003", pair: "META/USDC", side: "buy", amount: 25, yourPrice: 448, submittedAt: "1d ago", dealStatus: "expired", offerStatus: "failed" },
+  { id: "off004", pair: "SOL/USDC", side: "sell", amount: 50, yourPrice: 185, submittedAt: "3h ago", dealStatus: "open", offerStatus: "pending" },
+  { id: "off005", pair: "ETH/USDC", side: "buy", amount: 1, yourPrice: 3150, submittedAt: "6h ago", dealStatus: "executed", offerStatus: "partial" },
 ];
 
 export default function OTCPage() {
@@ -833,52 +834,63 @@ export default function OTCPage() {
                           <table className="w-full">
                             <thead>
                               <tr className="text-muted-foreground text-sm border-b border-border">
-                                <th className="text-left py-3 font-medium">Pair</th>
-                                <th className="text-left py-3 font-medium">You</th>
-                                <th className="text-right py-3 font-medium">Your Price</th>
+                                <th className="text-left py-3 font-medium">Selling (you receive)</th>
+                                <th className="text-left py-3 font-medium">Buying (you send)</th>
+                                <th className="text-right py-3 font-medium">Your price</th>
+                                <th className="text-right py-3 font-medium">You send</th>
+                                <th className="text-right py-3 font-medium">You receive</th>
                                 <th className="text-center py-3 font-medium">Submitted</th>
-                                <th className="text-center py-3 font-medium">Deal Status</th>
-                                <th className="text-center py-3 font-medium">Your Offer</th>
+                                <th className="text-center py-3 font-medium">Deal status</th>
+                                <th className="text-center py-3 font-medium">Your offer</th>
                               </tr>
                             </thead>
                             <tbody>
-                              {offers.map((offer) => (
-                                <tr key={offer.id} className="border-b border-border/50">
-                                  <td className="py-3 text-foreground font-medium">{offer.pair}</td>
-                                  <td className="py-3">
-                                    <span className={offer.side === "sell" ? "text-destructive" : "text-success"}>
-                                      {offer.side === "sell" ? "Selling" : "Buying"}
-                                    </span>
-                                  </td>
-                                  <td className="py-3 text-right text-foreground">{offer.yourPrice.toLocaleString()}</td>
-                                  <td className="py-3 text-center text-muted-foreground">{offer.submittedAt}</td>
-                                  <td className="py-3 text-center">
-                                    {offer.dealStatus === "open" && (
-                                      <span className="px-2 py-0.5 rounded text-xs font-medium bg-sky-500/20 text-sky-400 border border-sky-500/30">open</span>
-                                    )}
-                                    {offer.dealStatus === "executed" && (
-                                      <span className="px-2 py-0.5 rounded text-xs font-medium bg-success/20 text-success border border-success/30">executed</span>
-                                    )}
-                                    {offer.dealStatus === "expired" && (
-                                      <span className="px-2 py-0.5 rounded text-xs font-medium bg-muted text-muted-foreground">expired</span>
-                                    )}
-                                  </td>
-                                  <td className="py-3 text-center">
-                                    {offer.offerStatus === "pending" && (
-                                      <span className="px-2 py-0.5 rounded text-xs font-medium bg-purple-500/20 text-purple-400 border border-purple-500/30">pending</span>
-                                    )}
-                                    {offer.offerStatus === "passed" && (
-                                      <span className="px-2 py-0.5 rounded text-xs font-medium bg-success/20 text-success border border-success/30">passed</span>
-                                    )}
-                                    {offer.offerStatus === "partial" && (
-                                      <span className="px-2 py-0.5 rounded text-xs font-medium bg-yellow-500/20 text-yellow-400 border border-yellow-500/30">partial</span>
-                                    )}
-                                    {offer.offerStatus === "failed" && (
-                                      <span className="px-2 py-0.5 rounded text-xs font-medium bg-muted text-muted-foreground">failed</span>
-                                    )}
-                                  </td>
-                                </tr>
-                              ))}
+                              {offers.map((offer) => {
+                                const [base, quote] = offer.pair.split("/");
+                                const total = offer.amount * offer.yourPrice;
+                                const youSend = offer.side === "sell"
+                                  ? `${offer.amount} ${base}`
+                                  : `${total.toLocaleString()} ${quote}`;
+                                const youReceive = offer.side === "sell"
+                                  ? `${total.toLocaleString()} ${quote}`
+                                  : `${offer.amount} ${base}`;
+
+                                return (
+                                  <tr key={offer.id} className="border-b border-border/50">
+                                    <td className="py-3 text-foreground">{base}</td>
+                                    <td className="py-3 text-foreground">{quote}</td>
+                                    <td className="py-3 text-right text-foreground">{offer.yourPrice.toLocaleString()}</td>
+                                    <td className="py-3 text-right text-foreground">{youSend}</td>
+                                    <td className="py-3 text-right text-foreground">{youReceive}</td>
+                                    <td className="py-3 text-center text-muted-foreground">{offer.submittedAt}</td>
+                                    <td className="py-3 text-center">
+                                      {offer.dealStatus === "open" && (
+                                        <span className="px-2 py-0.5 rounded text-xs font-medium bg-sky-500/20 text-sky-400 border border-sky-500/30">open</span>
+                                      )}
+                                      {offer.dealStatus === "executed" && (
+                                        <span className="px-2 py-0.5 rounded text-xs font-medium bg-success/20 text-success border border-success/30">executed</span>
+                                      )}
+                                      {offer.dealStatus === "expired" && (
+                                        <span className="px-2 py-0.5 rounded text-xs font-medium bg-muted text-muted-foreground">expired</span>
+                                      )}
+                                    </td>
+                                    <td className="py-3 text-center">
+                                      {offer.offerStatus === "pending" && (
+                                        <span className="px-2 py-0.5 rounded text-xs font-medium bg-purple-500/20 text-purple-400 border border-purple-500/30">pending</span>
+                                      )}
+                                      {offer.offerStatus === "passed" && (
+                                        <span className="px-2 py-0.5 rounded text-xs font-medium bg-success/20 text-success border border-success/30">passed</span>
+                                      )}
+                                      {offer.offerStatus === "partial" && (
+                                        <span className="px-2 py-0.5 rounded text-xs font-medium bg-yellow-500/20 text-yellow-400 border border-yellow-500/30">partial</span>
+                                      )}
+                                      {offer.offerStatus === "failed" && (
+                                        <span className="px-2 py-0.5 rounded text-xs font-medium bg-muted text-muted-foreground">failed</span>
+                                      )}
+                                    </td>
+                                  </tr>
+                                );
+                              })}
                             </tbody>
                           </table>
                         )}
