@@ -98,6 +98,9 @@ export default function OTCPage() {
   const [offerPrice, setOfferPrice] = useState("");
   const [isOfferLoading, setIsOfferLoading] = useState(false);
 
+  // Negotiation panel state
+  const [isNegotiationExpanded, setIsNegotiationExpanded] = useState(false);
+
   // Real-time countdown state
   const [, setTick] = useState(0);
 
@@ -848,15 +851,40 @@ export default function OTCPage() {
         </div>
 
         {/* Right Panel - Negotiation */}
-        <div className="w-[380px] shrink-0 border-l border-border p-4 overflow-y-auto">
-          <h3 className="text-foreground font-medium mb-4">Negotiation</h3>
-          <div className="bg-card/50 border border-border rounded-lg p-4 h-[calc(100%-2rem)] flex items-center justify-center">
-            <p className="text-muted-foreground text-sm text-center">
-              {selectedMarketDeal
-                ? `Negotiating ${selectedMarketDeal.pair}...`
-                : "Select a deal to start negotiating"
-              }
-            </p>
+        <div
+          className={`shrink-0 border-l border-border p-4 transition-all duration-300 ease-in-out ${
+            isNegotiationExpanded ? "w-[35vw]" : "w-[380px]"
+          }`}
+        >
+          <div className="bg-card/50 border border-border rounded-lg">
+            {/* Header with expand/collapse toggle */}
+            <div className="flex items-center justify-between p-4 border-b border-border">
+              <h3 className="text-base font-semibold text-foreground">Negotiation</h3>
+              <button
+                onClick={() => setIsNegotiationExpanded(!isNegotiationExpanded)}
+                className="text-muted-foreground hover:text-foreground transition-colors p-1"
+                aria-label={isNegotiationExpanded ? "Collapse panel" : "Expand panel"}
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  {isNegotiationExpanded ? (
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  ) : (
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                  )}
+                </svg>
+              </button>
+            </div>
+            {/* Content - placeholder to match left panel height */}
+            <div className="p-4 space-y-4">
+              <p className="text-muted-foreground text-sm text-center py-6">
+                {selectedMarketDeal
+                  ? `Negotiating ${selectedMarketDeal.pair}...`
+                  : "Select a deal to start negotiating"
+                }
+              </p>
+              {/* Spacer to roughly match left panel height */}
+              <div className="min-h-[320px]" />
+            </div>
           </div>
         </div>
       </div>
