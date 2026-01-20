@@ -99,7 +99,7 @@ export default function OTCPage() {
   const [isOfferLoading, setIsOfferLoading] = useState(false);
 
   // Negotiation panel state
-  const [isNegotiationExpanded, setIsNegotiationExpanded] = useState(false);
+  const [expandedFaq, setExpandedFaq] = useState<number | null>(null);
 
   // Real-time countdown state
   const [, setTick] = useState(0);
@@ -109,6 +109,26 @@ export default function OTCPage() {
     const interval = setInterval(() => setTick((t) => t + 1), 1000);
     return () => clearInterval(interval);
   }, [selectedMarketDeal]);
+
+  // FAQ data for negotiation panel
+  const faqItems = [
+    {
+      q: "What is an OTC RFQ?",
+      a: "OTC RFQ (Request for Quote) lets you request private quotes from market makers for large trades without exposing your order to public markets."
+    },
+    {
+      q: "How does private price discovery work?",
+      a: "Your order details are encrypted. Market makers submit sealed bids that only you can see, preventing front-running and information leakage."
+    },
+    {
+      q: "How is confidentiality preserved?",
+      a: "All trade parameters are encrypted using Arcium's MPC network. Neither party sees the other's limits until a match is confirmed."
+    },
+    {
+      q: "What happens after both sides agree?",
+      a: "Once prices match, the trade executes atomically on-chain. Funds are swapped directly between wallets with no counterparty risk."
+    }
+  ];
 
   // Calculate totals
   const calculatedTotal = useMemo(() => {
@@ -876,39 +896,63 @@ export default function OTCPage() {
         </div>
 
         {/* Right Panel - Negotiation */}
-        <div
-          className={`shrink-0 border-l border-border p-4 transition-all duration-300 ease-in-out ${
-            isNegotiationExpanded ? "w-[35vw]" : "w-[380px]"
-          }`}
-        >
+        <div className="shrink-0 w-[380px] border-l border-border p-4">
           <div className="bg-card/50 border border-border rounded-lg">
-            {/* Header with expand/collapse toggle */}
-            <div className="flex items-center justify-between p-4 border-b border-border">
-              <h3 className="text-base font-semibold text-foreground">Negotiation</h3>
-              <button
-                onClick={() => setIsNegotiationExpanded(!isNegotiationExpanded)}
-                className="text-muted-foreground hover:text-foreground transition-colors p-1"
-                aria-label={isNegotiationExpanded ? "Collapse panel" : "Expand panel"}
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  {isNegotiationExpanded ? (
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                  ) : (
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                  )}
-                </svg>
-              </button>
-            </div>
-            {/* Content - placeholder to match left panel height */}
-            <div className="p-4 space-y-4">
-              <p className="text-muted-foreground text-sm text-center py-6">
-                {selectedMarketDeal
-                  ? `Negotiating ${selectedMarketDeal.pair}...`
-                  : "Select a deal to start negotiating"
-                }
+            {/* Content */}
+            <div className="p-4 space-y-6">
+              {/* Header */}
+              <div className="flex items-center gap-2">
+                <h4 className="text-foreground font-medium">Private Negotiation Chat</h4>
+                <span className="px-2 py-0.5 rounded text-xs font-medium bg-primary/20 text-primary border border-primary/30">
+                  Coming Soon
+                </span>
+              </div>
+
+              {/* Description */}
+              <p className="text-muted-foreground text-sm">
+                Negotiate directly with counterparties in an encrypted chat. All messages are private and settled on-chain.
               </p>
-              {/* Spacer to roughly match left panel height */}
-              <div className="min-h-[320px]" />
+
+              {/* Divider */}
+              <div className="border-t border-border" />
+
+              {/* FAQ Section */}
+              <div>
+                <h5 className="text-muted-foreground text-xs font-medium uppercase tracking-wider mb-3">
+                  FAQ
+                </h5>
+                <div className="space-y-2">
+                  {faqItems.map((item, index) => (
+                    <div key={index} className="border border-border rounded-md overflow-hidden">
+                      <button
+                        onClick={() => setExpandedFaq(expandedFaq === index ? null : index)}
+                        className="w-full flex items-center justify-between p-3 text-left hover:bg-secondary/50 transition-colors"
+                      >
+                        <span className="text-foreground text-sm">{item.q}</span>
+                        <svg
+                          className={`w-4 h-4 text-muted-foreground shrink-0 transition-transform duration-200 ${
+                            expandedFaq === index ? "rotate-180" : ""
+                          }`}
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                        </svg>
+                      </button>
+                      <div
+                        className={`overflow-hidden transition-all duration-200 ${
+                          expandedFaq === index ? "max-h-40" : "max-h-0"
+                        }`}
+                      >
+                        <p className="px-3 pb-3 text-muted-foreground text-sm">
+                          {item.a}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
         </div>
