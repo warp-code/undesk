@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 
 const PAIRS = [
   { base: "META", quote: "USDC", label: "META/USDC" },
@@ -31,6 +31,7 @@ interface MarketDeal {
   type: "buy" | "sell";
   pair: string;
   expiresAt: number;
+  createdAt: number;
   isPartial: boolean;
   // Mock data for deal details view
   size?: number;
@@ -56,11 +57,11 @@ const MOCK_DEALS: Deal[] = [
 ];
 
 const MOCK_MARKET_DEALS: MarketDeal[] = [
-  { id: "mkt001", type: "buy", pair: "META/USDC", expiresAt: Date.now() + 9240000, isPartial: true, size: 5000, offerCount: 3 },
-  { id: "mkt002", type: "sell", pair: "META/USDC", expiresAt: Date.now() + 51720000, isPartial: false, size: 2500, offerCount: 0 },
-  { id: "mkt003", type: "buy", pair: "ETH/USDC", expiresAt: Date.now() + 22140000, isPartial: true, size: 15, offerCount: 2 },
-  { id: "mkt004", type: "sell", pair: "ETH/USDC", expiresAt: Date.now() + 3900000, isPartial: true, size: 8, offerCount: 4 },
-  { id: "mkt005", type: "buy", pair: "SOL/USDC", expiresAt: Date.now() + 67200000, isPartial: false, size: 100, offerCount: 0 },
+  { id: "mkt001", type: "buy", pair: "META/USDC", expiresAt: Date.now() + 9240000, createdAt: Date.now() - 14760000, isPartial: true, size: 5000, offerCount: 3 },
+  { id: "mkt002", type: "sell", pair: "META/USDC", expiresAt: Date.now() + 51720000, createdAt: Date.now() - 34680000, isPartial: false, size: 2500, offerCount: 0 },
+  { id: "mkt003", type: "buy", pair: "ETH/USDC", expiresAt: Date.now() + 22140000, createdAt: Date.now() - 64260000, isPartial: true, size: 15, offerCount: 2 },
+  { id: "mkt004", type: "sell", pair: "ETH/USDC", expiresAt: Date.now() + 3900000, createdAt: Date.now() - 82500000, isPartial: true, size: 8, offerCount: 4 },
+  { id: "mkt005", type: "buy", pair: "SOL/USDC", expiresAt: Date.now() + 67200000, createdAt: Date.now() - 19200000, isPartial: false, size: 100, offerCount: 0 },
 ];
 
 const MOCK_OFFERS: Offer[] = [
@@ -96,6 +97,15 @@ export default function OTCPage() {
   const [offerAmount, setOfferAmount] = useState("");
   const [offerPrice, setOfferPrice] = useState("");
   const [isOfferLoading, setIsOfferLoading] = useState(false);
+
+  // Real-time countdown state
+  const [, setTick] = useState(0);
+
+  useEffect(() => {
+    if (!selectedMarketDeal) return;
+    const interval = setInterval(() => setTick((t) => t + 1), 1000);
+    return () => clearInterval(interval);
+  }, [selectedMarketDeal]);
 
   // Calculate totals
   const calculatedTotal = useMemo(() => {
@@ -177,6 +187,13 @@ export default function OTCPage() {
   const getPairFromLabel = (label: string): { base: string; quote: string } => {
     const [base, quote] = label.split("/");
     return { base, quote };
+  };
+
+  const getTimeProgress = (createdAt: number, expiresAt: number) => {
+    const totalDuration = expiresAt - createdAt;
+    const remaining = expiresAt - Date.now();
+    if (remaining <= 0 || totalDuration <= 0) return 0;
+    return Math.min(100, Math.max(0, (remaining / totalDuration) * 100));
   };
 
   // Filter market deals
@@ -511,9 +528,24 @@ export default function OTCPage() {
                 {/* Deal Details */}
                 <div className="space-y-6">
                   <div>
-                    <h2 className="text-xl font-semibold text-foreground mb-1">
-                      {selectedMarketDeal.pair}
-                    </h2>
+                    <div className="flex items-center justify-between mb-1">
+                      <h2 className="text-xl font-semibold text-foreground">
+                        {selectedMarketDeal.pair}
+                      </h2>
+                      {/* Compact time remaining */}
+                      <div className="flex items-center gap-2">
+                        <span className="text-muted-foreground text-sm">⏳</span>
+                        <span className={`text-sm font-medium ${isUrgent(selectedMarketDeal.expiresAt) ? "text-yellow-400" : "text-foreground"}`}>
+                          {formatTimeRemaining(selectedMarketDeal.expiresAt)}
+                        </span>
+                        <div className="w-24 h-1 bg-secondary rounded-full overflow-hidden">
+                          <div
+                            className="h-full bg-muted-foreground/50 rounded-full transition-all duration-1000 ease-linear"
+                            style={{ width: `${getTimeProgress(selectedMarketDeal.createdAt, selectedMarketDeal.expiresAt)}%` }}
+                          />
+                        </div>
+                      </div>
+                    </div>
                     <div className="flex items-center gap-2">
                       <span className={`font-medium ${selectedMarketDeal.type === "buy" ? "text-success" : "text-destructive"}`}>
                         {selectedMarketDeal.type === "buy" ? "Buying" : "Selling"}
@@ -526,12 +558,6 @@ export default function OTCPage() {
 
                   {/* Deal info grid */}
                   <div className="grid grid-cols-2 gap-4">
-                    <div className="bg-secondary/30 rounded-lg p-4">
-                      <p className="text-muted-foreground text-sm mb-1">Expires</p>
-                      <p className={`text-lg font-medium ${isUrgent(selectedMarketDeal.expiresAt) ? "text-yellow-400" : "text-foreground"}`}>
-                        {formatTimeRemaining(selectedMarketDeal.expiresAt)}
-                      </p>
-                    </div>
                     <div className="bg-secondary/30 rounded-lg p-4">
                       <p className="text-muted-foreground text-sm mb-1">Status</p>
                       <div className="flex items-center gap-2">
