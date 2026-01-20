@@ -331,7 +331,7 @@ export default function OTCPage() {
                       Total
                     </label>
                     <div className="bg-input rounded-md px-3 py-2 flex justify-between border border-transparent hover:border-border transition-colors">
-                      <span className="text-foreground">
+                      <span className={offerTotal > 0 ? "text-foreground" : "text-muted-foreground"}>
                         {offerTotal > 0 ? offerTotal.toLocaleString() : "—"}
                       </span>
                       <span className="text-muted-foreground">{getPairFromLabel(selectedMarketDeal.pair).quote}</span>
