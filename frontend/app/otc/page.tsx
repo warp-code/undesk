@@ -248,7 +248,7 @@ export default function OTCPage() {
               <a href="#" className="text-muted-foreground hover:text-foreground transition-colors">Settings</a>
             </div>
           </div>
-          <button className="bg-primary/20 hover:bg-primary/30 text-primary border border-primary/50 px-3 py-1.5 rounded font-medium text-sm transition-colors">
+          <button className="bg-primary/20 hover:bg-primary/30 text-primary border border-primary/50 px-3 py-1.5 rounded-md font-medium text-sm transition-colors">
             Connect Wallet
           </button>
         </div>
@@ -276,7 +276,7 @@ export default function OTCPage() {
                 </div>
 
                 {/* Deal context */}
-                <div className="bg-secondary/30 rounded px-3 py-2 mb-6">
+                <div className="bg-secondary/30 rounded-md px-3 py-2 mb-6">
                   <div className="flex items-center gap-2">
                     <span className="text-foreground font-medium">{selectedMarketDeal.pair}</span>
                     <span className={selectedMarketDeal.type === "buy" ? "text-success" : "text-destructive"}>
@@ -294,7 +294,7 @@ export default function OTCPage() {
                     <label className="text-muted-foreground text-sm mb-1 block">
                       Amount
                     </label>
-                    <div className="bg-input rounded px-3 py-2 flex justify-between">
+                    <div className="bg-input rounded-md px-3 py-2 flex justify-between">
                       <input
                         type="text"
                         inputMode="decimal"
@@ -312,7 +312,7 @@ export default function OTCPage() {
                     <label className="text-muted-foreground text-sm mb-1 block">
                       Your price per {getPairFromLabel(selectedMarketDeal.pair).base}
                     </label>
-                    <div className="bg-input rounded px-3 py-2 flex justify-between">
+                    <div className="bg-input rounded-md px-3 py-2 flex justify-between">
                       <input
                         type="text"
                         inputMode="decimal"
@@ -330,7 +330,7 @@ export default function OTCPage() {
                     <label className="text-muted-foreground text-sm mb-1 block">
                       Total
                     </label>
-                    <div className="bg-input rounded px-3 py-2 flex justify-between">
+                    <div className="bg-input rounded-md px-3 py-2 flex justify-between">
                       <span className="text-foreground">
                         {offerTotal > 0 ? offerTotal.toLocaleString() : "—"}
                       </span>
@@ -347,7 +347,7 @@ export default function OTCPage() {
                   <button
                     onClick={handlePlaceOffer}
                     disabled={!canPlaceOffer}
-                    className={`w-full py-3 rounded font-medium transition-colors flex items-center justify-center ${
+                    className={`w-full py-3 rounded-md font-medium transition-colors flex items-center justify-center ${
                       canPlaceOffer
                         ? "bg-primary hover:bg-primary/80 text-primary-foreground"
                         : "bg-secondary text-muted-foreground cursor-not-allowed"
@@ -374,7 +374,7 @@ export default function OTCPage() {
                   <button
                     onClick={() => !isLocked && setMode("buy")}
                     disabled={isLocked}
-                    className={`px-4 py-1.5 rounded text-sm font-medium transition-colors ${
+                    className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${
                       mode === "buy"
                         ? "bg-success text-success-foreground"
                         : "bg-secondary text-muted-foreground"
@@ -385,7 +385,7 @@ export default function OTCPage() {
                   <button
                     onClick={() => !isLocked && setMode("sell")}
                     disabled={isLocked}
-                    className={`px-4 py-1.5 rounded text-sm font-medium transition-colors ${
+                    className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${
                       mode === "sell"
                         ? "bg-destructive text-destructive-foreground"
                         : "bg-secondary text-muted-foreground"
@@ -393,7 +393,7 @@ export default function OTCPage() {
                   >
                     Sell
                   </button>
-                  <div className="flex-1 bg-input rounded px-3 py-1.5 text-foreground/80 text-sm">
+                  <div className="flex-1 bg-input rounded-md px-3 py-1.5 text-foreground/80 text-sm">
                     {selectedPair.label}
                   </div>
                 </div>
@@ -403,7 +403,7 @@ export default function OTCPage() {
                     <label className="text-muted-foreground text-sm mb-1 block">
                       {mode === "buy" ? "Buy" : "Sell"} amount
                     </label>
-                    <div className="bg-input rounded px-3 py-2 flex justify-between">
+                    <div className="bg-input rounded-md px-3 py-2 flex justify-between">
                       <input
                         type="text"
                         inputMode="decimal"
@@ -421,7 +421,7 @@ export default function OTCPage() {
                     <label className="text-muted-foreground text-sm mb-1 block">
                       Price per {selectedPair.base}
                     </label>
-                    <div className="bg-input rounded px-3 py-2 flex justify-between">
+                    <div className="bg-input rounded-md px-3 py-2 flex justify-between">
                       <input
                         type="text"
                         inputMode="decimal"
@@ -439,7 +439,7 @@ export default function OTCPage() {
                     <label className="text-muted-foreground text-sm mb-1 block">
                       Expires in
                     </label>
-                    <div className="bg-input rounded px-3 py-2 flex justify-between">
+                    <div className="bg-input rounded-md px-3 py-2 flex justify-between">
                       <input
                         type="text"
                         inputMode="decimal"
@@ -473,7 +473,7 @@ export default function OTCPage() {
                     <label className="text-muted-foreground text-sm mb-1 block">
                       {mode === "buy" ? "Total cost" : "You receive"}
                     </label>
-                    <div className="bg-input rounded px-3 py-2 flex justify-between">
+                    <div className="bg-input rounded-md px-3 py-2 flex justify-between">
                       <span className="text-foreground">
                         {calculatedTotal > 0 ? calculatedTotal.toLocaleString() : "—"}
                       </span>
@@ -484,7 +484,7 @@ export default function OTCPage() {
                   <button
                     onClick={handleSubmit}
                     disabled={!canSubmit}
-                    className={`w-full py-3 rounded font-medium transition-colors flex items-center justify-center ${
+                    className={`w-full py-3 rounded-md font-medium transition-colors flex items-center justify-center ${
                       canSubmit
                         ? "bg-primary hover:bg-primary/80 text-primary-foreground"
                         : "bg-secondary text-muted-foreground cursor-not-allowed"
@@ -584,7 +584,7 @@ export default function OTCPage() {
                   </div>
 
                   {/* Info box */}
-                  <div className="bg-secondary/30 rounded p-4 text-sm text-muted-foreground">
+                  <div className="bg-secondary/30 rounded-md p-4 text-sm text-muted-foreground">
                     <p className="font-medium text-foreground mb-2">How it works</p>
                     <ul className="space-y-1 list-disc list-inside">
                       <li>You won&apos;t see the creator&apos;s price</li>
@@ -675,7 +675,7 @@ export default function OTCPage() {
                                 </td>
                                 <td className="py-3 text-right">
                                   {deal.isPartial && deal.status === "open" && (
-                                    <button className="bg-success/20 hover:bg-success/30 text-success border border-success/50 px-3 py-1 text-sm rounded font-medium transition-colors">
+                                    <button className="bg-success/20 hover:bg-success/30 text-success border border-success/50 px-3 py-1 text-sm rounded-md font-medium transition-colors">
                                       Execute
                                     </button>
                                   )}
@@ -697,7 +697,7 @@ export default function OTCPage() {
                             <button
                               key={f}
                               onClick={() => setPairFilter(f)}
-                              className={`px-3 py-1 rounded text-sm transition-colors ${
+                              className={`px-3 py-1 rounded-md text-sm transition-colors ${
                                 pairFilter === f
                                   ? "bg-accent text-accent-foreground"
                                   : "bg-secondary/50 text-muted-foreground hover:text-foreground"
@@ -755,7 +755,7 @@ export default function OTCPage() {
                                 </td>
                                 <td className="py-3 text-right">
                                   <button
-                                    className="bg-secondary hover:bg-secondary/80 text-secondary-foreground px-3 py-1 text-sm rounded font-medium transition-colors"
+                                    className="bg-secondary hover:bg-secondary/80 text-secondary-foreground px-3 py-1 text-sm rounded-md font-medium transition-colors"
                                     onClick={(e) => {
                                       e.stopPropagation();
                                       handleMarketDealClick(deal);
@@ -770,7 +770,7 @@ export default function OTCPage() {
                         </table>
                       </div>
 
-                      <div className="mt-4 p-3 bg-secondary/30 rounded text-sm text-muted-foreground">
+                      <div className="mt-4 p-3 bg-secondary/30 rounded-md text-sm text-muted-foreground">
                         Click a row to view deal details and make an offer.
                       </div>
                     </div>
@@ -839,7 +839,7 @@ export default function OTCPage() {
                         )}
                       </div>
 
-                      <div className="mt-4 p-3 bg-secondary/30 rounded text-sm text-muted-foreground">
+                      <div className="mt-4 p-3 bg-secondary/30 rounded-md text-sm text-muted-foreground">
                         You&apos;ll only know if your offer passed or failed once the deal concludes.
                       </div>
                     </div>
