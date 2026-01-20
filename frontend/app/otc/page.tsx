@@ -294,7 +294,7 @@ export default function OTCPage() {
                     <label className="text-muted-foreground text-sm mb-1 block">
                       Amount
                     </label>
-                    <div className="bg-input rounded-md px-3 py-2 flex justify-between">
+                    <div className="bg-input rounded-md px-3 py-2 flex justify-between border border-transparent hover:border-border focus-within:border-primary hover:focus-within:border-primary focus-within:ring-1 focus-within:ring-primary/30 transition-all">
                       <input
                         type="text"
                         inputMode="decimal"
@@ -312,7 +312,7 @@ export default function OTCPage() {
                     <label className="text-muted-foreground text-sm mb-1 block">
                       Your price per {getPairFromLabel(selectedMarketDeal.pair).base}
                     </label>
-                    <div className="bg-input rounded-md px-3 py-2 flex justify-between">
+                    <div className="bg-input rounded-md px-3 py-2 flex justify-between border border-transparent hover:border-border focus-within:border-primary hover:focus-within:border-primary focus-within:ring-1 focus-within:ring-primary/30 transition-all">
                       <input
                         type="text"
                         inputMode="decimal"
@@ -330,7 +330,7 @@ export default function OTCPage() {
                     <label className="text-muted-foreground text-sm mb-1 block">
                       Total
                     </label>
-                    <div className="bg-input rounded-md px-3 py-2 flex justify-between">
+                    <div className="bg-input rounded-md px-3 py-2 flex justify-between border border-transparent hover:border-border transition-colors">
                       <span className="text-foreground">
                         {offerTotal > 0 ? offerTotal.toLocaleString() : "—"}
                       </span>
@@ -393,7 +393,7 @@ export default function OTCPage() {
                   >
                     Sell
                   </button>
-                  <div className="flex-1 bg-input rounded-md px-3 py-1.5 text-foreground/80 text-sm">
+                  <div className="flex-1 bg-input rounded-md px-3 py-1.5 text-foreground/80 text-sm border border-transparent hover:border-border transition-colors">
                     {selectedPair.label}
                   </div>
                 </div>
@@ -403,7 +403,7 @@ export default function OTCPage() {
                     <label className="text-muted-foreground text-sm mb-1 block">
                       {mode === "buy" ? "Buy" : "Sell"} amount
                     </label>
-                    <div className="bg-input rounded-md px-3 py-2 flex justify-between">
+                    <div className="bg-input rounded-md px-3 py-2 flex justify-between border border-transparent hover:border-border focus-within:border-primary hover:focus-within:border-primary focus-within:ring-1 focus-within:ring-primary/30 transition-all">
                       <input
                         type="text"
                         inputMode="decimal"
@@ -421,7 +421,7 @@ export default function OTCPage() {
                     <label className="text-muted-foreground text-sm mb-1 block">
                       Price per {selectedPair.base}
                     </label>
-                    <div className="bg-input rounded-md px-3 py-2 flex justify-between">
+                    <div className="bg-input rounded-md px-3 py-2 flex justify-between border border-transparent hover:border-border focus-within:border-primary hover:focus-within:border-primary focus-within:ring-1 focus-within:ring-primary/30 transition-all">
                       <input
                         type="text"
                         inputMode="decimal"
@@ -439,7 +439,7 @@ export default function OTCPage() {
                     <label className="text-muted-foreground text-sm mb-1 block">
                       Expires in
                     </label>
-                    <div className="bg-input rounded-md px-3 py-2 flex justify-between">
+                    <div className="bg-input rounded-md px-3 py-2 flex justify-between border border-transparent hover:border-border focus-within:border-primary hover:focus-within:border-primary focus-within:ring-1 focus-within:ring-primary/30 transition-all">
                       <input
                         type="text"
                         inputMode="decimal"
@@ -473,7 +473,7 @@ export default function OTCPage() {
                     <label className="text-muted-foreground text-sm mb-1 block">
                       {mode === "buy" ? "Total cost" : "You receive"}
                     </label>
-                    <div className="bg-input rounded-md px-3 py-2 flex justify-between">
+                    <div className="bg-input rounded-md px-3 py-2 flex justify-between border border-transparent hover:border-border transition-colors">
                       <span className="text-foreground">
                         {calculatedTotal > 0 ? calculatedTotal.toLocaleString() : "—"}
                       </span>
