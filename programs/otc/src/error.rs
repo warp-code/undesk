@@ -6,4 +6,8 @@ pub enum ErrorCode {
     AbortedComputation,
     #[msg("Cluster not set")]
     ClusterNotSet,
+    #[msg("Deal is not open")]
+    DealNotOpen,
+    #[msg("Deal has expired")]
+    DealExpired,
 }

@@ -66,6 +66,12 @@ Each confidential operation requires three components:
 - `#[init_computation_definition_accounts("name", payer)]` - Generates init accounts
 - `#[arcium_callback(encrypted_ix = "name")]` - Links callback to encrypted instruction
 
+### Stack Size Issues
+
+If you see "Stack offset exceeded max offset of 4096" errors:
+- **Your code** (e.g., `otc::instructions::...`): Box large accounts: `Account<'info, T>` → `Box<Account<'info, T>>`
+- **arcium-client internal** (e.g., `arcium_client::idl::...`): Safe to ignore
+
 ### Encryption Pattern
 
 Uses x25519 key exchange with RescueCipher:

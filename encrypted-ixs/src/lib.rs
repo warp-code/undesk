@@ -138,6 +138,50 @@ mod circuits {
         (Mxe::get().from_arcis(state), deal_data.owner.from_arcis(blob))
     }
 
+    /// Submit an offer to an existing deal.
+    /// Takes MXE-encrypted deal state by reference and Shared-encrypted offer input.
+    /// Computes amt_to_execute based on price comparison and deal availability.
+    /// Returns updated deal state, new offer state, and encrypted blob for offeror.
+    #[instruction]
+    pub fn submit_offer(
+        deal_state: Enc<Mxe, &DealState>,
+        offer_data: Enc<Shared, OfferInput>,
+    ) -> (Enc<Mxe, DealState>, Enc<Mxe, OfferState>, Enc<Shared, OfferCreatedBlob>) {
+        let deal = *(deal_state.to_arcis());
+        let offer = offer_data.to_arcis();
+
+        // Price comparison: offeror must be willing to pay at least deal price
+        let remaining = deal.amount - deal.fill_amount;
+        let amt_to_execute = if offer.price >= deal.price {
+            if offer.amount < remaining { offer.amount } else { remaining }
+        } else {
+            0
+        };
+
+        let updated_deal = DealState {
+            amount: deal.amount,
+            price: deal.price,
+            fill_amount: deal.fill_amount + amt_to_execute,
+        };
+
+        let offer_state = OfferState {
+            price: offer.price,
+            amount: offer.amount,
+            amt_to_execute,
+        };
+
+        let blob = OfferCreatedBlob {
+            price: offer.price,
+            amount: offer.amount,
+        };
+
+        (
+            Mxe::get().from_arcis(updated_deal),
+            Mxe::get().from_arcis(offer_state),
+            offer_data.owner.from_arcis(blob),
+        )
+    }
+
     /// Initialize a new counter with value 0, encrypted for the MXE only.
     /// The state is stored on-chain and only the MXE can decrypt it.
     #[instruction]

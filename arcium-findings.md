@@ -294,3 +294,51 @@ Mixed returns are useful for:
 - [Input/Output in Arcis](https://docs.arcium.com/developers/arcis/input-output) - Encrypted data handling
 - [The Basics](https://docs.arcium.com/developers/program) - Program invocation fundamentals
 - [Callback Server](https://docs.arcium.com/developers/callback-server) - Handling large outputs
+
+---
+
+## Stack Size Issues in Arcium/Anchor Programs
+
+When building Arcium programs, you may encounter stack size errors like:
+
+```
+Stack offset of X exceeded max offset of 4096 by Y bytes, please minimize large stack variables
+```
+
+### Your Code: Fix by Boxing
+
+If this error appears for functions in **your own code** (e.g., `otc::instructions::submit_offer::SubmitOffer`), fix it by boxing large account types in the Accounts structs:
+
+**Before:**
+```rust
+#[derive(Accounts)]
+pub struct SubmitOffer<'info> {
+    pub deal: Account<'info, DealAccount>,
+    // ... other accounts
+}
+```
+
+**After:**
+```rust
+#[derive(Accounts)]
+pub struct SubmitOffer<'info> {
+    pub deal: Box<Account<'info, DealAccount>>,
+    // ... other accounts
+}
+```
+
+**Why it works:** Boxing moves the account data from the stack (limited to 4096 bytes) to the heap, which has much more space available.
+
+**Where to apply:**
+- Queue context structs (e.g., `SubmitOffer`)
+- Callback context structs (e.g., `SubmitOfferCallback`)
+- Any struct with large `Account<'info, T>` fields where `T` contains significant data
+
+### Internal Arcium Warnings: Ignore
+
+If the error appears for **internal arcium-client functions** like:
+```
+arcium_client..idl..arcium..utils..Account
+```
+
+This is fine and can be ignored. It's internal to the `arcium-client` crate and not something we can fix from our code. The build should still succeed despite these warnings.
