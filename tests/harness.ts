@@ -255,6 +255,16 @@ export function getDealAddress(program: Program<Otc>, createKey: PublicKey): Pub
   )[0];
 }
 
+/**
+ * Derives the offer account address for a given deal and create_key.
+ */
+export function getOfferAddress(program: Program<Otc>, deal: PublicKey, createKey: PublicKey): PublicKey {
+  return PublicKey.findProgramAddressSync(
+    [Buffer.from("offer"), deal.toBuffer(), createKey.toBuffer()],
+    program.programId
+  )[0];
+}
+
 // Computation definition initialization helpers
 
 export async function initAddTogetherCompDef(
@@ -504,6 +514,55 @@ export async function initCreateDealCompDef(
     await uploadCircuit(
       provider,
       "create_deal",
+      program.programId,
+      rawCircuit,
+      true
+    );
+  } else if (!offchainSource) {
+    await finalizeCompDefWithRetry(provider, offset, program.programId, owner);
+  }
+  return sig;
+}
+
+export async function initSubmitOfferCompDef(
+  program: Program<Otc>,
+  provider: anchor.AnchorProvider,
+  owner: anchor.web3.Keypair,
+  uploadRawCircuit: boolean = false,
+  offchainSource: boolean = false
+): Promise<string> {
+  const baseSeedCompDefAcc = getArciumAccountBaseSeed(
+    "ComputationDefinitionAccount"
+  );
+  const offset = getCompDefAccOffset("submit_offer");
+
+  const compDefPDA = PublicKey.findProgramAddressSync(
+    [baseSeedCompDefAcc, program.programId.toBuffer(), offset],
+    getArciumProgramId()
+  )[0];
+
+  console.log("Submit Offer comp def pda is ", compDefPDA);
+
+  const sig = await program.methods
+    .initSubmitOfferCompDef()
+    .accounts({
+      compDefAccount: compDefPDA,
+      payer: owner.publicKey,
+      mxeAccount: getMXEAccAddress(program.programId),
+    })
+    .signers([owner])
+    .rpc({
+      commitment: "confirmed",
+    });
+  console.log("Init Submit Offer computation definition transaction", sig);
+
+  if (uploadRawCircuit) {
+    const { uploadCircuit } = await import("@arcium-hq/client");
+    const rawCircuit = fs.readFileSync("build/submit_offer.arcis");
+
+    await uploadCircuit(
+      provider,
+      "submit_offer",
       program.programId,
       rawCircuit,
       true
