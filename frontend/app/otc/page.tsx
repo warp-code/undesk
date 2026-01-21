@@ -2,6 +2,9 @@
 
 import { useState, useMemo, useEffect, useRef } from "react";
 
+const TOKENS = ["META", "ETH", "SOL", "USDC"] as const;
+type Token = (typeof TOKENS)[number];
+
 const PAIRS = [
   { base: "META", quote: "USDC", label: "META/USDC" },
   { base: "ETH", quote: "USDC", label: "ETH/USDC" },
@@ -75,14 +78,16 @@ const MOCK_OFFERS: Offer[] = [
 
 export default function OTCPage() {
   // Create Deal form state
-  const [mode, setMode] = useState<"buy" | "sell">("buy");
-  const [selectedPair, setSelectedPair] = useState<Pair>(PAIRS[0]);
-  const [baseAmount, setBaseAmount] = useState("4444");
+  const [sellToken, setSellToken] = useState<Token>("META");
+  const [quoteToken, setQuoteToken] = useState<Token>("USDC");
+  const [sellAmount, setSellAmount] = useState("4444");
   const [pricePerUnit, setPricePerUnit] = useState("444");
   const [expiresIn, setExpiresIn] = useState("24");
   const [allowPartial, setAllowPartial] = useState(true);
   const [isLocked, setIsLocked] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [sellTokenDropdownOpen, setSellTokenDropdownOpen] = useState(false);
+  const [quoteTokenDropdownOpen, setQuoteTokenDropdownOpen] = useState(false);
 
   // Tab state
   const [activeTab, setActiveTab] = useState<"deals" | "market" | "offers">("market");
@@ -126,6 +131,24 @@ export default function OTCPage() {
     }
   }, [activeTab]);
 
+  // Refs for click-outside detection
+  const sellDropdownRef = useRef<HTMLDivElement>(null);
+  const quoteDropdownRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdowns when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (sellDropdownRef.current && !sellDropdownRef.current.contains(e.target as Node)) {
+        setSellTokenDropdownOpen(false);
+      }
+      if (quoteDropdownRef.current && !quoteDropdownRef.current.contains(e.target as Node)) {
+        setQuoteTokenDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
   // FAQ data for negotiation panel
   const faqItems = [
     {
@@ -148,10 +171,10 @@ export default function OTCPage() {
 
   // Calculate totals
   const calculatedTotal = useMemo(() => {
-    const base = parseFloat(baseAmount) || 0;
+    const amount = parseFloat(sellAmount) || 0;
     const price = parseFloat(pricePerUnit) || 0;
-    return base * price;
-  }, [baseAmount, pricePerUnit]);
+    return amount * price;
+  }, [sellAmount, pricePerUnit]);
 
   const offerTotal = useMemo(() => {
     const amount = parseFloat(offerAmount) || 0;
@@ -176,9 +199,9 @@ export default function OTCPage() {
       setIsLoading(false);
       const newDeal: Deal = {
         id: crypto.randomUUID().slice(0, 8),
-        type: mode,
-        pair: selectedPair.label,
-        amount: parseFloat(baseAmount),
+        type: "sell",
+        pair: `${sellToken}/${quoteToken}`,
+        amount: parseFloat(sellAmount),
         price: parseFloat(pricePerUnit),
         total: calculatedTotal,
         status: "open",
@@ -243,12 +266,13 @@ export default function OTCPage() {
 
   const canSubmit =
     !isLocked &&
-    baseAmount &&
+    sellAmount &&
     pricePerUnit &&
     expiresIn &&
-    parseFloat(baseAmount) > 0 &&
+    parseFloat(sellAmount) > 0 &&
     parseFloat(pricePerUnit) > 0 &&
-    parseFloat(expiresIn) > 0;
+    parseFloat(expiresIn) > 0 &&
+    sellToken !== quoteToken;
 
   const canPlaceOffer =
     offerAmount &&
@@ -405,72 +429,67 @@ export default function OTCPage() {
                   Create private OTC deal
                 </h2>
 
-                {/* Buy/Sell Toggle + Pair Selector Row */}
-                <div className="flex gap-2 mb-6">
-                  {/* Segmented Control Container */}
-                  <div className="relative flex bg-secondary rounded-lg p-1">
-                    {/* Animated sliding background */}
-                    <div
-                      className={`absolute top-1 bottom-1 w-[calc(50%-4px)] rounded-md transition-all duration-200 ease-out ${
-                        mode === "buy"
-                          ? "left-1 bg-success"
-                          : "left-[calc(50%)] bg-destructive"
-                      }`}
-                    />
-                    {/* Buy button */}
-                    <button
-                      onClick={() => !isLocked && setMode("buy")}
-                      disabled={isLocked}
-                      className={`relative z-10 px-6 py-2 text-sm font-medium transition-colors duration-200 ${
-                        mode === "buy"
-                          ? "text-success-foreground"
-                          : "text-muted-foreground hover:text-foreground"
-                      }`}
-                    >
-                      Buy
-                    </button>
-                    {/* Sell button */}
-                    <button
-                      onClick={() => !isLocked && setMode("sell")}
-                      disabled={isLocked}
-                      className={`relative z-10 px-6 py-2 text-sm font-medium transition-colors duration-200 ${
-                        mode === "sell"
-                          ? "text-destructive-foreground"
-                          : "text-muted-foreground hover:text-foreground"
-                      }`}
-                    >
-                      Sell
-                    </button>
-                  </div>
-                  <div className="flex-1 bg-input rounded-md px-3 text-foreground/80 text-sm border border-transparent hover:border-border transition-colors flex items-center">
-                    {selectedPair.label}
-                  </div>
-                </div>
-
                 <div className="space-y-4">
+                  {/* You sell */}
                   <div>
-                    <label className="text-muted-foreground text-sm mb-1 block">
-                      {mode === "buy" ? "Buy" : "Sell"} amount
+                    <label className="text-foreground text-sm mb-1 block">
+                      You sell
                     </label>
-                    <div className="bg-input rounded-md px-3 py-2 flex justify-between border border-transparent hover:border-border focus-within:border-primary hover:focus-within:border-primary focus-within:ring-1 focus-within:ring-primary/30 transition-all">
+                    <div className="bg-input rounded-md px-3 py-2 flex justify-between items-center border border-transparent hover:border-border focus-within:border-primary hover:focus-within:border-primary focus-within:ring-1 focus-within:ring-primary/30 transition-all">
                       <input
                         type="text"
                         inputMode="decimal"
-                        value={baseAmount}
-                        onChange={(e) => handleNumberInput(e.target.value, setBaseAmount)}
+                        value={sellAmount}
+                        onChange={(e) => handleNumberInput(e.target.value, setSellAmount)}
                         placeholder="0"
                         disabled={isLocked}
                         className="flex-1 bg-transparent text-foreground outline-none"
                       />
-                      <span className="text-muted-foreground">{selectedPair.base}</span>
+                      <div className="relative" ref={sellDropdownRef}>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (!isLocked) {
+                              setSellTokenDropdownOpen(!sellTokenDropdownOpen);
+                              setQuoteTokenDropdownOpen(false);
+                            }
+                          }}
+                          disabled={isLocked}
+                          className="flex items-center gap-1 text-foreground hover:text-primary transition-colors"
+                        >
+                          <span>{sellToken}</span>
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                          </svg>
+                        </button>
+                        {sellTokenDropdownOpen && (
+                          <div className="absolute right-0 top-full mt-1 bg-card border border-border rounded-md shadow-lg z-10 min-w-[80px]">
+                            {TOKENS.filter(t => t !== quoteToken).map((token) => (
+                              <button
+                                key={token}
+                                onClick={() => {
+                                  setSellToken(token);
+                                  setSellTokenDropdownOpen(false);
+                                }}
+                                className={`w-full px-3 py-2 text-left text-sm hover:bg-secondary transition-colors ${
+                                  token === sellToken ? "text-primary" : "text-foreground"
+                                }`}
+                              >
+                                {token}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
 
+                  {/* Price per sell token */}
                   <div>
-                    <label className="text-muted-foreground text-sm mb-1 block">
-                      Price per {selectedPair.base}
+                    <label className="text-foreground text-sm mb-1 block">
+                      Price per {sellToken}
                     </label>
-                    <div className="bg-input rounded-md px-3 py-2 flex justify-between border border-transparent hover:border-border focus-within:border-primary hover:focus-within:border-primary focus-within:ring-1 focus-within:ring-primary/30 transition-all">
+                    <div className="bg-input rounded-md px-3 py-2 flex justify-between items-center border border-transparent hover:border-border focus-within:border-primary hover:focus-within:border-primary focus-within:ring-1 focus-within:ring-primary/30 transition-all">
                       <input
                         type="text"
                         inputMode="decimal"
@@ -480,12 +499,48 @@ export default function OTCPage() {
                         disabled={isLocked}
                         className="flex-1 bg-transparent text-foreground outline-none"
                       />
-                      <span className="text-muted-foreground">{selectedPair.quote}</span>
+                      <div className="relative" ref={quoteDropdownRef}>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (!isLocked) {
+                              setQuoteTokenDropdownOpen(!quoteTokenDropdownOpen);
+                              setSellTokenDropdownOpen(false);
+                            }
+                          }}
+                          disabled={isLocked}
+                          className="flex items-center gap-1 text-foreground hover:text-primary transition-colors"
+                        >
+                          <span>{quoteToken}</span>
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                          </svg>
+                        </button>
+                        {quoteTokenDropdownOpen && (
+                          <div className="absolute right-0 top-full mt-1 bg-card border border-border rounded-md shadow-lg z-10 min-w-[80px]">
+                            {TOKENS.filter(t => t !== sellToken).map((token) => (
+                              <button
+                                key={token}
+                                onClick={() => {
+                                  setQuoteToken(token);
+                                  setQuoteTokenDropdownOpen(false);
+                                }}
+                                className={`w-full px-3 py-2 text-left text-sm hover:bg-secondary transition-colors ${
+                                  token === quoteToken ? "text-primary" : "text-foreground"
+                                }`}
+                              >
+                                {token}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
 
+                  {/* Expires in */}
                   <div>
-                    <label className="text-muted-foreground text-sm mb-1 block">
+                    <label className="text-foreground text-sm mb-1 block">
                       Expires in
                     </label>
                     <div className="bg-input rounded-md px-3 py-2 flex justify-between border border-transparent hover:border-border focus-within:border-primary hover:focus-within:border-primary focus-within:ring-1 focus-within:ring-primary/30 transition-all">
@@ -530,15 +585,16 @@ export default function OTCPage() {
                     when fully filled{allowPartial ? " or partial fills execute at expiry" : " with private viable quotes"}.
                   </p>
 
+                  {/* You receive (read-only) */}
                   <div>
-                    <label className="text-muted-foreground text-sm mb-1 block">
-                      {mode === "buy" ? "Total cost" : "You receive"}
+                    <label className="text-foreground text-sm mb-1 block">
+                      You receive
                     </label>
-                    <div className="bg-input rounded-md px-3 py-2 flex justify-between border border-transparent hover:border-border transition-colors">
+                    <div className="bg-input/50 rounded-md px-3 py-2 flex justify-between items-center border border-transparent">
                       <span className={calculatedTotal > 0 ? "text-foreground" : "text-muted-foreground"}>
                         {calculatedTotal > 0 ? calculatedTotal.toLocaleString() : "—"}
                       </span>
-                      <span className="text-muted-foreground">{selectedPair.quote}</span>
+                      <span className="text-muted-foreground">{quoteToken}</span>
                     </div>
                   </div>
 
