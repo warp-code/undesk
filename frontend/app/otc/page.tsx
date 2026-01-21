@@ -945,8 +945,7 @@ export default function OTCPage() {
                                 <th className="text-right py-3 font-medium">You send</th>
                                 <th className="text-right py-3 font-medium">You receive</th>
                                 <th className="text-center py-3 font-medium">Submitted</th>
-                                <th className="text-center py-3 font-medium">Deal status</th>
-                                <th className="text-center py-3 font-medium">Your offer</th>
+                                <th className="text-left py-3 font-medium">Status</th>
                               </tr>
                             </thead>
                             <tbody>
@@ -961,36 +960,24 @@ export default function OTCPage() {
                                   : `${offer.amount} ${base}`;
 
                                 return (
-                                  <tr key={offer.id} className="border-b border-border/50">
+                                  <tr key={offer.id} className={`border-b border-border/50 ${offer.dealStatus === "expired" && offer.offerStatus === "failed" ? "opacity-50" : ""}`}>
                                     <td className="py-3 text-foreground">{base}</td>
                                     <td className="py-3 text-foreground">{quote}</td>
                                     <td className="py-3 text-right text-foreground">{offer.yourPrice.toLocaleString()}</td>
                                     <td className="py-3 text-right text-foreground">{youSend}</td>
                                     <td className="py-3 text-right text-foreground">{youReceive}</td>
                                     <td className="py-3 text-center text-muted-foreground">{offer.submittedAt}</td>
-                                    <td className="py-3 text-center">
-                                      {offer.dealStatus === "open" && (
-                                        <span className="px-2 py-0.5 rounded text-xs font-medium bg-sky-500/20 text-sky-400 border border-sky-500/30">open</span>
-                                      )}
-                                      {offer.dealStatus === "executed" && (
-                                        <span className="px-2 py-0.5 rounded text-xs font-medium bg-success/20 text-success border border-success/30">executed</span>
-                                      )}
-                                      {offer.dealStatus === "expired" && (
-                                        <span className="px-2 py-0.5 rounded text-xs font-medium bg-muted text-muted-foreground">expired</span>
-                                      )}
-                                    </td>
-                                    <td className="py-3 text-center">
-                                      {offer.offerStatus === "pending" && (
-                                        <span className="px-2 py-0.5 rounded text-xs font-medium bg-purple-500/20 text-purple-400 border border-purple-500/30">pending</span>
-                                      )}
-                                      {offer.offerStatus === "passed" && (
-                                        <span className="px-2 py-0.5 rounded text-xs font-medium bg-success/20 text-success border border-success/30">passed</span>
-                                      )}
-                                      {offer.offerStatus === "partial" && (
-                                        <span className="px-2 py-0.5 rounded text-xs font-medium bg-yellow-500/20 text-yellow-400 border border-yellow-500/30">partial</span>
-                                      )}
-                                      {offer.offerStatus === "failed" && (
-                                        <span className="px-2 py-0.5 rounded text-xs font-medium bg-muted text-muted-foreground">failed</span>
+                                    <td className="py-3 text-left">
+                                      {offer.dealStatus === "open" && offer.offerStatus === "pending" ? (
+                                        <span className="text-muted-foreground">Pending</span>
+                                      ) : offer.dealStatus === "executed" && offer.offerStatus === "passed" ? (
+                                        <span className="text-green-500">Filled</span>
+                                      ) : offer.dealStatus === "executed" && offer.offerStatus === "partial" ? (
+                                        <span className="text-yellow-500">Partial</span>
+                                      ) : offer.dealStatus === "expired" && offer.offerStatus === "failed" ? (
+                                        <span className="text-muted-foreground/50">Unfilled</span>
+                                      ) : (
+                                        <span className="text-muted-foreground">{offer.offerStatus}</span>
                                       )}
                                     </td>
                                   </tr>
