@@ -54,6 +54,7 @@ interface Deal {
   allowPartial: boolean;
   expiresAt: number;
   createdAt: number;
+  offerCount?: number;
 }
 
 // Open Market - other users' deals (no price shown)
@@ -83,9 +84,9 @@ interface Offer {
 
 // Mock data
 const MOCK_DEALS: Deal[] = [
-  { id: "d1", type: "buy", pair: "META/USDC", amount: 4444, price: 444, total: 1973136, status: "open", isPartial: false, allowPartial: true, expiresAt: Date.now() + 83640000, createdAt: Date.now() },
-  { id: "d2", type: "sell", pair: "ETH/USDC", amount: 10, price: 3200, total: 32000, status: "open", isPartial: true, allowPartial: true, expiresAt: Date.now() + 20520000, createdAt: Date.now() - 3600000 },
-  { id: "d3", type: "buy", pair: "META/USDC", amount: 1000, price: 450, total: 450000, status: "executed", isPartial: true, allowPartial: false, expiresAt: 0, createdAt: Date.now() - 86400000 },
+  { id: "d1", type: "buy", pair: "META/USDC", amount: 4444, price: 444, total: 1973136, status: "open", isPartial: false, allowPartial: true, expiresAt: Date.now() + 83640000, createdAt: Date.now(), offerCount: 0 },
+  { id: "d2", type: "sell", pair: "ETH/USDC", amount: 10, price: 3200, total: 32000, status: "open", isPartial: true, allowPartial: true, expiresAt: Date.now() + 20520000, createdAt: Date.now() - 3600000, offerCount: 3 },
+  { id: "d3", type: "buy", pair: "META/USDC", amount: 1000, price: 450, total: 450000, status: "executed", isPartial: true, allowPartial: false, expiresAt: 0, createdAt: Date.now() - 86400000, offerCount: 2 },
 ];
 
 const MOCK_MARKET_DEALS: MarketDeal[] = [
@@ -794,7 +795,7 @@ export default function OTCPage() {
                               <th className="text-right py-3 font-medium">Price</th>
                               <th className="text-right py-3 font-medium">Total</th>
                               <th className="text-center py-3 font-medium">Expires</th>
-                              <th className="text-center py-3 font-medium">Status</th>
+                              <th className="text-left py-3 font-medium">Status</th>
                               <th className="py-3"></th>
                             </tr>
                           </thead>
@@ -816,24 +817,21 @@ export default function OTCPage() {
                                   <td className="py-3 text-center text-muted-foreground">
                                     {deal.status === "executed" ? "—" : formatTimeRemaining(deal.expiresAt)}
                                   </td>
-                                  <td className="py-3 text-center">
-                                    <div className="flex items-center justify-center gap-1">
-                                      {deal.status === "open" && (
-                                        <span className="px-2 py-0.5 rounded text-xs font-medium bg-sky-500/20 text-sky-400 border border-sky-500/30">open</span>
-                                      )}
-                                      {deal.status === "executed" && (
-                                        <span className="px-2 py-0.5 rounded text-xs font-medium bg-success/20 text-success border border-success/30">executed</span>
-                                      )}
-                                      {deal.status === "expired" && (
-                                        <span className="px-2 py-0.5 rounded text-xs font-medium bg-muted text-muted-foreground">expired</span>
-                                      )}
-                                      {deal.isPartial && deal.status === "open" && (
-                                        <span className="px-2 py-0.5 rounded text-xs font-medium bg-yellow-500/20 text-yellow-400 border border-yellow-500/30">has offers</span>
-                                      )}
-                                    </div>
+                                  <td className="py-3 text-left">
+                                    {deal.status === "open" ? (
+                                      <span className="text-muted-foreground">
+                                        Open{deal.offerCount != null && deal.offerCount > 0 ? (
+                                          <> · <span className="text-foreground font-medium">{deal.offerCount} {deal.offerCount === 1 ? "offer" : "offers"}</span></>
+                                        ) : null}
+                                      </span>
+                                    ) : deal.status === "executed" ? (
+                                      <span className="text-green-500">Executed</span>
+                                    ) : (
+                                      <span className="text-muted-foreground">{deal.status}</span>
+                                    )}
                                   </td>
                                   <td className="py-3 text-right">
-                                    {deal.isPartial && deal.status === "open" && (
+                                    {deal.status === "open" && deal.offerCount && deal.offerCount > 0 && (
                                       <button className="bg-success/20 hover:bg-success/30 text-success border border-success/50 px-3 py-1 text-sm rounded-md font-medium transition-colors">
                                         Execute
                                       </button>
