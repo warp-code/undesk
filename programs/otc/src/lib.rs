@@ -118,4 +118,41 @@ pub mod otc {
     ) -> Result<()> {
         instructions::get_counter::callback_handler(ctx, output)
     }
+
+    // Create Deal
+    pub fn init_create_deal_comp_def(ctx: Context<InitCreateDealCompDef>) -> Result<()> {
+        instructions::create_deal::init_comp_def_handler(ctx)
+    }
+
+    pub fn create_deal(
+        ctx: Context<CreateDeal>,
+        computation_offset: u64,
+        controller: Pubkey,
+        encryption_pubkey: [u8; 32],
+        nonce: u128,
+        expires_at: i64,
+        allow_partial: bool,
+        encrypted_amount: [u8; 32],
+        encrypted_price: [u8; 32],
+    ) -> Result<()> {
+        instructions::create_deal::handler(
+            ctx,
+            computation_offset,
+            controller,
+            encryption_pubkey,
+            nonce,
+            expires_at,
+            allow_partial,
+            encrypted_amount,
+            encrypted_price,
+        )
+    }
+
+    #[arcium_callback(encrypted_ix = "create_deal")]
+    pub fn create_deal_callback(
+        ctx: Context<CreateDealCallback>,
+        output: SignedComputationOutputs<CreateDealOutput>,
+    ) -> Result<()> {
+        instructions::create_deal::callback_handler(ctx, output)
+    }
 }

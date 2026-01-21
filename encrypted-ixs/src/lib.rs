@@ -115,6 +115,29 @@ mod circuits {
         input_ctxt.owner.from_arcis(sum)
     }
 
+    /// Create a new deal with encrypted parameters.
+    /// Returns MXE-encrypted state for on-chain storage and Shared-encrypted blob for creator.
+    #[instruction]
+    pub fn create_deal(
+        deal_data: Enc<Shared, DealInput>,
+    ) -> (Enc<Mxe, DealState>, Enc<Shared, DealCreatedBlob>) {
+        let input = deal_data.to_arcis();
+
+        let state = DealState {
+            amount: input.amount,
+            price: input.price,
+            fill_amount: 0,
+        };
+
+        let blob = DealCreatedBlob {
+            amount: input.amount,
+            price: input.price,
+        };
+
+        // Use deal_data.owner to re-encrypt the blob back to the creator
+        (Mxe::get().from_arcis(state), deal_data.owner.from_arcis(blob))
+    }
+
     /// Initialize a new counter with value 0, encrypted for the MXE only.
     /// The state is stored on-chain and only the MXE can decrypt it.
     #[instruction]

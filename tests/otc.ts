@@ -1,8 +1,9 @@
 import * as anchor from "@coral-xyz/anchor";
 import { Program } from "@coral-xyz/anchor";
-import { PublicKey } from "@solana/web3.js";
+import { Keypair, PublicKey } from "@solana/web3.js";
 import { Otc } from "../target/types/otc";
 import { randomBytes } from "crypto";
+import { createMint } from "@solana/spl-token";
 import {
   awaitComputationFinalization,
   getArciumEnv,
@@ -387,6 +388,163 @@ describe("Otc", () => {
     console.log("Decrypted counter value for recipient 2:", decrypted2[0]);
   });
 
+  it("Create Deal initialized", async () => {
+    const initCompDefSig = await initCreateDealCompDef(
+      program,
+      owner,
+      false,
+      false
+    );
+    console.log(
+      "Create Deal computation definition initialized with signature",
+      initCompDefSig
+    );
+  });
+
+  it("Successfully creates a deal with encrypted parameters", async () => {
+    // 1. Get MXE public key
+    const mxePublicKey = await getMXEPublicKeyWithRetry(
+      provider as anchor.AnchorProvider,
+      program.programId
+    );
+    console.log("MXE x25519 pubkey is", mxePublicKey);
+
+    // 2. Generate encryption keypair
+    const privateKey = x25519.utils.randomSecretKey();
+    const publicKey = x25519.getPublicKey(privateKey);
+
+    const sharedSecret = x25519.getSharedSecret(privateKey, mxePublicKey);
+    const cipher = new RescueCipher(sharedSecret);
+
+    // 3. Create base and quote mints
+    const baseMint = await createMint(
+      provider.connection,
+      owner,
+      owner.publicKey,
+      null,
+      6
+    );
+    console.log("Base mint created:", baseMint.toBase58());
+
+    const quoteMint = await createMint(
+      provider.connection,
+      owner,
+      owner.publicKey,
+      null,
+      6
+    );
+    console.log("Quote mint created:", quoteMint.toBase58());
+
+    // 4. Encrypt amount (u64) and price (u128)
+    const amount = BigInt(1000);        // Base amount to sell
+    const price = BigInt(2) << BigInt(64);  // X64.64 fixed-point: 2.0 as price
+    const plaintext = [amount, price];
+
+    const nonce = randomBytes(16);
+    const ciphertext = cipher.encrypt(plaintext, nonce);
+    console.log("Encrypted amount and price");
+
+    // 5. Generate ephemeral create_key
+    const createKey = Keypair.generate();
+
+    // 6. Set deal parameters
+    const expiresAt = new anchor.BN(Math.floor(Date.now() / 1000) + 3600); // 1 hour from now
+    const allowPartial = true;
+
+    // 7. Queue create_deal computation
+    const computationOffset = new anchor.BN(randomBytes(8), "hex");
+    const dealAddress = getDealAddress(createKey.publicKey);
+
+    const dealCreatedEventPromise = awaitEvent("dealCreated");
+
+    const queueSig = await program.methods
+      .createDeal(
+        computationOffset,
+        owner.publicKey,  // controller
+        Array.from(publicKey),
+        new anchor.BN(deserializeLE(nonce).toString()),
+        expiresAt,
+        allowPartial,
+        Array.from(ciphertext[0]),
+        Array.from(ciphertext[1])
+      )
+      .accountsPartial({
+        createKey: createKey.publicKey,
+        deal: dealAddress,
+        baseMint: baseMint,
+        quoteMint: quoteMint,
+        computationAccount: getComputationAccAddress(
+          arciumEnv.arciumClusterOffset,
+          computationOffset
+        ),
+        clusterAccount,
+        mxeAccount: getMXEAccAddress(program.programId),
+        mempoolAccount: getMempoolAccAddress(arciumEnv.arciumClusterOffset),
+        executingPool: getExecutingPoolAccAddress(arciumEnv.arciumClusterOffset),
+        compDefAccount: getCompDefAccAddress(
+          program.programId,
+          Buffer.from(getCompDefAccOffset("create_deal")).readUInt32LE()
+        ),
+      })
+      .signers([createKey])
+      .rpc({ skipPreflight: true, commitment: "confirmed" });
+    console.log("Queue create_deal sig is ", queueSig);
+
+    // 8. Await finalization
+    const finalizeSig = await awaitComputationFinalization(
+      provider as anchor.AnchorProvider,
+      computationOffset,
+      program.programId,
+      "confirmed"
+    );
+    console.log("Finalize sig is ", finalizeSig);
+
+    // 9. Verify DealCreated event
+    const dealCreatedEvent = await dealCreatedEventPromise;
+    console.log("DealCreated event received");
+
+    // Verify public fields
+    expect(dealCreatedEvent.deal.toBase58()).to.equal(dealAddress.toBase58());
+    expect(dealCreatedEvent.baseMint.toBase58()).to.equal(baseMint.toBase58());
+    expect(dealCreatedEvent.quoteMint.toBase58()).to.equal(quoteMint.toBase58());
+    expect(dealCreatedEvent.expiresAt.toNumber()).to.equal(expiresAt.toNumber());
+    expect(dealCreatedEvent.allowPartial).to.equal(allowPartial);
+
+    // Decrypt the blob
+    const decrypted = cipher.decrypt(
+      dealCreatedEvent.ciphertexts,
+      Uint8Array.from(dealCreatedEvent.nonce)
+    );
+    console.log("Decrypted amount:", decrypted[0]);
+    console.log("Decrypted price:", decrypted[1]);
+
+    expect(decrypted[0]).to.equal(amount);
+    expect(decrypted[1]).to.equal(price);
+
+    // 10. Fetch and verify DealAccount state
+    const dealAccount = await program.account.dealAccount.fetch(dealAddress);
+
+    expect(dealAccount.createKey.toBase58()).to.equal(createKey.publicKey.toBase58());
+    expect(dealAccount.controller.toBase58()).to.equal(owner.publicKey.toBase58());
+    expect(dealAccount.encryptionPubkey).to.deep.equal(Array.from(publicKey));
+    expect(dealAccount.baseMint.toBase58()).to.equal(baseMint.toBase58());
+    expect(dealAccount.quoteMint.toBase58()).to.equal(quoteMint.toBase58());
+    expect(dealAccount.expiresAt.toNumber()).to.equal(expiresAt.toNumber());
+    expect(dealAccount.status).to.equal(0); // OPEN
+    expect(dealAccount.allowPartial).to.equal(allowPartial);
+    expect(dealAccount.createdAt.toNumber()).to.be.greaterThan(0);
+    expect(dealAccount.numOffers).to.equal(0);
+
+    console.log("DealAccount verified successfully");
+    console.log("  - create_key:", dealAccount.createKey.toBase58());
+    console.log("  - controller:", dealAccount.controller.toBase58());
+    console.log("  - base_mint:", dealAccount.baseMint.toBase58());
+    console.log("  - quote_mint:", dealAccount.quoteMint.toBase58());
+    console.log("  - created_at:", dealAccount.createdAt.toNumber());
+    console.log("  - expires_at:", dealAccount.expiresAt.toNumber());
+    console.log("  - status:", dealAccount.status);
+  });
+
   async function initAddTogetherCompDef(
     program: Program<Otc>,
     owner: anchor.web3.Keypair,
@@ -628,6 +786,60 @@ describe("Otc", () => {
   function getCounterAddress(owner: PublicKey): PublicKey {
     return PublicKey.findProgramAddressSync(
       [Buffer.from("counter"), owner.toBuffer()],
+      program.programId
+    )[0];
+  }
+
+  async function initCreateDealCompDef(
+    program: Program<Otc>,
+    owner: anchor.web3.Keypair,
+    uploadRawCircuit: boolean,
+    offchainSource: boolean
+  ): Promise<string> {
+    const baseSeedCompDefAcc = getArciumAccountBaseSeed(
+      "ComputationDefinitionAccount"
+    );
+    const offset = getCompDefAccOffset("create_deal");
+
+    const compDefPDA = PublicKey.findProgramAddressSync(
+      [baseSeedCompDefAcc, program.programId.toBuffer(), offset],
+      getArciumProgramId()
+    )[0];
+
+    console.log("Create Deal comp def pda is ", compDefPDA);
+
+    const sig = await program.methods
+      .initCreateDealCompDef()
+      .accounts({
+        compDefAccount: compDefPDA,
+        payer: owner.publicKey,
+        mxeAccount: getMXEAccAddress(program.programId),
+      })
+      .signers([owner])
+      .rpc({
+        commitment: "confirmed",
+      });
+    console.log("Init Create Deal computation definition transaction", sig);
+
+    if (uploadRawCircuit) {
+      const rawCircuit = fs.readFileSync("build/create_deal.arcis");
+
+      await uploadCircuit(
+        provider as anchor.AnchorProvider,
+        "create_deal",
+        program.programId,
+        rawCircuit,
+        true
+      );
+    } else if (!offchainSource) {
+      await finalizeCompDefWithRetry(provider as anchor.AnchorProvider, offset, program.programId, owner);
+    }
+    return sig;
+  }
+
+  function getDealAddress(createKey: PublicKey): PublicKey {
+    return PublicKey.findProgramAddressSync(
+      [Buffer.from("deal"), createKey.toBuffer()],
       program.programId
     )[0];
   }
