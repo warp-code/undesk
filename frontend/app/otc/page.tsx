@@ -876,7 +876,7 @@ export default function OTCPage() {
                             <tr className="text-muted-foreground text-sm border-b border-border">
                               <th className="text-left py-3 font-medium">Selling (you receive)</th>
                               <th className="text-left py-3 font-medium">Buying (you send)</th>
-                              <th className="text-center py-3 font-medium">Status</th>
+                              <th className="text-left py-3 font-medium">Status</th>
                               <th className="text-center py-3 font-medium">Expires</th>
                             </tr>
                           </thead>
@@ -896,15 +896,11 @@ export default function OTCPage() {
                                 >
                                   <td className="py-3 text-foreground">{selling}</td>
                                   <td className="py-3 text-foreground">{buying}</td>
-                                  <td className="py-3 text-center">
-                                    {deal.offerCount && deal.offerCount > 0 ? (
-                                      <span className="px-2 py-0.5 rounded text-xs font-medium bg-yellow-500/20 text-yellow-400 border border-yellow-500/30">
-                                        has offers
-                                      </span>
+                                  <td className="py-3 text-left">
+                                    {deal.offerCount != null && deal.offerCount > 0 ? (
+                                      <span className="text-foreground">{deal.offerCount} {deal.offerCount === 1 ? "offer" : "offers"}</span>
                                     ) : (
-                                      <span className="px-2 py-0.5 rounded text-xs font-medium bg-sky-500/20 text-sky-400 border border-sky-500/30">
-                                        open
-                                      </span>
+                                      <span className="text-muted-foreground">Open</span>
                                     )}
                                   </td>
                                   <td className="py-3 text-center">
