@@ -231,6 +231,42 @@ mod circuits {
         (creator.from_arcis(blob), status.reveal())
     }
 
+    /// Crank (settle) a single offer after the deal has been settled.
+    /// Returns the settlement blob encrypted for the offeror.
+    #[instruction]
+    pub fn crank_offer(
+        offer_state: Enc<Mxe, &OfferState>,
+        offeror: Shared,
+        deal_success: bool,
+    ) -> Enc<Shared, OfferSettledBlob> {
+        let offer = *(offer_state.to_arcis());
+
+        // If deal failed, nothing executes
+        let executed_amt = if deal_success {
+            offer.amt_to_execute
+        } else {
+            0
+        };
+
+        let refund_amt = offer.amount - executed_amt;
+
+        let outcome: u8 = if executed_amt == 0 {
+            2  // FAILED
+        } else if executed_amt < offer.amount {
+            1  // PARTIAL
+        } else {
+            0  // EXECUTED (full)
+        };
+
+        let blob = OfferSettledBlob {
+            outcome,
+            executed_amt,
+            refund_amt,
+        };
+
+        offeror.from_arcis(blob)
+    }
+
     /// Initialize a new counter with value 0, encrypted for the MXE only.
     /// The state is stored on-chain and only the MXE can decrypt it.
     #[instruction]

@@ -621,3 +621,52 @@ export async function initCrankDealCompDef(
   }
   return sig;
 }
+
+export async function initCrankOfferCompDef(
+  program: Program<Otc>,
+  provider: anchor.AnchorProvider,
+  owner: anchor.web3.Keypair,
+  uploadRawCircuit: boolean = false,
+  offchainSource: boolean = false
+): Promise<string> {
+  const baseSeedCompDefAcc = getArciumAccountBaseSeed(
+    "ComputationDefinitionAccount"
+  );
+  const offset = getCompDefAccOffset("crank_offer");
+
+  const compDefPDA = PublicKey.findProgramAddressSync(
+    [baseSeedCompDefAcc, program.programId.toBuffer(), offset],
+    getArciumProgramId()
+  )[0];
+
+  console.log("Crank Offer comp def pda is ", compDefPDA);
+
+  const sig = await program.methods
+    .initCrankOfferCompDef()
+    .accounts({
+      compDefAccount: compDefPDA,
+      payer: owner.publicKey,
+      mxeAccount: getMXEAccAddress(program.programId),
+    })
+    .signers([owner])
+    .rpc({
+      commitment: "confirmed",
+    });
+  console.log("Init Crank Offer computation definition transaction", sig);
+
+  if (uploadRawCircuit) {
+    const { uploadCircuit } = await import("@arcium-hq/client");
+    const rawCircuit = fs.readFileSync("build/crank_offer.arcis");
+
+    await uploadCircuit(
+      provider,
+      "crank_offer",
+      program.programId,
+      rawCircuit,
+      true
+    );
+  } else if (!offchainSource) {
+    await finalizeCompDefWithRetry(provider, offset, program.programId, owner);
+  }
+  return sig;
+}

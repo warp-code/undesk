@@ -7,6 +7,7 @@ import {
   initCreateDealCompDef,
   initSubmitOfferCompDef,
   initCrankDealCompDef,
+  initCrankOfferCompDef,
 } from "./harness";
 
 describe("OTC Setup", () => {
@@ -65,6 +66,14 @@ describe("OTC Setup", () => {
     const sig = await initCrankDealCompDef(program, provider, owner, false, false);
     console.log(
       "Crank Deal computation definition initialized with signature",
+      sig
+    );
+  });
+
+  it("initializes crank_offer comp def", async () => {
+    const sig = await initCrankOfferCompDef(program, provider, owner, false, false);
+    console.log(
+      "Crank Offer computation definition initialized with signature",
       sig
     );
   });

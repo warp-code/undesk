@@ -1,5 +1,6 @@
 pub mod add_together;
 pub mod crank_deal;
+pub mod crank_offer;
 pub mod create_deal;
 pub mod get_counter;
 pub mod increment_counter;
@@ -12,6 +13,9 @@ pub use add_together::{
 };
 pub use crank_deal::{
     CrankDeal, CrankDealCallback, CrankDealOutput, InitCrankDealCompDef,
+};
+pub use crank_offer::{
+    CrankOffer, CrankOfferCallback, CrankOfferOutput, InitCrankOfferCompDef,
 };
 pub use create_deal::{
     CreateDeal, CreateDealCallback, CreateDealOutput, InitCreateDealCompDef,
@@ -43,6 +47,12 @@ pub(crate) use crank_deal::__client_accounts_crank_deal;
 pub(crate) use crank_deal::__client_accounts_crank_deal_callback;
 #[doc(hidden)]
 pub(crate) use crank_deal::__client_accounts_init_crank_deal_comp_def;
+#[doc(hidden)]
+pub(crate) use crank_offer::__client_accounts_crank_offer;
+#[doc(hidden)]
+pub(crate) use crank_offer::__client_accounts_crank_offer_callback;
+#[doc(hidden)]
+pub(crate) use crank_offer::__client_accounts_init_crank_offer_comp_def;
 #[doc(hidden)]
 pub(crate) use create_deal::__client_accounts_create_deal;
 #[doc(hidden)]

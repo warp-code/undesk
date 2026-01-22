@@ -12,4 +12,10 @@ pub enum ErrorCode {
     DealExpired,
     #[msg("Not authorized to perform this action")]
     NotAuthorized,
+    #[msg("Deal has not been settled yet")]
+    DealNotSettled,
+    #[msg("Offer has already been settled")]
+    OfferAlreadySettled,
+    #[msg("Offer does not belong to this deal")]
+    DealMismatch,
 }
