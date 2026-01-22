@@ -270,8 +270,108 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Footer border */}
-      <div className="border-t border-border h-12 shrink-0" />
+      {/* Footer */}
+      <footer className="border-t border-border py-12 px-6">
+        <div className="max-w-6xl mx-auto">
+          <div className="grid md:grid-cols-4 gap-8 mb-8">
+            {/* Brand */}
+            <div className="md:col-span-1">
+              <div className="flex items-center gap-2 mb-4">
+                <span className="text-primary text-xl">⬡</span>
+                <span className="text-foreground font-semibold text-lg">
+                  Veil OTC
+                </span>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                Private OTC trading on Solana
+              </p>
+            </div>
+
+            {/* Product Links */}
+            <div>
+              <h4 className="font-semibold text-foreground mb-4">Product</h4>
+              <ul className="space-y-2 text-sm text-muted-foreground">
+                <li>
+                  <a
+                    href="#how-it-works"
+                    className="hover:text-foreground transition-colors"
+                  >
+                    How it works
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="#security"
+                    className="hover:text-foreground transition-colors"
+                  >
+                    Security
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="#faq"
+                    className="hover:text-foreground transition-colors"
+                  >
+                    FAQ
+                  </a>
+                </li>
+              </ul>
+            </div>
+
+            {/* Resources Links */}
+            <div>
+              <h4 className="font-semibold text-foreground mb-4">Resources</h4>
+              <ul className="space-y-2 text-sm text-muted-foreground">
+                <li>
+                  <a
+                    href="#"
+                    className="hover:text-foreground transition-colors"
+                  >
+                    Documentation
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="#"
+                    className="hover:text-foreground transition-colors"
+                  >
+                    GitHub
+                  </a>
+                </li>
+              </ul>
+            </div>
+
+            {/* Social Links */}
+            <div>
+              <h4 className="font-semibold text-foreground mb-4">Community</h4>
+              <ul className="space-y-2 text-sm text-muted-foreground">
+                <li>
+                  <a
+                    href="#"
+                    className="hover:text-foreground transition-colors"
+                  >
+                    Twitter
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="#"
+                    className="hover:text-foreground transition-colors"
+                  >
+                    Discord
+                  </a>
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          {/* Bottom bar */}
+          <div className="pt-8 border-t border-border flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-muted-foreground">
+            <p>© 2025 Veil OTC. All rights reserved.</p>
+            <p>Built on Solana • Powered by Arcium</p>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }
