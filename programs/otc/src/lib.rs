@@ -188,4 +188,31 @@ pub mod otc {
     ) -> Result<()> {
         instructions::submit_offer::callback_handler(ctx, output)
     }
+
+    // Crank Deal
+    pub fn init_crank_deal_comp_def(ctx: Context<InitCrankDealCompDef>) -> Result<()> {
+        instructions::crank_deal::init_comp_def_handler(ctx)
+    }
+
+    pub fn crank_deal(
+        ctx: Context<CrankDeal>,
+        computation_offset: u64,
+        creator_encryption_pubkey: [u8; 32],
+        creator_nonce: u128,
+    ) -> Result<()> {
+        instructions::crank_deal::handler(
+            ctx,
+            computation_offset,
+            creator_encryption_pubkey,
+            creator_nonce,
+        )
+    }
+
+    #[arcium_callback(encrypted_ix = "crank_deal")]
+    pub fn crank_deal_callback(
+        ctx: Context<CrankDealCallback>,
+        output: SignedComputationOutputs<CrankDealOutput>,
+    ) -> Result<()> {
+        instructions::crank_deal::callback_handler(ctx, output)
+    }
 }

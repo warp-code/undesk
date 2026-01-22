@@ -10,4 +10,6 @@ pub enum ErrorCode {
     DealNotOpen,
     #[msg("Deal has expired")]
     DealExpired,
+    #[msg("Not authorized to perform this action")]
+    NotAuthorized,
 }

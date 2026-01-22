@@ -91,6 +91,8 @@ See `arcium-findings.md` for full details. Quick reference:
 | `Shared` (marker) | `.x25519_pubkey(pubkey)` + `.plaintext_u128(nonce)` |
 | `Enc<Mxe, &T>` (by ref) | `.plaintext_u128(stored_nonce)` + `.account(key, ciphertext_offset, ciphertext_len)` |
 | `Enc<Shared, T>` (by value) | `.x25519_pubkey()` + `.plaintext_u128(nonce)` + `.encrypted_*()` per field |
+| `bool` (plaintext) | `.plaintext_bool(value)` |
+| `u8/u16/u32/u64/u128` (plaintext) | `.plaintext_u8()` / `.plaintext_u16()` / etc. |
 
 **Key points:**
 - For `Enc<Mxe, &T>` by reference: pass nonce separately, then reference only ciphertext portion (offset 24 = skip 8-byte discriminator + 16-byte nonce)
@@ -98,6 +100,7 @@ See `arcium-findings.md` for full details. Quick reference:
 - Decryption uses `x25519.getSharedSecret(yourPrivateKey, mxePublicKey)` - NOT the `encryption_key` from events (that's your pubkey echoed back)
 - "Unknown action 'undefined'" = ArgBuilder args don't match instruction signature
 - "InvalidArguments" (6301) = wrong argument format/offsets
+- **Use the correct plaintext method for each type**: `bool` requires `.plaintext_bool()`, NOT `.plaintext_u8()`. Using the wrong method causes "Unknown action 'undefined'" errors.
 
 ## Key Dependencies
 

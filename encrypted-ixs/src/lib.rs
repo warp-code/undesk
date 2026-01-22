@@ -182,6 +182,55 @@ mod circuits {
         )
     }
 
+    /// Crank (settle) a deal after expiry or when fully filled.
+    /// Returns the settlement blob encrypted for the creator and the new status.
+    #[instruction]
+    pub fn crank_deal(
+        deal_state: Enc<Mxe, &DealState>,
+        creator: Shared,
+        is_expired: bool,
+        allow_partial: bool,
+    ) -> (Enc<Shared, DealSettledBlob>, u8) {
+        let deal = *(deal_state.to_arcis());
+        let fully_filled = deal.fill_amount >= deal.amount;
+
+        // can_settle: expired OR fully filled
+        let can_settle = is_expired || fully_filled;
+
+        // deal_executes: fully filled OR (partial allowed AND has some fill)
+        let deal_executes = fully_filled || (allow_partial && deal.fill_amount > 0);
+
+        // Compute values based on whether we can settle and whether deal executes
+        let total_filled = if can_settle && deal_executes {
+            deal.fill_amount
+        } else {
+            0
+        };
+
+        let unfilled = deal.amount - total_filled;
+
+        // price is X64.64: (fill_amount * price) >> 64
+        let creator_receives = ((total_filled as u128 * deal.price) >> 64) as u64;
+        let creator_refund = if can_settle { unfilled } else { 0 };
+
+        let blob = DealSettledBlob {
+            total_filled,
+            creator_receives,
+            creator_refund,
+        };
+
+        // status: 0 = OPEN (no change), 1 = EXECUTED, 2 = EXPIRED
+        let status: u8 = if !can_settle {
+            0 // Cannot settle yet
+        } else if deal_executes {
+            1 // EXECUTED
+        } else {
+            2 // EXPIRED
+        };
+
+        (creator.from_arcis(blob), status.reveal())
+    }
+
     /// Initialize a new counter with value 0, encrypted for the MXE only.
     /// The state is stored on-chain and only the MXE can decrypt it.
     #[instruction]
