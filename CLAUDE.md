@@ -44,11 +44,7 @@ Code is written in three places:
    - Operations execute off-chain on the Arcium network
    - Uses `#[encrypted]` and `#[instruction]` macros
 
-3. **`frontend/`** - Next.js web application
-   - Next.js 16.1.1 with React 19
-   - TypeScript 5
-   - Tailwind CSS v4 for styling
-   - Configured as a yarn workspace
+3. **`frontend/`** - Next.js web application (see Frontend Architecture below)
 
 ### Confidential Computation Flow
 
@@ -102,12 +98,106 @@ See `arcium-findings.md` for full details. Quick reference:
 - "InvalidArguments" (6301) = wrong argument format/offsets
 - **Use the correct plaintext method for each type**: `bool` requires `.plaintext_bool()`, NOT `.plaintext_u8()`. Using the wrong method causes "Unknown action 'undefined'" errors.
 
+## Frontend Architecture
+
+### Overview
+
+The frontend is **"Veil OTC"** - a private over-the-counter trading platform. It's a Next.js app using the App Router pattern.
+
+**Tech Stack:**
+- Next.js 16.1.1 with React 18.3.1
+- TypeScript 5.7.3 (strict mode)
+- Tailwind CSS v4 (dark theme only)
+- Fonts: Inter (sans) + JetBrains Mono (mono)
+
+### Directory Structure
+
+```
+frontend/
+├── app/
+│   ├── layout.tsx           # Root layout with metadata
+│   ├── globals.css          # Tailwind config + design system (CSS variables)
+│   ├── page.tsx             # Landing page (marketing)
+│   └── otc/
+│       ├── page.tsx         # Main trading interface
+│       ├── _lib/
+│       │   ├── types.ts     # TypeScript interfaces (Deal, MarketDeal, Offer)
+│       │   ├── constants.ts # Mock data
+│       │   └── format.ts    # Utility functions
+│       ├── _components/     # React components
+│       └── _hooks/
+│           └── useUrlState.ts  # URL-based state management
+├── types/                   # Global type declarations
+└── public/                  # Static assets
+```
+
+### Pages
+
+1. **Landing (`/`)** - Marketing page with hero, how-it-works, security, FAQ sections
+2. **Trading (`/otc`)** - Main app with three-column layout:
+   - Left (440px): `CreateDealForm`, `MakeOfferForm`
+   - Center (flex): Tab navigation + tables (`DealsTable`, `MarketTable`, `OffersTable`) or `DealDetails`
+   - Right (380px): `FAQPanel`
+
+### State Management
+
+Uses **URL-based state** via `useUrlState` hook (no external state library):
+- `?view=market|deals|offers` - Active tab
+- `&deal=<id>` - Selected deal for details view
+
+### Data Types
+
+```typescript
+// User's created deals
+Deal { id, type: "buy"|"sell", pair, amount, price, total, status, isPartial, allowPartial, expiresAt, createdAt, offerCount }
+
+// Other traders' deals (price hidden for privacy)
+MarketDeal { id, type, pair, expiresAt, createdAt, isPartial, size, offerCount }
+
+// User's submitted offers
+Offer { id, pair, side, amount, yourPrice, submittedAt, dealStatus, offerStatus }
+```
+
+**Tokens:** META, ETH, SOL, USDC
+**Pairs:** META/USDC, ETH/USDC, SOL/USDC
+
+### Design System
+
+Dark theme with CSS variables in `globals.css`:
+- `--background` (#0a0a0a) - Page background
+- `--card` (#171717) - Panels/cards
+- `--secondary` (#242424) - Buttons/filters
+- `--primary` (orange) - CTAs/highlights
+- Success: Teal (#009d82) for buy actions
+- Destructive: Muted red for sell actions
+
+### Key Components
+
+| Component | Purpose |
+|-----------|---------|
+| `CreateDealForm` | Form to create OTC deals |
+| `MakeOfferForm` | Form to submit counter-offers |
+| `DealsTable` | User's created deals |
+| `MarketTable` | Open market deals (filterable by pair) |
+| `OffersTable` | User's submitted offers |
+| `DealDetails` | Full deal view with offer context |
+| `TokenDropdown` | Reusable token selector |
+| `TokenIcon` | SVG icons for tokens |
+| `TabNavigation` | Tab switcher with animated underline |
+| `FAQPanel` | Right sidebar FAQ accordion |
+
+### Current Integration Status
+
+- **Mock data only** - All data in `_lib/constants.ts`
+- **No Solana/Arcium integration yet** - Wallet connect is placeholder
+- **"Coming Soon"** - Private Negotiation Chat feature
+
 ## Key Dependencies
 
 - **Anchor** 0.32.1 - Solana framework
 - **Arcium** 0.5.4 - `arcium-anchor`, `arcium-client`, `arcium-macros`
 - **Arcis** 0.5.4 - Encrypted instruction framework
-- **Next.js** 16.1.1 - Frontend (in `frontend/` workspace)
+- **Next.js** 16.1.1 with React 18.3.1 - Frontend (in `frontend/` workspace)
 
 ## Testing
 
