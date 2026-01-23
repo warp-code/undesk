@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react";
 import type { MarketDeal } from "../_lib/types";
-import { getPairFromLabel } from "../_lib/format";
+import { getPairFromLabel, sanitizeNumberInput } from "../_lib/format";
 
 interface MakeOfferFormProps {
   deal: MarketDeal;
@@ -26,13 +26,6 @@ export const MakeOfferForm = ({ deal, onOfferPlaced, onClose }: MakeOfferFormPro
     offerPrice &&
     parseFloat(offerAmount) > 0 &&
     parseFloat(offerPrice) > 0;
-
-  const handleNumberInput = (value: string, setter: (val: string) => void) => {
-    const cleaned = value.replace(/,/g, "");
-    if (cleaned === "" || /^\d*\.?\d*$/.test(cleaned)) {
-      setter(cleaned);
-    }
-  };
 
   const handlePlaceOffer = () => {
     if (!canPlaceOffer) return;
@@ -85,7 +78,10 @@ export const MakeOfferForm = ({ deal, onOfferPlaced, onClose }: MakeOfferFormPro
               type="text"
               inputMode="decimal"
               value={offerAmount}
-              onChange={(e) => handleNumberInput(e.target.value, setOfferAmount)}
+              onChange={(e) => {
+                const sanitized = sanitizeNumberInput(e.target.value);
+                if (sanitized !== null) setOfferAmount(sanitized);
+              }}
               placeholder="0"
               className="flex-1 bg-transparent text-foreground outline-none"
             />
@@ -103,7 +99,10 @@ export const MakeOfferForm = ({ deal, onOfferPlaced, onClose }: MakeOfferFormPro
               type="text"
               inputMode="decimal"
               value={offerPrice}
-              onChange={(e) => handleNumberInput(e.target.value, setOfferPrice)}
+              onChange={(e) => {
+                const sanitized = sanitizeNumberInput(e.target.value);
+                if (sanitized !== null) setOfferPrice(sanitized);
+              }}
               placeholder="0"
               className="flex-1 bg-transparent text-foreground outline-none"
             />

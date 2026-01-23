@@ -1,3 +1,5 @@
+import { sanitizeNumberInput } from "../_lib/format";
+
 interface FormInputProps {
   value: string;
   onChange: (value: string) => void;
@@ -18,9 +20,9 @@ export const FormInput = ({
   children,
 }: FormInputProps) => {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const cleaned = e.target.value.replace(/,/g, "");
-    if (cleaned === "" || /^\d*\.?\d*$/.test(cleaned)) {
-      onChange(cleaned);
+    const sanitized = sanitizeNumberInput(e.target.value);
+    if (sanitized !== null) {
+      onChange(sanitized);
     }
   };
 

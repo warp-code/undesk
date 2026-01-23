@@ -1,5 +1,13 @@
 // Time formatting utilities
 
+export const sanitizeNumberInput = (value: string): string | null => {
+  const cleaned = value.replace(/,/g, "");
+  if (cleaned === "" || /^\d*\.?\d*$/.test(cleaned)) {
+    return cleaned;
+  }
+  return null;
+};
+
 export const formatTimeRemaining = (expiresAt: number): string => {
   if (expiresAt === 0) return "-";
   const diff = expiresAt - Date.now();

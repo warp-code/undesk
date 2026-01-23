@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useMemo, useEffect, useRef } from "react";
-import { TOKENS, type Token, type Deal } from "../_lib/types";
-import { TokenIcon } from "./TokenIcon";
+import { useState, useMemo } from "react";
+import { type Token, type Deal } from "../_lib/types";
+import { sanitizeNumberInput } from "../_lib/format";
+import { TokenDropdown } from "./TokenDropdown";
 
 interface CreateDealFormProps {
   onDealCreated: (deal: Deal) => void;
@@ -17,39 +18,12 @@ export const CreateDealForm = ({ onDealCreated }: CreateDealFormProps) => {
   const [allowPartial, setAllowPartial] = useState(true);
   const [isLocked, setIsLocked] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [sellTokenDropdownOpen, setSellTokenDropdownOpen] = useState(false);
-  const [quoteTokenDropdownOpen, setQuoteTokenDropdownOpen] = useState(false);
-
-  // Refs for click-outside detection
-  const sellDropdownRef = useRef<HTMLDivElement>(null);
-  const quoteDropdownRef = useRef<HTMLDivElement>(null);
-
-  // Close dropdowns when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (sellDropdownRef.current && !sellDropdownRef.current.contains(e.target as Node)) {
-        setSellTokenDropdownOpen(false);
-      }
-      if (quoteDropdownRef.current && !quoteDropdownRef.current.contains(e.target as Node)) {
-        setQuoteTokenDropdownOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
 
   const calculatedTotal = useMemo(() => {
     const amount = parseFloat(sellAmount) || 0;
     const price = parseFloat(pricePerUnit) || 0;
     return amount * price;
   }, [sellAmount, pricePerUnit]);
-
-  const handleNumberInput = (value: string, setter: (val: string) => void) => {
-    const cleaned = value.replace(/,/g, "");
-    if (cleaned === "" || /^\d*\.?\d*$/.test(cleaned)) {
-      setter(cleaned);
-    }
-  };
 
   const canSubmit =
     !isLocked &&
@@ -103,49 +77,20 @@ export const CreateDealForm = ({ onDealCreated }: CreateDealFormProps) => {
               type="text"
               inputMode="decimal"
               value={sellAmount}
-              onChange={(e) => handleNumberInput(e.target.value, setSellAmount)}
+              onChange={(e) => {
+                const sanitized = sanitizeNumberInput(e.target.value);
+                if (sanitized !== null) setSellAmount(sanitized);
+              }}
               placeholder="0"
               disabled={isLocked}
               className="flex-1 bg-transparent text-foreground outline-none"
             />
-            <div className="relative" ref={sellDropdownRef}>
-              <button
-                type="button"
-                onClick={() => {
-                  if (!isLocked) {
-                    setSellTokenDropdownOpen(!sellTokenDropdownOpen);
-                    setQuoteTokenDropdownOpen(false);
-                  }
-                }}
-                disabled={isLocked}
-                className="flex items-center gap-1.5 text-foreground hover:text-primary transition-colors"
-              >
-                <TokenIcon token={sellToken} className="w-4 h-4" />
-                <span>{sellToken}</span>
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                </svg>
-              </button>
-              {sellTokenDropdownOpen && (
-                <div className="absolute right-0 top-full mt-1 bg-card border border-border rounded-md shadow-lg z-10 min-w-[100px]">
-                  {TOKENS.filter(t => t !== quoteToken).map((token) => (
-                    <button
-                      key={token}
-                      onClick={() => {
-                        setSellToken(token);
-                        setSellTokenDropdownOpen(false);
-                      }}
-                      className={`w-full px-3 py-2 text-left text-sm hover:bg-secondary transition-colors flex items-center gap-2 ${
-                        token === sellToken ? "text-primary" : "text-foreground"
-                      }`}
-                    >
-                      <TokenIcon token={token} className="w-4 h-4" />
-                      {token}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
+            <TokenDropdown
+              selected={sellToken}
+              onSelect={setSellToken}
+              exclude={quoteToken}
+              disabled={isLocked}
+            />
           </div>
         </div>
 
@@ -159,49 +104,20 @@ export const CreateDealForm = ({ onDealCreated }: CreateDealFormProps) => {
               type="text"
               inputMode="decimal"
               value={pricePerUnit}
-              onChange={(e) => handleNumberInput(e.target.value, setPricePerUnit)}
+              onChange={(e) => {
+                const sanitized = sanitizeNumberInput(e.target.value);
+                if (sanitized !== null) setPricePerUnit(sanitized);
+              }}
               placeholder="0"
               disabled={isLocked}
               className="flex-1 bg-transparent text-foreground outline-none"
             />
-            <div className="relative" ref={quoteDropdownRef}>
-              <button
-                type="button"
-                onClick={() => {
-                  if (!isLocked) {
-                    setQuoteTokenDropdownOpen(!quoteTokenDropdownOpen);
-                    setSellTokenDropdownOpen(false);
-                  }
-                }}
-                disabled={isLocked}
-                className="flex items-center gap-1.5 text-foreground hover:text-primary transition-colors"
-              >
-                <TokenIcon token={quoteToken} className="w-4 h-4" />
-                <span>{quoteToken}</span>
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                </svg>
-              </button>
-              {quoteTokenDropdownOpen && (
-                <div className="absolute right-0 top-full mt-1 bg-card border border-border rounded-md shadow-lg z-10 min-w-[100px]">
-                  {TOKENS.filter(t => t !== sellToken).map((token) => (
-                    <button
-                      key={token}
-                      onClick={() => {
-                        setQuoteToken(token);
-                        setQuoteTokenDropdownOpen(false);
-                      }}
-                      className={`w-full px-3 py-2 text-left text-sm hover:bg-secondary transition-colors flex items-center gap-2 ${
-                        token === quoteToken ? "text-primary" : "text-foreground"
-                      }`}
-                    >
-                      <TokenIcon token={token} className="w-4 h-4" />
-                      {token}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
+            <TokenDropdown
+              selected={quoteToken}
+              onSelect={setQuoteToken}
+              exclude={sellToken}
+              disabled={isLocked}
+            />
           </div>
         </div>
 
@@ -215,7 +131,10 @@ export const CreateDealForm = ({ onDealCreated }: CreateDealFormProps) => {
               type="text"
               inputMode="decimal"
               value={expiresIn}
-              onChange={(e) => handleNumberInput(e.target.value, setExpiresIn)}
+              onChange={(e) => {
+                const sanitized = sanitizeNumberInput(e.target.value);
+                if (sanitized !== null) setExpiresIn(sanitized);
+              }}
               placeholder="24"
               disabled={isLocked}
               className="flex-1 bg-transparent text-foreground outline-none"
