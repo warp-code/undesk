@@ -309,7 +309,7 @@ export default function HomePage() {
       </nav>
 
       {/* Hero Section */}
-      <section className="relative min-h-[70vh] flex flex-col justify-center overflow-hidden">
+      <section className="relative min-h-[65vh] flex flex-col justify-center overflow-hidden">
         {/* Background Pattern */}
         <BackgroundPattern
           activeLines={activeLines}
