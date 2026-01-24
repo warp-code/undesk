@@ -296,21 +296,21 @@ export default function HomePage() {
         />
 
         {/* Hero Content - positioned left on larger screens */}
-        <div className="relative z-10 max-w-2xl text-center lg:text-left lg:mr-auto lg:ml-[10%] space-y-8">
-          <h1 className="text-5xl font-bold text-foreground">
+        <div className="relative z-10 max-w-2xl text-center lg:text-left lg:mr-auto lg:ml-[10%] space-y-6">
+          <h1 className="text-4xl font-bold text-foreground">
             Private OTC Trading
           </h1>
-          <p className="text-lg text-muted-foreground leading-relaxed">
+          <p className="text-base text-muted-foreground leading-relaxed">
             Execute large trades with complete privacy. No slippage, no
             front-running, no information leakage.
           </p>
-          <div className="pt-6">
+          <div className="pt-2">
             <Link
               href="/otc"
-              className="btn-primary-glow text-primary-foreground px-5 py-2.5 rounded-lg font-medium text-base inline-flex items-center gap-2 group"
+              className="btn-primary-glow text-primary-foreground px-4 py-2 rounded-lg font-medium text-sm inline-flex items-center gap-2 group"
             >
               Start Trading
-              <span className="text-lg transition-transform duration-200 group-hover:translate-x-1">
+              <span className="text-base transition-transform duration-200 group-hover:translate-x-1">
                 →
               </span>
             </Link>
