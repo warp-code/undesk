@@ -284,9 +284,9 @@ export default function HomePage() {
           {/* CTA Button */}
           <Link
             href="/otc"
-            className="btn-primary-glow text-primary-foreground px-5 py-2 rounded-lg font-medium text-sm"
+            className="bg-secondary border border-border hover:bg-muted text-foreground px-5 py-2 rounded-lg font-medium text-sm transition-colors"
           >
-            Open app →
+            Launch App
           </Link>
         </div>
       </nav>
