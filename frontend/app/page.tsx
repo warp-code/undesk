@@ -173,11 +173,7 @@ function FAQItem({ question, answer }: { question: string; answer: string }) {
         onClick={() => setIsOpen(!isOpen)}
         className="w-full px-8 py-6 flex items-center justify-between text-left"
       >
-        <span
-          className={`font-medium transition-colors duration-200 ${
-            isOpen ? "text-primary" : "text-foreground"
-          }`}
-        >
+        <span className="font-medium text-foreground">
           {question}
         </span>
         <svg
@@ -197,7 +193,7 @@ function FAQItem({ question, answer }: { question: string; answer: string }) {
         className="overflow-hidden transition-all duration-300 ease-out"
         style={{ maxHeight: isOpen ? contentHeight : 0 }}
       >
-        <div className="px-8 pb-6 text-muted-foreground">{answer}</div>
+        <div className="px-8 pb-6 text-muted-foreground text-sm">{answer}</div>
       </div>
     </div>
   );
@@ -304,14 +300,14 @@ export default function HomePage() {
           <h1 className="text-5xl font-bold text-foreground">
             Private OTC Trading
           </h1>
-          <p className="text-xl text-muted-foreground leading-relaxed">
+          <p className="text-lg text-muted-foreground leading-relaxed">
             Execute large trades with complete privacy. No slippage, no
             front-running, no information leakage.
           </p>
           <div className="pt-6">
             <Link
               href="/otc"
-              className="btn-primary-glow text-primary-foreground px-6 py-3 rounded-lg font-medium inline-flex items-center gap-2 group"
+              className="btn-primary-glow text-primary-foreground px-5 py-2.5 rounded-lg font-medium text-base inline-flex items-center gap-2 group"
             >
               Start Trading
               <span className="text-lg transition-transform duration-200 group-hover:translate-x-1">
@@ -323,7 +319,7 @@ export default function HomePage() {
       </section>
 
       {/* How it works Section */}
-      <section id="how-it-works" className="py-32 px-6">
+      <section id="how-it-works" className="py-20 px-6">
         <div className="max-w-6xl mx-auto">
           <h2 className="text-3xl font-bold text-foreground text-center mb-20">
             Why Veil OTC?
@@ -374,7 +370,7 @@ export default function HomePage() {
       </section>
 
       {/* Security Section */}
-      <section id="security" className="py-32 px-6 border-t border-border">
+      <section id="security" className="py-32 px-6 bg-card">
         <div className="max-w-6xl mx-auto">
           <h2 className="text-3xl font-bold text-foreground text-center mb-6">
             Built for Security
@@ -393,7 +389,7 @@ export default function HomePage() {
               <h3 className="font-semibold text-foreground mb-2">
                 MPC Protected
               </h3>
-              <p className="text-sm text-muted-foreground leading-relaxed">
+              <p className="text-muted-foreground leading-relaxed">
                 Multi-party computation ensures no single point of failure
               </p>
             </div>
@@ -406,7 +402,7 @@ export default function HomePage() {
               <h3 className="font-semibold text-foreground mb-2">
                 End-to-End Encrypted
               </h3>
-              <p className="text-sm text-muted-foreground leading-relaxed">
+              <p className="text-muted-foreground leading-relaxed">
                 Data encrypted from submission to settlement
               </p>
             </div>
@@ -419,7 +415,7 @@ export default function HomePage() {
               <h3 className="font-semibold text-foreground mb-2">
                 Open Source
               </h3>
-              <p className="text-sm text-muted-foreground leading-relaxed">
+              <p className="text-muted-foreground leading-relaxed">
                 Fully auditable contracts on Solana
               </p>
             </div>
@@ -432,7 +428,7 @@ export default function HomePage() {
               <h3 className="font-semibold text-foreground mb-2">
                 Non-Custodial
               </h3>
-              <p className="text-sm text-muted-foreground leading-relaxed">
+              <p className="text-muted-foreground leading-relaxed">
                 You control your assets at all times
               </p>
             </div>
@@ -441,7 +437,7 @@ export default function HomePage() {
       </section>
 
       {/* FAQ Section */}
-      <section id="faq" className="py-32 px-6 border-t border-border">
+      <section id="faq" className="py-32 px-6">
         <div className="max-w-3xl mx-auto">
           <h2 className="text-3xl font-bold text-foreground text-center mb-6">
             FAQ
@@ -532,26 +528,11 @@ export default function HomePage() {
               </ul>
             </div>
 
-            {/* Social Links */}
-            <div>
-              <h4 className="font-semibold text-foreground mb-6">Community</h4>
-              <ul className="space-y-3 text-sm text-muted-foreground">
-                <li>
-                  <a
-                    href="#"
-                    className="hover:text-foreground transition-colors"
-                  >
-                    Twitter
-                  </a>
-                </li>
-              </ul>
-            </div>
           </div>
 
           {/* Bottom bar */}
-          <div className="pt-12 border-t border-border flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-muted-foreground">
-            <p>© 2025 Veil OTC. All rights reserved.</p>
-            <p>Built on Solana • Powered by Arcium</p>
+          <div className="pt-12 border-t border-border text-sm text-muted-foreground">
+            <p>© 2025 Veil OTC</p>
           </div>
         </div>
       </footer>
