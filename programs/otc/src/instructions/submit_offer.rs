@@ -130,6 +130,7 @@ pub fn callback_handler(
         deal: deal.key(),
         offer: offer.key(),
         offer_index: offer.offer_index,
+        submitted_at: offer.submitted_at,
         encryption_key: shared_blob.encryption_key,
         nonce: shared_blob.nonce.to_le_bytes(),
         ciphertexts: shared_blob.ciphertexts,

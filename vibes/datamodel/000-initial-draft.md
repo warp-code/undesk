@@ -119,7 +119,7 @@ pub const FAILED: u8 = 2;
 | `deal` | `Pubkey` | No | Deal PDA address |
 | `base_mint` | `Pubkey` | No | Token being sold |
 | `quote_mint` | `Pubkey` | No | Token received |
-| `created_at` | `i64` | No | Creation timestamp *(to be added)* |
+| `created_at` | `i64` | No | Creation timestamp |
 | `expires_at` | `i64` | No | Expiration timestamp |
 | `allow_partial` | `bool` | No | Allow partial fills |
 | `encryption_key` | `[u8; 32]` | No | Creator's x25519 pubkey (echoed) |
@@ -133,7 +133,7 @@ pub const FAILED: u8 = 2;
 | `deal` | `Pubkey` | No | Parent deal address |
 | `offer` | `Pubkey` | No | Offer PDA address |
 | `offer_index` | `u32` | No | FIFO sequence number |
-| `submitted_at` | `i64` | No | Submission timestamp *(to be added)* |
+| `submitted_at` | `i64` | No | Submission timestamp |
 | `encryption_key` | `[u8; 32]` | No | Offeror's x25519 pubkey |
 | `nonce` | `[u8; 16]` | - | Encryption nonce |
 | `ciphertexts` | `[[u8; 32]; 2]` | Yes | price (u128), amount (u64) |
@@ -491,19 +491,18 @@ const { data } = await supabase
 
 Can denormalize later if performance becomes an issue.
 
-### 5. Timestamp Fields in Events - ✅ RESOLVED
+### 5. Timestamp Fields in Events - ✅ RESOLVED (Implemented)
 
-`DealAccount.created_at` and `OfferAccount.submitted_at` are set at callback time but not included in events.
+`DealAccount.created_at` and `OfferAccount.submitted_at` are set at callback time and now included in events.
 
-**Decision:** Add timestamp fields to both creation events for parity:
+**Implementation complete:**
+- `DealCreated`: Added `created_at: i64`
+- `OfferCreated`: Added `submitted_at: i64`
 
-- `DealCreated`: Add `created_at: i64`
-- `OfferCreated`: Add `submitted_at: i64`
-
-Requires program changes in:
-- `programs/otc/src/events.rs` - Add fields to both event structs
-- `programs/otc/src/instructions/create_deal_callback.rs` - Emit `created_at`
-- `programs/otc/src/instructions/submit_offer_callback.rs` - Emit `submitted_at`
+Changed files:
+- `programs/otc/src/events.rs` - Added fields to both event structs
+- `programs/otc/src/instructions/create_deal.rs` - Emits `created_at`
+- `programs/otc/src/instructions/submit_offer.rs` - Emits `submitted_at`
 
 ### 6. Bytes Encoding Format - ✅ RESOLVED
 
@@ -609,7 +608,7 @@ enum OfferStatus {
 
 All open questions resolved. Ready to proceed:
 
-1. **Program changes:** Add `created_at` to `DealCreated` and `submitted_at` to `OfferCreated` events
+1. ~~**Program changes:** Add `created_at` to `DealCreated` and `submitted_at` to `OfferCreated` events~~ ✅
 2. **Supabase setup:** Create project and apply schema from Section 3
 3. **Generate types:** `supabase gen types typescript`
 4. **Frontend tasks:** Remove buy/sell, add token registry (see `vibes/today.md`)

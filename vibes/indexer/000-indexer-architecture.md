@@ -22,6 +22,7 @@ base_mint: Pubkey
 quote_mint: Pubkey
 expires_at: i64
 allow_partial: bool
+created_at: i64
 encryption_key: [u8; 32]  // creator's x25519 pubkey (echoed back)
 nonce: [u8; 16]
 ciphertexts: [[u8; 32]; 2]  // encrypted: amount (u64), price (u128 X64.64)
@@ -32,6 +33,7 @@ ciphertexts: [[u8; 32]; 2]  // encrypted: amount (u64), price (u128 X64.64)
 deal: Pubkey
 offer: Pubkey
 offer_index: u32
+submitted_at: i64
 encryption_key: [u8; 32]  // offeror's x25519 pubkey
 nonce: [u8; 16]
 ciphertexts: [[u8; 32]; 2]  // encrypted: price (u128), amount (u64)

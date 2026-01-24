@@ -103,6 +103,7 @@ pub fn callback_handler(
         quote_mint: deal.quote_mint,
         expires_at: deal.expires_at,
         allow_partial: deal.allow_partial,
+        created_at: deal.created_at,
         encryption_key: shared_blob.encryption_key,
         nonce: shared_blob.nonce.to_le_bytes(),
         ciphertexts: shared_blob.ciphertexts,

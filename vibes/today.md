@@ -16,29 +16,13 @@
 
 ## Quick Tasks
 
-### Remove buy/sell concept from frontend
+### ~~Remove buy/sell concept from frontend~~ ✅
 
-The OTC model only has base/quote (base is offered, quote is payment). Remove all `type: 'buy' | 'sell'` references from:
-- `frontend/app/otc/_lib/types.ts` - Deal, MarketDeal, Offer interfaces
-- `frontend/app/otc/_lib/constants.ts` - Mock data
-- `frontend/app/otc/_components/*` - Any UI showing buy/sell badges/labels
-- `vibes/frontend/004-*` - Update integration plans
+Done. Removed all `type: 'buy' | 'sell'` and `side` references. Renamed `MarketDeal.isPartial` → `allowPartial`. Changed `offerStatus: 'passed'` → `'executed'`.
 
-Also:
-- Rename `MarketDeal.isPartial` → `allowPartial` (clarity)
-- Change `Offer.offerStatus: 'passed'` → `'executed'` (match OfferOutcome enum)
+### ~~Add timestamps to creation events~~ ✅
 
-### Add timestamps to creation events
-
-For indexer parity with on-chain data, add timestamp fields to events:
-
-**DealCreated:**
-- `programs/otc/src/events.rs` - Add `created_at: i64` field
-- `programs/otc/src/instructions/create_deal_callback.rs` - Emit the timestamp
-
-**OfferCreated:**
-- `programs/otc/src/events.rs` - Add `submitted_at: i64` field
-- `programs/otc/src/instructions/submit_offer_callback.rs` - Emit the timestamp
+Done. Added `created_at: i64` to `DealCreated` and `submitted_at: i64` to `OfferCreated` events. Timestamps are emitted from the callback handlers.
 
 ---
 
@@ -57,17 +41,13 @@ Create a token registry and derive display strings from mints:
 
 ## Next Tasks
 
-### 1. Fix Crank Encryption Validation (Small)
+### ~~1. Fix Crank Encryption Validation~~ ✅
 
-**Files:** `crank_deal.rs`, `crank_offer.rs`, `error.rs`
-
-Add validation that `creator_encryption_pubkey == deal.encryption_pubkey` (and same for offers). Prevents malicious crankers from encrypting settlements to wrong keys.
-
-See: `vibes/program/execution/002_validate-crank-encryption-pubkey.md`
+Done. Solved via design change: encryption pubkey is now read directly from account (`ctx.accounts.deal.encryption_pubkey`) instead of being passed as a parameter. No validation needed.
 
 ---
 
-### 2. Define Complete Data Model ✅
+### ~~2. Define Complete Data Model~~ ✅
 
 **Output:** `vibes/datamodel/000-initial-draft.md`
 
@@ -140,13 +120,11 @@ Architecture: `vibes/cranker/000-cranker-architecture.md`
 ## Dependency Graph
 
 ```
-1. Fix crank validation
+1. Fix crank validation ✅
+2. Define data model ✅
         │
         ▼
-2. Define data model  ◄── Foundation for everything below
-        │
-        ▼
-3. Supabase setup
+3. Supabase setup  ◄── You are here
         │
         ▼
 4. Indexer
@@ -161,9 +139,8 @@ Architecture: `vibes/cranker/000-cranker-architecture.md`
 
 ## Quick Links
 
-- **Data model: `vibes/datamodel/000-initial-draft.md`** ← NEW
+- **Data model: `vibes/datamodel/000-initial-draft.md`**
 - Instruction plan: `vibes/program/execution/001_instruction-plan.md`
 - Frontend integration: `vibes/frontend/004-solana-anchor-integration-plan.md`
 - Indexer architecture: `vibes/indexer/000-indexer-architecture.md`
 - Cranker architecture: `vibes/cranker/000-cranker-architecture.md`
-- Crank validation fix: `vibes/program/execution/002_validate-crank-encryption-pubkey.md`

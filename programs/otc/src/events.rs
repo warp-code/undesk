@@ -11,6 +11,7 @@ pub struct DealCreated {
     pub quote_mint: Pubkey,
     pub expires_at: i64,
     pub allow_partial: bool,
+    pub created_at: i64,
 
     // Encrypted blob (decryptable by creator)
     /// The x25519 public key used for encryption (echoed back)
@@ -29,6 +30,7 @@ pub struct OfferCreated {
     pub deal: Pubkey,
     pub offer: Pubkey,
     pub offer_index: u32,
+    pub submitted_at: i64,
 
     // Encrypted blob (decryptable by offeror)
     /// The x25519 public key used for encryption (echoed back)
