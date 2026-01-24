@@ -12,7 +12,7 @@ export type {
   RawEventInsert,
   DealStatus,
   OfferStatus,
-} from "./types"
+} from "./types";
 
 // Client
 export {
@@ -20,4 +20,4 @@ export {
   createServiceClient,
   type TypedSupabaseClient,
   type SupabaseConfig,
-} from "./client"
+} from "./client";
