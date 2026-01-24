@@ -38,10 +38,12 @@ const faqs = [
 
 interface LineData {
   x: number;
-  y1: number;
-  y2: number;
+  yStart: number;
+  yEnd: number;
   weight: "thin" | "medium" | "thick";
+  opacity: number;
   isAccent: boolean;
+  accentColor: string;
 }
 
 function BackgroundPattern({
@@ -53,25 +55,50 @@ function BackgroundPattern({
 }) {
   const tierLines = useMemo(() => {
     const tiers: LineData[][] = [[], [], []];
+
     const tierConfigs = [
-      { yStart: 18, yEnd: 32, xOffset: 0, spacing: 1.5 },
-      { yStart: 34, yEnd: 48, xOffset: 0.75, spacing: 1.65 },
-      { yStart: 50, yEnd: 64, xOffset: 1.5, spacing: 1.35 },
+      { yStart: 18, yEnd: 32, spacing: 6, offset: 0 },
+      { yStart: 34, yEnd: 48, spacing: 6.5, offset: 3 },
+      { yStart: 50, yEnd: 64, spacing: 5.5, offset: 6 },
     ];
 
+    // Use a fixed width for calculations (will scale with viewBox)
+    const width = 1200;
+
     tierConfigs.forEach((config, tierIdx) => {
-      for (let x = 48; x <= 100; x += config.spacing) {
+      const lineCount = Math.floor(width / config.spacing);
+
+      for (let i = 0; i < lineCount; i++) {
+        const x = config.offset + i * config.spacing;
+        const xPercent = x / width;
+
+        // Text safe zone: skip lines in left 48%
+        if (xPercent < 0.48) continue;
+
+        // Calculate opacity for transition zone (48-58%)
+        let opacity = 1;
+        if (xPercent < 0.58) {
+          opacity = (xPercent - 0.48) / 0.1;
+        }
+
+        // Random weight distribution: 60% thin, 30% medium, 10% thick
         const rand = Math.random();
-        const weight =
-          rand < 0.6 ? "thin" : rand < 0.9 ? "medium" : "thick";
-        const isAccent = Math.random() < 0.03;
+        let weight: "thin" | "medium" | "thick" = "thin";
+        if (rand > 0.9) weight = "thick";
+        else if (rand > 0.6) weight = "medium";
+
+        // Accent lines (8% chance) - purple or orange
+        const isAccent = Math.random() > 0.92;
+        const accentColor = Math.random() > 0.5 ? "#a78bfa" : "#f97316";
 
         tiers[tierIdx].push({
-          x: x + config.xOffset,
-          y1: config.yStart,
-          y2: config.yEnd,
+          x,
+          yStart: config.yStart,
+          yEnd: config.yEnd,
           weight,
+          opacity,
           isAccent,
+          accentColor,
         });
       }
     });
@@ -81,21 +108,28 @@ function BackgroundPattern({
   const getLineKey = (tierIdx: number, lineIdx: number) =>
     `${tierIdx}-${lineIdx}`;
 
-  const getOpacity = (x: number) => {
-    if (x < 48) return 0;
-    if (x < 58) return (x - 48) / 10;
-    return 1;
+  // 1.5x stroke widths from v12 spec
+  const getStrokeWidth = (
+    line: { weight: string; isAccent: boolean },
+    isActive: boolean
+  ) => {
+    if (isActive) return 1.8;
+    if (line.isAccent) return 0.75;
+    if (line.weight === "thick") return 0.6;
+    if (line.weight === "medium") return 0.42;
+    return 0.22;
   };
 
   return (
     <svg
       className="absolute inset-0 w-full h-full"
-      preserveAspectRatio="none"
+      viewBox="0 0 1200 600"
+      preserveAspectRatio="xMidYMid slice"
       style={{ pointerEvents: "none" }}
     >
       <defs>
         <filter id="pingGlow" x="-200%" y="-200%" width="500%" height="500%">
-          <feGaussianBlur stdDeviation="2" result="blur" />
+          <feGaussianBlur stdDeviation="3" result="blur" />
           <feMerge>
             <feMergeNode in="blur" />
             <feMergeNode in="blur" />
@@ -109,37 +143,24 @@ function BackgroundPattern({
         tier.map((line, lineIdx) => {
           const key = getLineKey(tierIdx, lineIdx);
           const isActive = activeLines.has(key);
-          const opacity = getOpacity(line.x);
 
-          if (opacity === 0) return null;
-
-          const baseOpacity = opacity * 0.4;
-          let strokeColor = `rgba(255,255,255,${baseOpacity})`;
+          let strokeColor = `rgba(255,255,255,${line.opacity * 0.7})`;
           if (isActive) {
             strokeColor = "#f97316";
           } else if (line.isAccent) {
-            strokeColor = `rgba(249,115,22,${opacity * 0.6})`;
+            strokeColor = line.accentColor;
           }
-
-          const strokeWidth = isActive
-            ? 1.2
-            : line.isAccent
-              ? 0.5
-              : line.weight === "thick"
-                ? 0.4
-                : line.weight === "medium"
-                  ? 0.28
-                  : 0.15;
 
           return (
             <line
               key={key}
-              x1={`${line.x}%`}
-              y1={`${line.y1}%`}
-              x2={`${line.x}%`}
-              y2={`${line.y2}%`}
+              x1={line.x}
+              y1={`${line.yStart}%`}
+              x2={line.x}
+              y2={`${line.yEnd}%`}
               stroke={strokeColor}
-              strokeWidth={strokeWidth}
+              strokeWidth={getStrokeWidth(line, isActive)}
+              strokeLinecap="round"
               filter={isActive ? "url(#pingGlow)" : "none"}
               style={{
                 transition:
