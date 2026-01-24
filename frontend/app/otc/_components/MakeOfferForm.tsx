@@ -2,7 +2,8 @@
 
 import { useState, useMemo } from "react";
 import type { MarketDeal } from "../_lib/types";
-import { getPairFromLabel, sanitizeNumberInput } from "../_lib/format";
+import { sanitizeNumberInput } from "../_lib/format";
+import { getTokenSymbol } from "../_lib/tokens";
 
 interface MakeOfferFormProps {
   deal: MarketDeal;
@@ -10,7 +11,11 @@ interface MakeOfferFormProps {
   onClose: () => void;
 }
 
-export const MakeOfferForm = ({ deal, onOfferPlaced, onClose }: MakeOfferFormProps) => {
+export const MakeOfferForm = ({
+  deal,
+  onOfferPlaced,
+  onClose,
+}: MakeOfferFormProps) => {
   const [offerAmount, setOfferAmount] = useState("");
   const [offerPrice, setOfferPrice] = useState("");
   const [isOfferLoading, setIsOfferLoading] = useState(false);
@@ -37,7 +42,8 @@ export const MakeOfferForm = ({ deal, onOfferPlaced, onClose }: MakeOfferFormPro
     }, 1000);
   };
 
-  const { base, quote } = getPairFromLabel(deal.pair);
+  const base = getTokenSymbol(deal.baseMint);
+  const quote = getTokenSymbol(deal.quoteMint);
 
   return (
     <>
@@ -48,8 +54,18 @@ export const MakeOfferForm = ({ deal, onOfferPlaced, onClose }: MakeOfferFormPro
           className="text-muted-foreground hover:text-foreground transition-colors p-1"
           aria-label="Close"
         >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          <svg
+            className="w-5 h-5"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M6 18L18 6M6 6l12 12"
+            />
           </svg>
         </button>
       </div>
@@ -112,7 +128,11 @@ export const MakeOfferForm = ({ deal, onOfferPlaced, onClose }: MakeOfferFormPro
             Total
           </label>
           <div className="bg-input rounded-md px-3 py-2 flex justify-between border border-transparent hover:border-border transition-colors">
-            <span className={offerTotal > 0 ? "text-foreground" : "text-muted-foreground"}>
+            <span
+              className={
+                offerTotal > 0 ? "text-foreground" : "text-muted-foreground"
+              }
+            >
               {offerTotal > 0 ? offerTotal.toLocaleString() : "—"}
             </span>
             <span className="text-muted-foreground">{quote}</span>
@@ -121,7 +141,8 @@ export const MakeOfferForm = ({ deal, onOfferPlaced, onClose }: MakeOfferFormPro
 
         {/* Helper text */}
         <p className="text-muted-foreground/70 text-sm">
-          Your price is private. If it meets the creator&apos;s threshold, your offer will pass.
+          Your price is private. If it meets the creator&apos;s threshold, your
+          offer will pass.
         </p>
 
         {/* Place Offer Button */}
@@ -135,9 +156,25 @@ export const MakeOfferForm = ({ deal, onOfferPlaced, onClose }: MakeOfferFormPro
           }`}
         >
           {isOfferLoading && (
-            <svg className="animate-spin h-4 w-4 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+            <svg
+              className="animate-spin h-4 w-4 mr-2"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+            >
+              <circle
+                className="opacity-25"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                strokeWidth="4"
+              />
+              <path
+                className="opacity-75"
+                fill="currentColor"
+                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+              />
             </svg>
           )}
           Place Offer

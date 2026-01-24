@@ -1,20 +1,13 @@
-// Token types
+// Token types (symbols for UI dropdowns)
 export const TOKENS = ["META", "ETH", "SOL", "USDC"] as const;
 export type Token = (typeof TOKENS)[number];
-
-export const PAIRS = [
-  { base: "META", quote: "USDC", label: "META/USDC" },
-  { base: "ETH", quote: "USDC", label: "ETH/USDC" },
-  { base: "SOL", quote: "USDC", label: "SOL/USDC" },
-] as const;
-
-export type Pair = (typeof PAIRS)[number];
 
 // Your Deals - deals created by user
 // Deal creator always offers BASE in exchange for QUOTE
 export interface Deal {
   id: string;
-  pair: string;
+  baseMint: string;
+  quoteMint: string;
   amount: number;
   price: number;
   total: number;
@@ -30,7 +23,8 @@ export interface Deal {
 // Deal creator always offers BASE in exchange for QUOTE
 export interface MarketDeal {
   id: string;
-  pair: string;
+  baseMint: string;
+  quoteMint: string;
   expiresAt: number;
   createdAt: number;
   allowPartial: boolean;
@@ -43,7 +37,8 @@ export interface MarketDeal {
 // When making an offer, you send QUOTE and receive BASE
 export interface Offer {
   id: string;
-  pair: string;
+  baseMint: string;
+  quoteMint: string;
   amount: number;
   yourPrice: number;
   submittedAt: string;

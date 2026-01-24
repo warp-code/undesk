@@ -32,10 +32,3 @@ export const getTimeProgress = (
   if (remaining <= 0 || totalDuration <= 0) return 0;
   return Math.min(100, Math.max(0, (remaining / totalDuration) * 100));
 };
-
-export const getPairFromLabel = (
-  label: string
-): { base: string; quote: string } => {
-  const [base, quote] = label.split("/");
-  return { base, quote };
-};

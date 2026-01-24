@@ -1,5 +1,6 @@
 import type { MarketDeal } from "../_lib/types";
 import { formatTimeRemaining, isUrgent } from "../_lib/format";
+import { getTokenSymbol } from "../_lib/tokens";
 
 interface MarketTableProps {
   deals: MarketDeal[];
@@ -42,7 +43,9 @@ export const MarketTable = ({
         <table className="w-full">
           <thead>
             <tr className="text-muted-foreground text-sm border-b border-border">
-              <th className="text-left py-3 font-medium">Selling (you receive)</th>
+              <th className="text-left py-3 font-medium">
+                Selling (you receive)
+              </th>
               <th className="text-left py-3 font-medium">Buying (you send)</th>
               <th className="text-left py-3 font-medium">Status</th>
               <th className="text-center py-3 font-medium">Expires</th>
@@ -50,7 +53,8 @@ export const MarketTable = ({
           </thead>
           <tbody>
             {filteredDeals.map((deal) => {
-              const [base, quote] = deal.pair.split("/");
+              const base = getTokenSymbol(deal.baseMint);
+              const quote = getTokenSymbol(deal.quoteMint);
               // Deal creator offers BASE in exchange for QUOTE
 
               return (
@@ -63,13 +67,22 @@ export const MarketTable = ({
                   <td className="py-3 text-foreground">{quote}</td>
                   <td className="py-3 text-left">
                     {deal.offerCount != null && deal.offerCount > 0 ? (
-                      <span className="text-foreground">{deal.offerCount} {deal.offerCount === 1 ? "offer" : "offers"}</span>
+                      <span className="text-foreground">
+                        {deal.offerCount}{" "}
+                        {deal.offerCount === 1 ? "offer" : "offers"}
+                      </span>
                     ) : (
                       <span className="text-muted-foreground">Open</span>
                     )}
                   </td>
                   <td className="py-3 text-center">
-                    <span className={isUrgent(deal.expiresAt) ? "text-yellow-400" : "text-muted-foreground"}>
+                    <span
+                      className={
+                        isUrgent(deal.expiresAt)
+                          ? "text-yellow-400"
+                          : "text-muted-foreground"
+                      }
+                    >
                       {formatTimeRemaining(deal.expiresAt)}
                     </span>
                   </td>

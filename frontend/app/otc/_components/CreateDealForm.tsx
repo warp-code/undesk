@@ -3,6 +3,7 @@
 import { useState, useMemo } from "react";
 import { type Token, type Deal } from "../_lib/types";
 import { sanitizeNumberInput } from "../_lib/format";
+import { getMintFromSymbol } from "../_lib/tokens";
 import { TokenDropdown } from "./TokenDropdown";
 
 interface CreateDealFormProps {
@@ -44,7 +45,8 @@ export const CreateDealForm = ({ onDealCreated }: CreateDealFormProps) => {
       setIsLoading(false);
       const newDeal: Deal = {
         id: crypto.randomUUID().slice(0, 8),
-        pair: `${sellToken}/${quoteToken}`,
+        baseMint: getMintFromSymbol(sellToken)!,
+        quoteMint: getMintFromSymbol(quoteToken)!,
         amount: parseFloat(sellAmount),
         price: parseFloat(pricePerUnit),
         total: calculatedTotal,
@@ -159,15 +161,25 @@ export const CreateDealForm = ({ onDealCreated }: CreateDealFormProps) => {
               viewBox="0 0 24 24"
               strokeWidth={3}
             >
-              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M5 13l4 4L19 7"
+              />
             </svg>
           </div>
-          <span className="text-muted-foreground text-sm">Allow partial fill at expiry</span>
+          <span className="text-muted-foreground text-sm">
+            Allow partial fill at expiry
+          </span>
         </label>
 
         <p className="text-muted-foreground/70 text-sm">
           Market makers will respond with private quotes. Trades auto-execute
-          when fully filled{allowPartial ? " or partial fills execute at expiry" : " with private viable quotes"}.
+          when fully filled
+          {allowPartial
+            ? " or partial fills execute at expiry"
+            : " with private viable quotes"}
+          .
         </p>
 
         {/* You receive (read-only) */}
@@ -176,7 +188,13 @@ export const CreateDealForm = ({ onDealCreated }: CreateDealFormProps) => {
             You receive
           </label>
           <div className="bg-input/50 rounded-md px-3 py-2 flex justify-between items-center border border-transparent">
-            <span className={calculatedTotal > 0 ? "text-foreground" : "text-muted-foreground"}>
+            <span
+              className={
+                calculatedTotal > 0
+                  ? "text-foreground"
+                  : "text-muted-foreground"
+              }
+            >
               {calculatedTotal > 0 ? calculatedTotal.toLocaleString() : "—"}
             </span>
             <span className="text-muted-foreground">{quoteToken}</span>
@@ -193,9 +211,25 @@ export const CreateDealForm = ({ onDealCreated }: CreateDealFormProps) => {
           }`}
         >
           {isLoading && (
-            <svg className="animate-spin h-4 w-4 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+            <svg
+              className="animate-spin h-4 w-4 mr-2"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+            >
+              <circle
+                className="opacity-25"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                strokeWidth="4"
+              />
+              <path
+                className="opacity-75"
+                fill="currentColor"
+                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+              />
             </svg>
           )}
           Create Deal

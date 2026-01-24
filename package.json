@@ -5,8 +5,8 @@
     "frontend"
   ],
   "scripts": {
-    "lint:fix": "prettier */*.js \"*/**/*{.js,.ts}\" -w",
-    "lint": "prettier */*.js \"*/**/*{.js,.ts}\" --check",
+    "lint:fix": "prettier */*.js \"*/**/*{.js,.ts,.tsx}\" --ignore-path .prettierignore -w",
+    "lint": "prettier */*.js \"*/**/*{.js,.ts,.tsx}\" --ignore-path .prettierignore --check",
     "dev": "yarn workspace frontend dev"
   },
   "dependencies": {

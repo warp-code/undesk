@@ -1,10 +1,19 @@
 import type { Deal, MarketDeal, Offer } from "./types";
 
+// Mint addresses for mock data
+const MINTS = {
+  META: "META111111111111111111111111111111111111111",
+  ETH: "7vfCXTUXx5WJV5JADk17DUJ4ksgau7utNKj4b963voxs",
+  SOL: "So11111111111111111111111111111111111111112",
+  USDC: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+} as const;
+
 // Mock data
 export const MOCK_DEALS: Deal[] = [
   {
     id: "d1",
-    pair: "META/USDC",
+    baseMint: MINTS.META,
+    quoteMint: MINTS.USDC,
     amount: 4444,
     price: 444,
     total: 1973136,
@@ -17,7 +26,8 @@ export const MOCK_DEALS: Deal[] = [
   },
   {
     id: "d2",
-    pair: "ETH/USDC",
+    baseMint: MINTS.ETH,
+    quoteMint: MINTS.USDC,
     amount: 10,
     price: 3200,
     total: 32000,
@@ -30,7 +40,8 @@ export const MOCK_DEALS: Deal[] = [
   },
   {
     id: "d3",
-    pair: "META/USDC",
+    baseMint: MINTS.META,
+    quoteMint: MINTS.USDC,
     amount: 1000,
     price: 450,
     total: 450000,
@@ -46,7 +57,8 @@ export const MOCK_DEALS: Deal[] = [
 export const MOCK_MARKET_DEALS: MarketDeal[] = [
   {
     id: "mkt001",
-    pair: "META/USDC",
+    baseMint: MINTS.META,
+    quoteMint: MINTS.USDC,
     expiresAt: Date.now() + 9240000,
     createdAt: Date.now() - 14760000,
     allowPartial: true,
@@ -55,7 +67,8 @@ export const MOCK_MARKET_DEALS: MarketDeal[] = [
   },
   {
     id: "mkt002",
-    pair: "META/USDC",
+    baseMint: MINTS.META,
+    quoteMint: MINTS.USDC,
     expiresAt: Date.now() + 51720000,
     createdAt: Date.now() - 34680000,
     allowPartial: false,
@@ -64,7 +77,8 @@ export const MOCK_MARKET_DEALS: MarketDeal[] = [
   },
   {
     id: "mkt003",
-    pair: "ETH/USDC",
+    baseMint: MINTS.ETH,
+    quoteMint: MINTS.USDC,
     expiresAt: Date.now() + 22140000,
     createdAt: Date.now() - 64260000,
     allowPartial: true,
@@ -73,7 +87,8 @@ export const MOCK_MARKET_DEALS: MarketDeal[] = [
   },
   {
     id: "mkt004",
-    pair: "ETH/USDC",
+    baseMint: MINTS.ETH,
+    quoteMint: MINTS.USDC,
     expiresAt: Date.now() + 3900000,
     createdAt: Date.now() - 82500000,
     allowPartial: true,
@@ -82,7 +97,8 @@ export const MOCK_MARKET_DEALS: MarketDeal[] = [
   },
   {
     id: "mkt005",
-    pair: "SOL/USDC",
+    baseMint: MINTS.SOL,
+    quoteMint: MINTS.USDC,
     expiresAt: Date.now() + 67200000,
     createdAt: Date.now() - 19200000,
     allowPartial: false,
@@ -94,7 +110,8 @@ export const MOCK_MARKET_DEALS: MarketDeal[] = [
 export const MOCK_OFFERS: Offer[] = [
   {
     id: "off001",
-    pair: "META/USDC",
+    baseMint: MINTS.META,
+    quoteMint: MINTS.USDC,
     amount: 10,
     yourPrice: 442,
     submittedAt: "2h ago",
@@ -103,7 +120,8 @@ export const MOCK_OFFERS: Offer[] = [
   },
   {
     id: "off002",
-    pair: "ETH/USDC",
+    baseMint: MINTS.ETH,
+    quoteMint: MINTS.USDC,
     amount: 2,
     yourPrice: 3200,
     submittedAt: "5h ago",
@@ -112,7 +130,8 @@ export const MOCK_OFFERS: Offer[] = [
   },
   {
     id: "off003",
-    pair: "META/USDC",
+    baseMint: MINTS.META,
+    quoteMint: MINTS.USDC,
     amount: 25,
     yourPrice: 448,
     submittedAt: "1d ago",
@@ -121,7 +140,8 @@ export const MOCK_OFFERS: Offer[] = [
   },
   {
     id: "off004",
-    pair: "SOL/USDC",
+    baseMint: MINTS.SOL,
+    quoteMint: MINTS.USDC,
     amount: 50,
     yourPrice: 185,
     submittedAt: "3h ago",
@@ -130,7 +150,8 @@ export const MOCK_OFFERS: Offer[] = [
   },
   {
     id: "off005",
-    pair: "ETH/USDC",
+    baseMint: MINTS.ETH,
+    quoteMint: MINTS.USDC,
     amount: 1,
     yourPrice: 3150,
     submittedAt: "6h ago",

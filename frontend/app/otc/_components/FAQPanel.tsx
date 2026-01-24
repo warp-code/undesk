@@ -13,7 +13,9 @@ export const FAQPanel = () => {
         <div className="p-4 space-y-6">
           {/* Header */}
           <div className="flex items-center gap-2">
-            <h4 className="text-foreground font-medium">Private Negotiation Chat</h4>
+            <h4 className="text-foreground font-medium">
+              Private Negotiation Chat
+            </h4>
             <span className="px-2 py-0.5 rounded text-xs font-medium bg-primary/20 text-primary border border-primary/30">
               Coming Soon
             </span>
@@ -21,7 +23,8 @@ export const FAQPanel = () => {
 
           {/* Description */}
           <p className="text-muted-foreground text-sm">
-            Negotiate directly with counterparties in an encrypted chat. All messages are private and settled on-chain.
+            Negotiate directly with counterparties in an encrypted chat. All
+            messages are private and settled on-chain.
           </p>
 
           {/* Divider */}
@@ -34,9 +37,14 @@ export const FAQPanel = () => {
             </h5>
             <div className="space-y-2">
               {FAQ_ITEMS.map((item, index) => (
-                <div key={index} className="border border-border rounded-md overflow-hidden">
+                <div
+                  key={index}
+                  className="border border-border rounded-md overflow-hidden"
+                >
                   <button
-                    onClick={() => setExpandedFaq(expandedFaq === index ? null : index)}
+                    onClick={() =>
+                      setExpandedFaq(expandedFaq === index ? null : index)
+                    }
                     className="w-full flex items-center justify-between p-3 text-left hover:bg-secondary/50 transition-colors"
                   >
                     <span className="text-foreground text-sm">{item.q}</span>
@@ -48,7 +56,12 @@ export const FAQPanel = () => {
                       stroke="currentColor"
                       viewBox="0 0 24 24"
                     >
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M19 9l-7 7-7-7"
+                      />
                     </svg>
                   </button>
                   <div

@@ -46,12 +46,16 @@ function FAQItem({ question, answer }: { question: string; answer: string }) {
         className="w-full px-6 py-5 flex items-center justify-between text-left"
       >
         <span
-          className={`font-medium ${isOpen ? "text-primary" : "text-foreground"}`}
+          className={`font-medium ${
+            isOpen ? "text-primary" : "text-foreground"
+          }`}
         >
           {question}
         </span>
         <span
-          className={`text-muted-foreground transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
+          className={`text-muted-foreground transition-transform duration-200 ${
+            isOpen ? "rotate-180" : ""
+          }`}
         >
           ↓
         </span>
@@ -227,7 +231,9 @@ export default function HomePage() {
               <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mx-auto mb-4">
                 <span className="text-primary text-xl">📜</span>
               </div>
-              <h3 className="font-semibold text-foreground mb-1">Open Source</h3>
+              <h3 className="font-semibold text-foreground mb-1">
+                Open Source
+              </h3>
               <p className="text-sm text-muted-foreground">
                 Fully auditable contracts on Solana
               </p>

@@ -1,6 +1,12 @@
 import type { Token } from "../_lib/types";
 
-export const TokenIcon = ({ token, className = "w-4 h-4" }: { token: Token; className?: string }) => {
+export const TokenIcon = ({
+  token,
+  className = "w-4 h-4",
+}: {
+  token: Token;
+  className?: string;
+}) => {
   const icons: Record<Token, JSX.Element> = {
     META: (
       <svg className={className} viewBox="0 0 24 24" fill="currentColor">
@@ -19,8 +25,21 @@ export const TokenIcon = ({ token, className = "w-4 h-4" }: { token: Token; clas
     ),
     USDC: (
       <svg className={className} viewBox="0 0 24 24" fill="currentColor">
-        <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" strokeWidth="2" />
-        <path d="M12 6v2m0 8v2m-2-10.5c2 0 3.5 1 3.5 2.5s-1.5 2.5-3.5 2.5-3.5 1-3.5 2.5 1.5 2.5 3.5 2.5" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+        <circle
+          cx="12"
+          cy="12"
+          r="10"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+        />
+        <path
+          d="M12 6v2m0 8v2m-2-10.5c2 0 3.5 1 3.5 2.5s-1.5 2.5-3.5 2.5-3.5 1-3.5 2.5 1.5 2.5 3.5 2.5"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+        />
       </svg>
     ),
   };

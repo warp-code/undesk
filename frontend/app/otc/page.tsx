@@ -3,6 +3,7 @@
 import { useState, useEffect, Suspense } from "react";
 import { type Deal, type MarketDeal, type Offer } from "./_lib/types";
 import { MOCK_DEALS, MOCK_MARKET_DEALS, MOCK_OFFERS } from "./_lib/constants";
+import { getTokenSymbol } from "./_lib/tokens";
 import { FAQPanel } from "./_components/FAQPanel";
 import { TabNavigation } from "./_components/TabNavigation";
 import { Navbar } from "./_components/Navbar";
@@ -45,7 +46,7 @@ function OTCPageContent() {
   const filteredMarketDeals =
     pairFilter === "all"
       ? marketDeals
-      : marketDeals.filter((d) => d.pair.startsWith(pairFilter));
+      : marketDeals.filter((d) => getTokenSymbol(d.baseMint) === pairFilter);
 
   // Handle row click
   const handleMarketDealClick = (deal: MarketDeal) => {

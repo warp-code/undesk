@@ -33,7 +33,11 @@ export const FormInput = ({
   return (
     <div className={baseClasses}>
       {readOnly ? (
-        <span className={parseFloat(value) > 0 ? "text-foreground" : "text-muted-foreground"}>
+        <span
+          className={
+            parseFloat(value) > 0 ? "text-foreground" : "text-muted-foreground"
+          }
+        >
           {parseFloat(value) > 0 ? parseFloat(value).toLocaleString() : "—"}
         </span>
       ) : (
