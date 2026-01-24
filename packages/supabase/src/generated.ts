@@ -55,6 +55,7 @@ export type Database = {
           settlement_ciphertexts: string | null;
           settlement_encryption_key: string | null;
           settlement_nonce: string | null;
+          slot: number;
           status: string;
         };
         Insert: {
@@ -74,6 +75,7 @@ export type Database = {
           settlement_ciphertexts?: string | null;
           settlement_encryption_key?: string | null;
           settlement_nonce?: string | null;
+          slot: number;
           status?: string;
         };
         Update: {
@@ -93,6 +95,7 @@ export type Database = {
           settlement_ciphertexts?: string | null;
           settlement_encryption_key?: string | null;
           settlement_nonce?: string | null;
+          slot?: number;
           status?: string;
         };
         Relationships: [];
@@ -112,6 +115,7 @@ export type Database = {
           settlement_ciphertexts: string | null;
           settlement_encryption_key: string | null;
           settlement_nonce: string | null;
+          slot: number;
           status: string;
           submitted_at: string;
         };
@@ -129,6 +133,7 @@ export type Database = {
           settlement_ciphertexts?: string | null;
           settlement_encryption_key?: string | null;
           settlement_nonce?: string | null;
+          slot: number;
           status?: string;
           submitted_at: string;
         };
@@ -146,6 +151,7 @@ export type Database = {
           settlement_ciphertexts?: string | null;
           settlement_encryption_key?: string | null;
           settlement_nonce?: string | null;
+          slot?: number;
           status?: string;
           submitted_at?: string;
         };

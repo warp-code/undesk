@@ -74,7 +74,10 @@ async function fetchSignatures(
   }
 
   logger.info("Fetched all signatures", { count: allSignatures.length });
-  return allSignatures;
+
+  // Reverse to process in chronological order (oldest first)
+  // This ensures DealCreated events are processed before their OfferCreated events
+  return allSignatures.reverse();
 }
 
 async function processTransactions(

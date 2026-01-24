@@ -6,7 +6,7 @@ resolution = true
 skip-lint = false
 
 [programs.localnet]
-otc = "CfwbKvb1wuJbi6h2B1MoRmGU6YWEUHTPL82TvHtcrV1"
+otc = "8wCCLUv68ofgoNg3AKbahgeqZitorLcgbRXQeHj7FpMd"
 
 [registry]
 url = "https://api.apr.dev"
@@ -31,7 +31,9 @@ program = "/Users/pileks/dev/pileks/otc/artifacts/arcium_program_0.5.4.so"
 address = "L2TExMFKdjpN9kozasaurPirfHy9P8sbXoAN1qA3S95"
 program = "artifacts/lighthouse.so"
 
-[test.validator]
 bind_address = "0.0.0.0"
 ledger = ".anchor/test-ledger"
 rpc_port = 8899
+[[test.genesis]]
+address = "F3G6Q9tRicyznCqcZLydJ6RxkwDSBeHWM458J7V6aeyk"
+program = "/Users/pileks/dev/pileks/temp/otc/artifacts/arcium_program_0.5.4.so"

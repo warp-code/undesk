@@ -20,54 +20,55 @@ export type EventWithContext<T = unknown> = {
 };
 
 /**
- * DealCreated event data (camelCase from Anchor)
+ * DealCreated event data (snake_case from Anchor BorshCoder with new IDL format)
+ * PublicKey and BN are proper class instances with methods.
  */
 export type DealCreatedData = {
   deal: PublicKey;
-  baseMint: PublicKey;
-  quoteMint: PublicKey;
-  expiresAt: BN;
-  allowPartial: boolean;
-  createdAt: BN;
-  encryptionKey: number[]; // [u8; 32]
+  base_mint: PublicKey;
+  quote_mint: PublicKey;
+  expires_at: BN;
+  allow_partial: boolean;
+  created_at: BN;
+  encryption_key: number[]; // [u8; 32]
   nonce: number[]; // [u8; 16]
   ciphertexts: number[][]; // [[u8; 32]; 2]
 };
 
 /**
- * OfferCreated event data (camelCase from Anchor)
+ * OfferCreated event data (snake_case from Anchor BorshCoder)
  */
 export type OfferCreatedData = {
   deal: PublicKey;
   offer: PublicKey;
-  offerIndex: number;
-  submittedAt: BN;
-  encryptionKey: number[]; // [u8; 32]
+  offer_index: number;
+  submitted_at: BN;
+  encryption_key: number[]; // [u8; 32]
   nonce: number[]; // [u8; 16]
   ciphertexts: number[][]; // [[u8; 32]; 2]
 };
 
 /**
- * DealSettled event data (camelCase from Anchor)
+ * DealSettled event data (snake_case from Anchor BorshCoder)
  */
 export type DealSettledData = {
   deal: PublicKey;
   status: number; // u8: 1 = executed, 2 = expired
-  settledAt: BN;
-  encryptionKey: number[]; // [u8; 32]
+  settled_at: BN;
+  encryption_key: number[]; // [u8; 32]
   nonce: number[]; // [u8; 16]
   ciphertexts: number[][]; // [[u8; 32]; 3]
 };
 
 /**
- * OfferSettled event data (camelCase from Anchor)
+ * OfferSettled event data (snake_case from Anchor BorshCoder)
  */
 export type OfferSettledData = {
   deal: PublicKey;
   offer: PublicKey;
-  offerIndex: number;
-  settledAt: BN;
-  encryptionKey: number[]; // [u8; 32]
+  offer_index: number;
+  settled_at: BN;
+  encryption_key: number[]; // [u8; 32]
   nonce: number[]; // [u8; 16]
   ciphertexts: number[][]; // [[u8; 32]; 3]
 };

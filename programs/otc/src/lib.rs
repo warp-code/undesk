@@ -11,7 +11,7 @@ pub use events::*;
 pub use instructions::*;
 pub use state::*;
 
-declare_id!("CfwbKvb1wuJbi6h2B1MoRmGU6YWEUHTPL82TvHtcrV1");
+declare_id!("8wCCLUv68ofgoNg3AKbahgeqZitorLcgbRXQeHj7FpMd");
 
 #[arcium_program]
 pub mod otc {

@@ -32,6 +32,7 @@ CREATE TABLE deals (
   -- Indexing metadata
   created_signature TEXT NOT NULL,       -- Transaction signature for DealCreated
   settled_signature TEXT,                -- Transaction signature for DealSettled
+  slot BIGINT NOT NULL,                  -- Solana slot of last update
   indexed_at TIMESTAMPTZ DEFAULT NOW(),  -- When this row was indexed
 
   -- Constraints
@@ -55,8 +56,8 @@ CREATE TABLE offers (
   -- Primary key
   address TEXT PRIMARY KEY,              -- Offer pubkey (base58)
 
-  -- Relationships
-  deal_address TEXT NOT NULL REFERENCES deals(address) ON DELETE CASCADE,
+  -- Relationships (no FK constraint - indexer may process events out of order)
+  deal_address TEXT NOT NULL,
 
   -- Public metadata (from OfferCreated event)
   offer_index INT NOT NULL,              -- FIFO sequence number within deal
@@ -77,6 +78,7 @@ CREATE TABLE offers (
   -- Indexing metadata
   created_signature TEXT NOT NULL,       -- Transaction signature for OfferCreated
   settled_signature TEXT,                -- Transaction signature for OfferSettled
+  slot BIGINT NOT NULL,                  -- Solana slot of last update
   indexed_at TIMESTAMPTZ DEFAULT NOW(),  -- When this row was indexed
 
   -- Constraints

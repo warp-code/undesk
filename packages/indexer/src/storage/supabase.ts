@@ -42,18 +42,18 @@ function bnToIsoString(bn: BN): string {
 }
 
 /**
- * Convert byte array to hex string
+ * Convert byte array to PostgreSQL bytea hex format (\x prefix)
  */
-function bytesToHex(bytes: number[]): string {
-  return Buffer.from(bytes).toString("hex");
+function bytesToBytea(bytes: number[]): string {
+  return "\\x" + Buffer.from(bytes).toString("hex");
 }
 
 /**
- * Flatten and convert 2D byte array to hex string
+ * Flatten and convert 2D byte array to PostgreSQL bytea hex format
  */
-function ciphertextsToHex(ciphertexts: number[][]): string {
+function ciphertextsToBytea(ciphertexts: number[][]): string {
   const flattened = ciphertexts.flat();
-  return Buffer.from(flattened).toString("hex");
+  return "\\x" + Buffer.from(flattened).toString("hex");
 }
 
 /**
@@ -115,30 +115,62 @@ export function createSupabaseStorage(config?: {
       event: EventWithContext<DealCreatedData>
     ): Promise<void> {
       const data = event.data;
+      const address = pubkeyToBase58(data.deal);
+      const slot = event.context.slot;
 
       const insert: DealInsert = {
-        address: pubkeyToBase58(data.deal),
-        base_mint: pubkeyToBase58(data.baseMint),
-        quote_mint: pubkeyToBase58(data.quoteMint),
-        expires_at: bnToIsoString(data.expiresAt),
-        allow_partial: data.allowPartial,
-        created_at: bnToIsoString(data.createdAt),
+        address,
+        base_mint: pubkeyToBase58(data.base_mint),
+        quote_mint: pubkeyToBase58(data.quote_mint),
+        expires_at: bnToIsoString(data.expires_at),
+        allow_partial: data.allow_partial,
+        created_at: bnToIsoString(data.created_at),
         created_signature: event.context.signature,
-        encryption_key: bytesToHex(data.encryptionKey),
-        nonce: bytesToHex(data.nonce),
-        ciphertexts: ciphertextsToHex(data.ciphertexts),
+        encryption_key: bytesToBytea(data.encryption_key),
+        nonce: bytesToBytea(data.nonce),
+        ciphertexts: ciphertextsToBytea(data.ciphertexts),
         status: "open",
+        slot,
       };
 
-      const { error } = await client
-        .from("deals")
-        .upsert(insert, { onConflict: "address" });
-      if (error) {
-        throw new Error(`Failed to upsert deal: ${error.message}`);
+      // Try insert first
+      const { error: insertError } = await client.from("deals").insert(insert);
+
+      if (insertError) {
+        // If duplicate key, try conditional update (only if incoming slot > existing)
+        if (insertError.code === "23505") {
+          const { data: updated, error: updateError } = await client
+            .from("deals")
+            .update({ ...insert, indexed_at: new Date().toISOString() })
+            .eq("address", address)
+            .lt("slot", slot)
+            .select("address");
+
+          if (updateError) {
+            throw new Error(`Failed to update deal: ${updateError.message}`);
+          }
+
+          if (!updated || updated.length === 0) {
+            logger.debug("Skipped deal upsert (existing slot >= incoming)", {
+              address,
+              incomingSlot: slot,
+            });
+            return;
+          }
+
+          logger.info("Updated deal (newer slot)", {
+            address,
+            slot,
+            signature: event.context.signature,
+          });
+          return;
+        }
+        throw new Error(`Failed to insert deal: ${insertError.message}`);
       }
 
-      logger.info("Upserted deal", {
-        address: insert.address,
+      logger.info("Inserted deal", {
+        address,
+        slot,
         signature: event.context.signature,
       });
     },
@@ -147,28 +179,42 @@ export function createSupabaseStorage(config?: {
       event: EventWithContext<DealSettledData>
     ): Promise<void> {
       const data = event.data;
+      const address = pubkeyToBase58(data.deal);
+      const slot = event.context.slot;
 
       const update: DealUpdate = {
         status: statusToString(data.status),
-        settled_at: bnToIsoString(data.settledAt),
+        settled_at: bnToIsoString(data.settled_at),
         settled_signature: event.context.signature,
-        settlement_encryption_key: bytesToHex(data.encryptionKey),
-        settlement_nonce: bytesToHex(data.nonce),
-        settlement_ciphertexts: ciphertextsToHex(data.ciphertexts),
+        settlement_encryption_key: bytesToBytea(data.encryption_key),
+        settlement_nonce: bytesToBytea(data.nonce),
+        settlement_ciphertexts: ciphertextsToBytea(data.ciphertexts),
+        slot,
       };
 
-      const address = pubkeyToBase58(data.deal);
-      const { error } = await client
+      const { data: updated, error } = await client
         .from("deals")
         .update(update)
-        .eq("address", address);
+        .eq("address", address)
+        .lt("slot", slot)
+        .select("address");
+
       if (error) {
         throw new Error(`Failed to update deal: ${error.message}`);
+      }
+
+      if (!updated || updated.length === 0) {
+        logger.debug("Skipped deal settlement (existing slot >= incoming)", {
+          address,
+          incomingSlot: slot,
+        });
+        return;
       }
 
       logger.info("Updated deal settlement", {
         address,
         status: update.status,
+        slot,
         signature: event.context.signature,
       });
     },
@@ -177,29 +223,61 @@ export function createSupabaseStorage(config?: {
       event: EventWithContext<OfferCreatedData>
     ): Promise<void> {
       const data = event.data;
+      const address = pubkeyToBase58(data.offer);
+      const slot = event.context.slot;
 
       const insert: OfferInsert = {
-        address: pubkeyToBase58(data.offer),
+        address,
         deal_address: pubkeyToBase58(data.deal),
-        offer_index: data.offerIndex,
-        submitted_at: bnToIsoString(data.submittedAt),
+        offer_index: data.offer_index,
+        submitted_at: bnToIsoString(data.submitted_at),
         created_signature: event.context.signature,
-        encryption_key: bytesToHex(data.encryptionKey),
-        nonce: bytesToHex(data.nonce),
-        ciphertexts: ciphertextsToHex(data.ciphertexts),
+        encryption_key: bytesToBytea(data.encryption_key),
+        nonce: bytesToBytea(data.nonce),
+        ciphertexts: ciphertextsToBytea(data.ciphertexts),
         status: "open",
+        slot,
       };
 
-      const { error } = await client
-        .from("offers")
-        .upsert(insert, { onConflict: "address" });
-      if (error) {
-        throw new Error(`Failed to upsert offer: ${error.message}`);
+      // Try insert first
+      const { error: insertError } = await client.from("offers").insert(insert);
+
+      if (insertError) {
+        // If duplicate key, try conditional update (only if incoming slot > existing)
+        if (insertError.code === "23505") {
+          const { data: updated, error: updateError } = await client
+            .from("offers")
+            .update({ ...insert, indexed_at: new Date().toISOString() })
+            .eq("address", address)
+            .lt("slot", slot)
+            .select("address");
+
+          if (updateError) {
+            throw new Error(`Failed to update offer: ${updateError.message}`);
+          }
+
+          if (!updated || updated.length === 0) {
+            logger.debug("Skipped offer upsert (existing slot >= incoming)", {
+              address,
+              incomingSlot: slot,
+            });
+            return;
+          }
+
+          logger.info("Updated offer (newer slot)", {
+            address,
+            slot,
+            signature: event.context.signature,
+          });
+          return;
+        }
+        throw new Error(`Failed to insert offer: ${insertError.message}`);
       }
 
-      logger.info("Upserted offer", {
-        address: insert.address,
+      logger.info("Inserted offer", {
+        address,
         dealAddress: insert.deal_address,
+        slot,
         signature: event.context.signature,
       });
     },
@@ -208,27 +286,41 @@ export function createSupabaseStorage(config?: {
       event: EventWithContext<OfferSettledData>
     ): Promise<void> {
       const data = event.data;
+      const address = pubkeyToBase58(data.offer);
+      const slot = event.context.slot;
 
       const update: OfferUpdate = {
         status: "settled",
-        settled_at: bnToIsoString(data.settledAt),
+        settled_at: bnToIsoString(data.settled_at),
         settled_signature: event.context.signature,
-        settlement_encryption_key: bytesToHex(data.encryptionKey),
-        settlement_nonce: bytesToHex(data.nonce),
-        settlement_ciphertexts: ciphertextsToHex(data.ciphertexts),
+        settlement_encryption_key: bytesToBytea(data.encryption_key),
+        settlement_nonce: bytesToBytea(data.nonce),
+        settlement_ciphertexts: ciphertextsToBytea(data.ciphertexts),
+        slot,
       };
 
-      const address = pubkeyToBase58(data.offer);
-      const { error } = await client
+      const { data: updated, error } = await client
         .from("offers")
         .update(update)
-        .eq("address", address);
+        .eq("address", address)
+        .lt("slot", slot)
+        .select("address");
+
       if (error) {
         throw new Error(`Failed to update offer: ${error.message}`);
       }
 
+      if (!updated || updated.length === 0) {
+        logger.debug("Skipped offer settlement (existing slot >= incoming)", {
+          address,
+          incomingSlot: slot,
+        });
+        return;
+      }
+
       logger.info("Updated offer settlement", {
         address,
+        slot,
         signature: event.context.signature,
       });
     },
