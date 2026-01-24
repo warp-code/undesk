@@ -13,7 +13,6 @@ use crate::{SignerAccount, ID, ID_CONST};
 pub fn handler(
     ctx: Context<CrankOffer>,
     computation_offset: u64,
-    offeror_encryption_pubkey: [u8; 32],
     offeror_nonce: u128,
 ) -> Result<()> {
     let offer_key = ctx.accounts.offer.key();
@@ -39,7 +38,7 @@ pub fn handler(
     let args = ArgBuilder::new()
         .plaintext_u128(offer_nonce)
         .account(offer_key, OFFER_CIPHERTEXT_OFFSET, OFFER_CIPHERTEXT_LENGTH)
-        .x25519_pubkey(offeror_encryption_pubkey)
+        .x25519_pubkey(ctx.accounts.offer.encryption_pubkey)
         .plaintext_u128(offeror_nonce)
         .plaintext_bool(deal_success)
         .build();

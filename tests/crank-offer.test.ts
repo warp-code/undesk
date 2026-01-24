@@ -195,7 +195,6 @@ describe("Crank Offer", () => {
     await program.methods
       .crankDeal(
         crankDealComputationOffset,
-        Array.from(dealCreatorPublicKey),
         new anchor.BN(deserializeLE(crankDealNonce).toString())
       )
       .accountsPartial({
@@ -254,7 +253,6 @@ describe("Crank Offer", () => {
     await program.methods
       .crankOffer(
         crankOfferComputationOffset,
-        Array.from(offerorPublicKey),  // Offeror's encryption pubkey
         new anchor.BN(deserializeLE(crankOfferNonce).toString())
       )
       .accountsPartial({

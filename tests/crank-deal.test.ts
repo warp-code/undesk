@@ -198,7 +198,6 @@ describe("Crank Deal", () => {
     await program.methods
       .crankDeal(
         crankComputationOffset,
-        Array.from(dealCreatorPublicKey),  // Creator's encryption pubkey
         new anchor.BN(deserializeLE(crankNonce).toString())  // Nonce for output encryption
       )
       .accountsPartial({

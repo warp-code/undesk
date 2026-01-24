@@ -197,15 +197,9 @@ pub mod otc {
     pub fn crank_deal(
         ctx: Context<CrankDeal>,
         computation_offset: u64,
-        creator_encryption_pubkey: [u8; 32],
         creator_nonce: u128,
     ) -> Result<()> {
-        instructions::crank_deal::handler(
-            ctx,
-            computation_offset,
-            creator_encryption_pubkey,
-            creator_nonce,
-        )
+        instructions::crank_deal::handler(ctx, computation_offset, creator_nonce)
     }
 
     #[arcium_callback(encrypted_ix = "crank_deal")]
@@ -224,15 +218,9 @@ pub mod otc {
     pub fn crank_offer(
         ctx: Context<CrankOffer>,
         computation_offset: u64,
-        offeror_encryption_pubkey: [u8; 32],
         offeror_nonce: u128,
     ) -> Result<()> {
-        instructions::crank_offer::handler(
-            ctx,
-            computation_offset,
-            offeror_encryption_pubkey,
-            offeror_nonce,
-        )
+        instructions::crank_offer::handler(ctx, computation_offset, offeror_nonce)
     }
 
     #[arcium_callback(encrypted_ix = "crank_offer")]

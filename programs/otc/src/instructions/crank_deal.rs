@@ -13,7 +13,6 @@ use crate::{SignerAccount, ID, ID_CONST};
 pub fn handler(
     ctx: Context<CrankDeal>,
     computation_offset: u64,
-    creator_encryption_pubkey: [u8; 32],
     creator_nonce: u128,
 ) -> Result<()> {
     // Capture keys and nonce before mutable borrows
@@ -49,7 +48,7 @@ pub fn handler(
         .plaintext_u128(deal_nonce)
         .account(deal_key, DEAL_CIPHERTEXT_OFFSET, DEAL_CIPHERTEXT_LENGTH)
         // Shared marker for creator
-        .x25519_pubkey(creator_encryption_pubkey)
+        .x25519_pubkey(ctx.accounts.deal.encryption_pubkey)
         .plaintext_u128(creator_nonce)
         // Plaintext booleans
         .plaintext_bool(is_expired)

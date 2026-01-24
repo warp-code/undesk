@@ -11,16 +11,6 @@ A TypeScript cranker for the OTC program that permissionlessly settles expired d
 
 ---
 
-## Prerequisites
-
-> **Pending program fix:** The crank instructions currently accept an encryption pubkey as a parameter without validating it matches the stored account pubkey. This will be fixed before implementation.
->
-> See: `vibes/program/execution/002_validate-crank-encryption-pubkey.md`
->
-> Once fixed, the program will enforce that `creator_encryption_pubkey == deal.encryption_pubkey` (and similarly for offers), ensuring the cranker cannot encrypt settlement outputs to the wrong key.
-
----
-
 ## Instructions to Crank
 
 The OTC program has 2 crank instructions:
@@ -35,17 +25,17 @@ Settles an open deal by computing final execution state.
 
 **Required data from Supabase:**
 - `address` - Deal pubkey
-- `encryption_key` - Creator's x25519 pubkey (stored from DealCreated event)
 - `expires_at` - Expiration timestamp
 
 **Parameters:**
 ```typescript
 {
-  computation_offset: u64,           // Random per call
-  creator_encryption_pubkey: [u8; 32], // From deals.encryption_key
-  creator_nonce: u128,                 // Generated randomly
+  computation_offset: u64,  // Random per call
+  creator_nonce: u128,      // Generated randomly
 }
 ```
+
+> **Note:** The encryption pubkey is read directly from the deal account (`deal.encryption_pubkey`), not passed as a parameter. This prevents malicious crankers from encrypting outputs to the wrong key.
 
 ### 2. crank_offer
 
@@ -58,16 +48,16 @@ Settles an individual offer after its deal has been settled.
 **Required data from Supabase:**
 - `address` - Offer pubkey
 - `deal_address` - Parent deal pubkey
-- `encryption_key` - Offeror's x25519 pubkey (stored from OfferCreated event)
 
 **Parameters:**
 ```typescript
 {
-  computation_offset: u64,             // Random per call
-  offeror_encryption_pubkey: [u8; 32], // From offers.encryption_key
-  offeror_nonce: u128,                 // Generated randomly
+  computation_offset: u64,  // Random per call
+  offeror_nonce: u128,      // Generated randomly
 }
 ```
+
+> **Note:** The encryption pubkey is read directly from the offer account (`offer.encryption_pubkey`), not passed as a parameter. This prevents malicious crankers from encrypting outputs to the wrong key.
 
 ---
 
@@ -123,13 +113,11 @@ import { SupabaseClient } from '@supabase/supabase-js';
 
 type CrankableDeal = {
   address: string;
-  encryptionKey: Uint8Array;  // 32 bytes
 };
 
 type CrankableOffer = {
   address: string;
   dealAddress: string;
-  encryptionKey: Uint8Array;  // 32 bytes
 };
 
 // Deals that are open and past expiry
@@ -140,7 +128,7 @@ const getExpiredOpenDeals = async (
 
   const { data, error } = await supabase
     .from('deals')
-    .select('address, encryption_key')
+    .select('address')
     .eq('status', 'open')
     .lt('expires_at', now);
 
@@ -148,7 +136,6 @@ const getExpiredOpenDeals = async (
 
   return (data ?? []).map(d => ({
     address: d.address,
-    encryptionKey: new Uint8Array(d.encryption_key),
   }));
 };
 
@@ -161,7 +148,6 @@ const getOpenOffersForSettledDeals = async (
     .select(`
       address,
       deal_address,
-      encryption_key,
       deals!inner(status)
     `)
     .eq('status', 'open')
@@ -172,7 +158,6 @@ const getOpenOffersForSettledDeals = async (
   return (data ?? []).map(o => ({
     address: o.address,
     dealAddress: o.deal_address,
-    encryptionKey: new Uint8Array(o.encryption_key),
   }));
 };
 ```
@@ -211,7 +196,6 @@ const generateComputationParams = () => {
 
 type CrankDealParams = {
   deal: PublicKey;
-  creatorEncryptionPubkey: Uint8Array;
 };
 
 const buildCrankDealIx = async (
@@ -225,7 +209,6 @@ const buildCrankDealIx = async (
   const ix = await program.methods
     .crankDeal(
       computationOffset,
-      Array.from(params.creatorEncryptionPubkey),
       nonce,
     )
     .accountsPartial({
@@ -249,7 +232,6 @@ const buildCrankDealIx = async (
 type CrankOfferParams = {
   deal: PublicKey;
   offer: PublicKey;
-  offerorEncryptionPubkey: Uint8Array;
 };
 
 const buildCrankOfferIx = async (
@@ -263,7 +245,6 @@ const buildCrankOfferIx = async (
   const ix = await program.methods
     .crankOffer(
       computationOffset,
-      Array.from(params.offerorEncryptionPubkey),
       nonce,
     )
     .accountsPartial({
@@ -320,7 +301,6 @@ const executeCrankDeal = async (
       payer.publicKey,
       {
         deal: new PublicKey(deal.address),
-        creatorEncryptionPubkey: deal.encryptionKey,
       },
       clusterOffset,
     );
@@ -363,7 +343,6 @@ const executeCrankOffer = async (
       {
         deal: new PublicKey(offer.dealAddress),
         offer: new PublicKey(offer.address),
-        offerorEncryptionPubkey: offer.encryptionKey,
       },
       clusterOffset,
     );
@@ -823,16 +802,15 @@ Add Prometheus metrics:
 ## Next Steps
 
 **Prerequisites (must complete first):**
-1. Fix encryption pubkey validation in program (see `vibes/program/execution/002_validate-crank-encryption-pubkey.md`)
-2. Implement and deploy the indexer (cranker depends on Supabase being populated)
+1. Implement and deploy the indexer (cranker depends on Supabase being populated)
 
 **Implementation:**
-3. Set up the `cranker/` workspace in the monorepo
-4. Add `@arcium-hq/client` and `@supabase/supabase-js` dependencies
-5. Implement `queries.ts` (Supabase queries)
-6. Implement `transactions.ts` (tx builders using `@arcium-hq/client`)
-7. Implement `execute.ts` (tx execution + `awaitComputationFinalization`)
-8. Implement `cranker.ts` (main loop)
-9. Implement `src/index.ts` (entry point)
-10. Test with localnet + local Supabase
-11. Deploy alongside indexer
+2. Set up the `cranker/` workspace in the monorepo
+3. Add `@arcium-hq/client` and `@supabase/supabase-js` dependencies
+4. Implement `queries.ts` (Supabase queries)
+5. Implement `transactions.ts` (tx builders using `@arcium-hq/client`)
+6. Implement `execute.ts` (tx execution + `awaitComputationFinalization`)
+7. Implement `cranker.ts` (main loop)
+8. Implement `src/index.ts` (entry point)
+9. Test with localnet + local Supabase
+10. Deploy alongside indexer
