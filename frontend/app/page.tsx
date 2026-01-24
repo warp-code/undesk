@@ -288,7 +288,7 @@ export default function HomePage() {
       </nav>
 
       {/* Hero Section */}
-      <section className="relative min-h-[90vh] flex flex-col items-start justify-center px-6 overflow-hidden">
+      <section className="relative min-h-[70vh] flex flex-col items-start justify-center px-6 overflow-hidden">
         {/* Background Pattern */}
         <BackgroundPattern
           activeLines={activeLines}
@@ -296,7 +296,7 @@ export default function HomePage() {
         />
 
         {/* Hero Content - positioned left on larger screens */}
-        <div className="relative z-10 max-w-2xl text-left ml-[6%] lg:ml-[10%] space-y-6 -mt-[20vh]">
+        <div className="relative z-10 max-w-2xl text-left ml-[6%] lg:ml-[10%] space-y-6 -mt-[5vh]">
           <h1 className="text-4xl font-bold text-foreground">
             Private OTC Trading
           </h1>
