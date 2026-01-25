@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 
 const faqs = [
   {
@@ -46,13 +46,7 @@ interface LineData {
   accentColor: string;
 }
 
-function BackgroundPattern({
-  activeLines,
-  onLineHover,
-}: {
-  activeLines: Set<string>;
-  onLineHover: (tierIdx: number, lineIdx: number) => void;
-}) {
+function BackgroundPattern({ activeLines }: { activeLines: Set<string> }) {
   const tierLines = useMemo(() => {
     const tiers: LineData[][] = [[], [], [], []];
 
@@ -64,7 +58,7 @@ function BackgroundPattern({
     ];
 
     // Use a fixed width for calculations (will scale with viewBox)
-    const width = 1200;
+    const width = 600;
 
     tierConfigs.forEach((config, tierIdx) => {
       const lineCount = Math.floor(width / config.spacing);
@@ -73,13 +67,10 @@ function BackgroundPattern({
         const x = config.offset + i * config.spacing;
         const xPercent = x / width;
 
-        // Text safe zone: skip lines in left 48%
-        if (xPercent < 0.48) continue;
-
-        // Calculate opacity for transition zone (48-58%)
+        // Calculate opacity for fade-in zone (first 20%)
         let opacity = 1;
-        if (xPercent < 0.58) {
-          opacity = (xPercent - 0.48) / 0.1;
+        if (xPercent < 0.2) {
+          opacity = xPercent / 0.2;
         }
 
         // Random weight distribution: 60% thin, 30% medium, 10% thick
@@ -123,23 +114,11 @@ function BackgroundPattern({
 
   return (
     <svg
-      className="absolute inset-0 w-full h-full"
-      viewBox="0 0 1200 600"
+      className="absolute top-0 right-0 bottom-0 w-1/2 h-full"
+      viewBox="0 0 600 600"
       preserveAspectRatio="none"
       style={{ pointerEvents: "none" }}
     >
-      <defs>
-        <filter id="pingGlow" x="-200%" y="-200%" width="500%" height="500%">
-          <feGaussianBlur stdDeviation="3" result="blur" />
-          <feMerge>
-            <feMergeNode in="blur" />
-            <feMergeNode in="blur" />
-            <feMergeNode in="blur" />
-            <feMergeNode in="SourceGraphic" />
-          </feMerge>
-        </filter>
-      </defs>
-
       {tierLines.map((tier, tierIdx) =>
         tier.map((line, lineIdx) => {
           const key = getLineKey(tierIdx, lineIdx);
@@ -153,38 +132,22 @@ function BackgroundPattern({
           }
 
           return (
-            <g key={key}>
-              {/* Invisible hitbox for hover detection */}
-              <line
-                x1={line.x}
-                y1={`${line.yStart}%`}
-                x2={line.x}
-                y2={`${line.yEnd}%`}
-                stroke="transparent"
-                strokeWidth={16}
-                style={{
-                  cursor: "pointer",
-                  pointerEvents: "auto",
-                }}
-                onMouseEnter={() => onLineHover(tierIdx, lineIdx)}
-              />
-              {/* Visible line */}
-              <line
-                x1={line.x}
-                y1={`${line.yStart}%`}
-                x2={line.x}
-                y2={`${line.yEnd}%`}
-                stroke={strokeColor}
-                strokeWidth={getStrokeWidth(line, isActive)}
-                strokeLinecap="round"
-                filter={isActive ? "url(#pingGlow)" : "none"}
-                style={{
-                  transition:
-                    "stroke 0.3s ease, stroke-width 0.3s ease, filter 0.3s ease",
-                  pointerEvents: "none",
-                }}
-              />
-            </g>
+            <line
+              key={key}
+              x1={line.x}
+              y1={`${line.yStart}%`}
+              x2={line.x}
+              y2={`${line.yEnd}%`}
+              stroke={strokeColor}
+              strokeWidth={getStrokeWidth(line, isActive)}
+              strokeLinecap="round"
+              style={{
+                filter: isActive
+                  ? "drop-shadow(0 0 4px #f97316) drop-shadow(0 0 8px #f97316)"
+                  : "none",
+                transition: "stroke 0.3s ease, stroke-width 0.3s ease",
+              }}
+            />
           );
         })
       )}
@@ -239,84 +202,59 @@ function FAQItem({ question, answer }: { question: string; answer: string }) {
 
 export default function HomePage() {
   const [activeLines, setActiveLines] = useState<Set<string>>(new Set());
-  const lineTimeouts = useRef<Map<string, NodeJS.Timeout>>(new Map());
 
   const getLineKey = (tierIdx: number, lineIdx: number) =>
     `${tierIdx}-${lineIdx}`;
 
-  // Activate a single line with its own independent timeout
-  const activateLine = useCallback((key: string, duration: number = 1200) => {
-    // Clear existing timeout for this line if any
-    const existingTimeout = lineTimeouts.current.get(key);
-    if (existingTimeout) clearTimeout(existingTimeout);
-
-    // Activate the line
-    setActiveLines((prev) => new Set([...prev, key]));
-
-    // Set timeout to deactivate this line independently
-    const timeout = setTimeout(() => {
-      setActiveLines((prev) => {
-        const next = new Set(prev);
-        next.delete(key);
-        return next;
-      });
-      lineTimeouts.current.delete(key);
-    }, duration);
-
-    lineTimeouts.current.set(key, timeout);
-  }, []);
-
-  // Idle animation - continuous staggered pings
+  // Idle animation - "deal matching" sequence
   useEffect(() => {
-    const triggerPair = () => {
+    const runSequence = () => {
       const t1 = Math.floor(Math.random() * 4);
       const t2 = (t1 + 1 + Math.floor(Math.random() * 3)) % 4;
-      const l1 = Math.floor(Math.random() * 50);
-      const l2 = Math.floor(Math.random() * 50);
-      activateLine(getLineKey(t1, l1), 1400);
-      setTimeout(() => activateLine(getLineKey(t2, l2), 1400), 120);
+      const l1 = Math.floor(Math.random() * 30) + 7;
+      const l2 = Math.floor(Math.random() * 30) + 7;
+      const key1 = getLineKey(t1, l1);
+      const key2 = getLineKey(t2, l2);
+
+      // Line 1 lights up (searching for deal)
+      setActiveLines((prev) => new Set([...prev, key1]));
+
+      // After delay, line 2 blinks twice (deal accepted)
+      setTimeout(() => {
+        // First blink on
+        setActiveLines((prev) => new Set([...prev, key2]));
+
+        // First blink off
+        setTimeout(() => {
+          setActiveLines((prev) => {
+            const next = new Set(prev);
+            next.delete(key2);
+            return next;
+          });
+
+          // Second blink on
+          setTimeout(() => {
+            setActiveLines((prev) => new Set([...prev, key2]));
+
+            // Both turn off together
+            setTimeout(() => {
+              setActiveLines((prev) => {
+                const next = new Set(prev);
+                next.delete(key1);
+                next.delete(key2);
+                return next;
+              });
+            }, 800);
+          }, 120);
+        }, 150);
+      }, 600);
     };
 
-    // Trigger pairs at staggered intervals for continuous activity
-    const intervals = [
-      setInterval(triggerPair, 1200),
-      setInterval(triggerPair, 1700),
-      setInterval(triggerPair, 2300),
-    ];
+    const interval = setInterval(runSequence, 3500);
+    runSequence(); // Run immediately on mount
 
-    // Stagger initial triggers
-    setTimeout(triggerPair, 0);
-    setTimeout(triggerPair, 400);
-    setTimeout(triggerPair, 800);
-
-    return () => intervals.forEach(clearInterval);
-  }, [activateLine]);
-
-  // Hover lights up the hovered line + one random inactive line
-  const handleLineHover = useCallback(
-    (tierIdx: number, lineIdx: number) => {
-      const hoveredKey = getLineKey(tierIdx, lineIdx);
-
-      // Activate the hovered line
-      activateLine(hoveredKey, 1200);
-
-      // Pick a random line that isn't currently active
-      let attempts = 0;
-      let partnerKey: string;
-      do {
-        const randomTier = Math.floor(Math.random() * 4);
-        const randomLine = Math.floor(Math.random() * 50);
-        partnerKey = getLineKey(randomTier, randomLine);
-        attempts++;
-      } while (activeLines.has(partnerKey) && attempts < 10);
-
-      // Activate the partner line with a slight delay
-      setTimeout(() => {
-        activateLine(partnerKey, 1200);
-      }, 100);
-    },
-    [activateLine, activeLines]
-  );
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -366,10 +304,7 @@ export default function HomePage() {
       {/* Hero Section */}
       <section className="relative h-[500px] flex flex-col justify-center overflow-hidden">
         {/* Background Pattern */}
-        <BackgroundPattern
-          activeLines={activeLines}
-          onLineHover={handleLineHover}
-        />
+        <BackgroundPattern activeLines={activeLines} />
 
         {/* Hero Content - aligned with navbar container */}
         <div className="relative z-10 max-w-6xl mx-auto px-6 w-full mt-16 pointer-events-none">
