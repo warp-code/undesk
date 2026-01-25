@@ -1,7 +1,7 @@
 # Frontend Integration - Implementation Overview
 
 **Date:** 2026-01-24
-**Status:** In progress (Phases 1-3.5 complete)
+**Status:** In progress (Phases 1-3.5, 6 complete)
 **Reference:** `vibes/frontend/004-solana-anchor-integration-plan.md`
 
 ---
@@ -39,8 +39,11 @@ The frontend is currently a fully-functional UI with **mock data only**. This do
 | ~~Key derivation~~ | ~~Derive controller + encryption keys from wallet signatures~~ ✅ |
 | ~~Anchor program~~ | ~~Create deals and submit offers on-chain~~ ✅ |
 | ~~Supabase client~~ | ~~Read deals/offers from database~~ ✅ |
-| Decryption utils | Decrypt user's own data from Supabase |
-| Data hooks | Replace mock data with live Supabase queries |
+| ~~Decryption utils~~ | ~~Decrypt user's own data from Supabase~~ ✅ |
+| ~~Data hooks~~ | ~~Replace mock data with live Supabase queries~~ ✅ |
+| Create deal hook | Send create_deal transaction |
+| Submit offer hook | Send submit_offer transaction |
+| Wire up | Connect hooks to UI components |
 
 ---
 
@@ -248,7 +251,7 @@ The frontend is currently a fully-functional UI with **mock data only**. This do
 
 ---
 
-### Phase 6: Data Reading Hooks (Supabase)
+### Phase 6: Data Reading Hooks (Supabase) ✅ COMPLETE
 **Effort: Medium-Large**
 
 #### Type Imports
@@ -280,45 +283,51 @@ import type {
 
 #### Implementation Steps
 
-1. **Create `_lib/decryption.ts`**:
+1. **Create `_lib/decryption.ts`**: ✅
    - `hexToBytes()` / `bytesToHex()` - encoding helpers
    - `isOwnedByUser()` - check if encryption_key matches user's pubkey
    - `decryptDealData()` - decrypt amount + price from deal
    - `decryptOfferData()` - decrypt price + amount from offer
-   - `decryptDealSettlement()` - decrypt settlement data
-   - `decryptOfferSettlement()` - decrypt outcome + executed amount
+   - ~~`decryptDealSettlement()` - decrypt settlement data~~ (deferred - not needed for open deals)
+   - ~~`decryptOfferSettlement()` - decrypt outcome + executed amount~~ (deferred - not needed for open deals)
 
-2. **Create `_hooks/useMarketDeals.ts`**:
+2. **Create `_hooks/useMarketDeals.ts`**: ✅
    - Fetch all open deals from Supabase (public fields only)
-   - Subscribe to Realtime for INSERT/UPDATE events
+   - ~~Subscribe to Realtime for INSERT/UPDATE events~~ (TODO - deferred)
    - No decryption needed
-   - Returns: `{ marketDeals, isLoading }`
+   - Returns: `{ marketDeals, isLoading, error, refetch }`
 
-3. **Create `_hooks/useMyDeals.ts`**:
-   - Fetch all deals from Supabase
-   - Filter by `encryption_key === user's pubkey`
+3. **Create `_hooks/useMyDeals.ts`**: ✅
+   - Fetch deals WHERE `encryption_key === user's pubkey`
    - Decrypt amount + price for each
-   - Subscribe to Realtime for updates
-   - Returns: `{ deals, isLoading }`
+   - ~~Subscribe to Realtime for updates~~ (TODO - deferred)
+   - Returns: `{ deals, isLoading, error, refetch }`
 
-4. **Create `_hooks/useMyOffers.ts`**:
+4. **Create `_hooks/useMyOffers.ts`**: ✅
    - Fetch offers with deal join from Supabase
    - Filter by `encryption_key === user's pubkey`
    - Decrypt price + amount for each
-   - Subscribe to Realtime for updates
-   - Returns: `{ offers, isLoading }`
+   - ~~Subscribe to Realtime for updates~~ (TODO - deferred)
+   - Returns: `{ offers, isLoading, error, refetch }`
 
-5. **Create `_hooks/useOffersForDeal.ts`**:
+5. ~~**Create `_hooks/useOffersForDeal.ts`**~~: (deferred - can add when needed)
    - Count offers for a specific deal
    - Subscribe to Realtime for new offers
    - Returns: `{ offerCount, isLoading }`
 
-**Files to create:**
-- `_lib/decryption.ts`
-- `_hooks/useMarketDeals.ts`
-- `_hooks/useMyDeals.ts`
-- `_hooks/useMyOffers.ts`
-- `_hooks/useOffersForDeal.ts`
+**Files created:**
+- `_lib/decryption.ts` ✅
+- `_hooks/useMarketDeals.ts` ✅
+- `_hooks/useMyDeals.ts` ✅
+- `_hooks/useMyOffers.ts` ✅
+
+**Deferred:**
+- `_hooks/useOffersForDeal.ts` - not needed yet
+- Supabase Realtime subscriptions - TODO in hooks
+- Settlement decryption - only needed for deal completion screen
+
+**Documentation:**
+- `vibes/frontend/007-encrypted-data-flow.md` - explains ciphertexts vs settlement_ciphertexts
 
 ---
 
@@ -383,7 +392,7 @@ import type {
 
 ## File Summary
 
-### Files Created (Phases 1-3.5)
+### Files Created (Phases 1-3.5, 6)
 
 **Providers (4):** ✅
 - `_providers/SolanaProvider.tsx` ✅
@@ -391,12 +400,16 @@ import type {
 - `_providers/DerivedKeysProvider.tsx` ✅
 - `_providers/SupabaseProvider.tsx` ✅
 
-**Hooks (1):** ✅
+**Hooks (4):** ✅
 - `_hooks/useDerivedKeys.ts` ✅
+- `_hooks/useMarketDeals.ts` ✅
+- `_hooks/useMyDeals.ts` ✅
+- `_hooks/useMyOffers.ts` ✅
 
-**Utilities (2):** ✅
+**Utilities (3):** ✅
 - `_lib/encryption.ts` ✅
 - `_lib/accounts.ts` ✅
+- `_lib/decryption.ts` ✅
 
 **IDL (2):** ✅
 - `_lib/idl/otc.json` ✅
@@ -407,19 +420,15 @@ import type {
 
 ### Files Still to Create
 
-**Hooks (6):**
+**Hooks (2):**
 - `_hooks/useCreateDeal.ts`
 - `_hooks/useSubmitOffer.ts`
-- `_hooks/useMarketDeals.ts`
-- `_hooks/useMyDeals.ts`
-- `_hooks/useMyOffers.ts`
-- `_hooks/useOffersForDeal.ts`
-
-**Utilities (1):**
-- `_lib/decryption.ts`
 
 **Components (1):**
 - `_components/TransactionStatus.tsx`
+
+**Deferred (not needed yet):**
+- `_hooks/useOffersForDeal.ts` - offer counting per deal
 
 > **Note:** `_lib/supabase.ts` and `_lib/database.types.ts` are NOT needed - use `@otc/supabase` package instead.
 
@@ -458,7 +467,7 @@ Phase 3: OTC Program ✅ ────────────┴─────�
                                  │
                                  ├──► Phase 5: Submit Offer
                                  │
-                                 └──► Phase 6: Data Hooks
+                                 └──► Phase 6: Data Hooks ✅
                                               │
                                               ▼
                                       Phase 7: Wire Up
@@ -470,7 +479,7 @@ Phase 3: OTC Program ✅ ────────────┴─────�
 **Recommended execution:**
 1. ~~Do Phase 1 + 3.5 + 3 together (infrastructure)~~ ✅
 2. ~~Do Phase 2 (key derivation)~~ ✅
-3. Do Phase 6 (data hooks) - can test with existing mock encryption keys
+3. ~~Do Phase 6 (data hooks)~~ ✅
 4. Do Phase 4 + 5 (mutations)
 5. Do Phase 7 (wire up)
 6. Do Phase 8 (polish)
@@ -537,11 +546,15 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=<anon-key>
 - [ ] Supabase client connects (verify with dev server)
 - [ ] No console errors
 
-### Phase 6: Data Hooks
-- [ ] Market deals load from Supabase
-- [ ] User's deals load and decrypt
-- [ ] User's offers load and decrypt
-- [ ] Realtime updates work
+### Phase 6: Data Hooks ✅
+- [x] `useMarketDeals` hook created
+- [x] `useMyDeals` hook created with decryption
+- [x] `useMyOffers` hook created with decryption
+- [x] `decryption.ts` utilities created
+- [ ] Market deals load from Supabase (needs testing with live data)
+- [ ] User's deals load and decrypt (needs testing with live data)
+- [ ] User's offers load and decrypt (needs testing with live data)
+- [ ] Realtime updates work (TODO - deferred)
 
 ### Phase 4: Deal Creation
 - [ ] Form validates inputs
@@ -636,7 +649,12 @@ yarn workspace @otc/cranker start
 4. ~~**Phase 3.5**: Supabase integration (SupabaseProvider using `@otc/supabase`)~~ ✅
 5. **Phase 4**: Deal creation hook (useCreateDeal)
 6. **Phase 5**: Offer submission hook (useSubmitOffer)
-7. **Phase 6**: Data reading hooks (useMarketDeals, useMyDeals, useMyOffers, decryption.ts)
+7. ~~**Phase 6**: Data reading hooks (useMarketDeals, useMyDeals, useMyOffers, decryption.ts)~~ ✅
 8. **Phase 7-8**: Wire up data flow and UX polish
 
-Phases 1-3.5 complete. Ready for Phase 4 (Deal Creation) or Phase 6 (Data Hooks).
+Phases 1-3.5 and 6 complete. Ready for Phase 4 (Deal Creation) or Phase 7 (Wire Up).
+
+**Phase 6 deferred items:**
+- Supabase Realtime subscriptions (TODO in hooks)
+- `useOffersForDeal` hook (not needed yet)
+- Settlement decryption (only for deal completion screen)
