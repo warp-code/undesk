@@ -369,18 +369,6 @@ export default function HomePage() {
               <div className="bg-secondary rounded-xl aspect-video" />
             </div>
 
-            {/* Feature 3 */}
-            <div className="grid md:grid-cols-2 gap-10 items-center">
-              <div>
-                <h3 className="text-xl font-semibold text-foreground mb-3">
-                  Trustless Settlement
-                </h3>
-                <p className="text-muted-foreground leading-relaxed">
-                  On-chain atomic swaps. No counterparty risk, no custodians.
-                </p>
-              </div>
-              <div className="bg-secondary rounded-xl aspect-video" />
-            </div>
           </div>
         </div>
       </section>
