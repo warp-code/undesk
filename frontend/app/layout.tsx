@@ -13,8 +13,8 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "OTC Request",
-  description: "Crypto OTC Request-For-Quote",
+  title: "Veil OTC",
+  description: "Private peer-to-peer OTC trading on Solana",
 };
 
 export default function RootLayout({
