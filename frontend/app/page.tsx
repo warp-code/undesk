@@ -7,32 +7,42 @@ const faqs = [
   {
     question: "What is Veil OTC?",
     answer:
-      "Veil OTC is a private over-the-counter trading platform built on Solana. It uses Arcium's confidential computing network to enable encrypted order matching—your trade intentions stay completely private until execution.",
+      "Veil OTC is a private over-the-counter trading platform built on Solana. It uses Arcium's confidential computing network to enable encrypted order matching—your trade intentions stay completely private, even during execution.",
   },
   {
     question: "How does the privacy work?",
     answer:
-      "Your trade data is encrypted end-to-end using multi-party computation (MPC). No single party—not even the network operators—can see your order details. Only when both parties agree does the trade execute on-chain.",
+      "Your trade data is encrypted end-to-end using Arcium's multi-party computation (MPC). No single party—not even the network operators—can see your order details.",
   },
   {
     question: "What tokens can I trade?",
     answer:
-      "You can trade any SPL token on Solana. Simply specify the token mint address when creating a deal.",
+      "You can trade any SPL token on Solana. If you can't find your token in the list, you can simply specify its mint address, also known as Token Address (TA) or Contract Address (CA), when creating a deal.",
   },
   {
     question: "Is there a minimum trade size?",
     answer:
-      "There's no minimum trade size, but Veil OTC is designed for larger trades where privacy and zero slippage matter most.",
+      "There's no minimum trade size, but Veil OTC is designed for larger trades where privacy and zero price impact matter most.",
   },
   {
     question: "How are trades settled?",
     answer:
-      "Trades settle via atomic on-chain swaps. Both parties' tokens are exchanged in a single transaction—either the trade completes fully or it doesn't happen at all. No counterparty risk.",
+      "Trades settle through encrypted execution inside the MPC network. Shared pool user balances are updated, and users may withdraw their funds at any time.",
   },
   {
     question: "How do I get started?",
     answer:
       "Connect your Solana wallet, then either create a new deal with your terms or browse and accept existing deals from other traders.",
+  },
+  {
+    question: "How are my on-chain accounts created privately?",
+    answer:
+      "All deal, deposit, and balance accounts are created using deterministically derived private addresses paired with random keypairs for frontrunning protection. Accounts on mainnet will be created through a private SOL pre-deposit scheme using Privacy Cash.",
+  },
+  {
+    question: "Can veil also do RFQ?",
+    answer:
+      "Veil OTC is our first step towards fully private OTC trading. We are building an RFQ system on top of Veil that will allow you to make and receive quotes through a fully private market structure. Coming soon.",
   },
 ];
 
@@ -103,7 +113,7 @@ function BackgroundPattern({ activeLines }: { activeLines: Set<string> }) {
   // 1.5x stroke widths from v12 spec
   const getStrokeWidth = (
     line: { weight: string; isAccent: boolean },
-    isActive: boolean
+    isActive: boolean,
   ) => {
     if (isActive) return 2.5;
     if (line.isAccent) return 1.2;
@@ -149,7 +159,7 @@ function BackgroundPattern({ activeLines }: { activeLines: Set<string> }) {
               }}
             />
           );
-        })
+        }),
       )}
     </svg>
   );
@@ -310,11 +320,12 @@ export default function HomePage() {
         <div className="relative z-10 max-w-6xl mx-auto px-6 w-full mt-16 pointer-events-none">
           <div className="max-w-2xl space-y-6 pointer-events-auto">
             <h1 className="text-5xl font-bold text-foreground">
-              Peer-to-peer, private OTC trading
+              Private peer-to-peer OTC trading
             </h1>
             <p className="text-lg text-muted-foreground leading-relaxed">
-              Execute large trades with complete privacy. No slippage, no
-              front-running, no information leakage.
+              Execute large trades with complete privacy.
+              <br />
+              No slippage, no front-running, no information leakage.
             </p>
             <div className="pt-2">
               <Link
@@ -335,21 +346,24 @@ export default function HomePage() {
       <section id="how-it-works" className="pt-44 pb-20">
         <div className="max-w-6xl mx-auto px-6">
           <h2 className="text-3xl font-bold text-foreground text-center mb-2">
-            Why Veil OTC?
+            The OTC desk without third parties
           </h2>
           <p className="text-muted-foreground text-center mb-16">
-            Trade large blocks privately and securely
+            Veil OTC enables you to create deals and offers in a fully trustless and self-custodial manner.
           </p>
           <div className="space-y-16">
             {/* Feature 1 */}
             <div className="grid md:grid-cols-2 gap-10 items-center">
               <div>
                 <h3 className="text-xl font-semibold text-foreground mb-3">
-                  Complete Privacy
+                  Typical OTC trading requires trust
                 </h3>
                 <p className="text-muted-foreground leading-relaxed">
-                  Encrypted order matching. Your trade intentions stay hidden
-                  until execution.
+                  Typical OTC trading requires a third party (usually a
+                  centralized exchange) to hold custody of your funds. If you
+                  wanted to make a private trade, you had to trust that the
+                  third party has your best interests at heart, and that they
+                  will not disclose information - now or ever.
                 </p>
               </div>
               <div className="bg-secondary rounded-xl aspect-video" />
@@ -359,16 +373,18 @@ export default function HomePage() {
             <div className="grid md:grid-cols-2 gap-10 items-center">
               <div>
                 <h3 className="text-xl font-semibold text-foreground mb-3">
-                  Zero Slippage
+                  Direct, private trading without a trusted desk
                 </h3>
                 <p className="text-muted-foreground leading-relaxed">
-                  Fixed price execution. No price impact, no MEV, no
-                  front-running.
+                  Veil OTC allows you to trade on-chain without the need for a
+                  third party. You are in full control of your funds at all
+                  times, and all your deal and offer details are only ever
+                  visible to you. Execution is also encrypted, preventing
+                  front-running and information leakage.
                 </p>
               </div>
               <div className="bg-secondary rounded-xl aspect-video" />
             </div>
-
           </div>
         </div>
       </section>
@@ -380,7 +396,7 @@ export default function HomePage() {
             How It Works
           </h2>
           <p className="text-muted-foreground text-center mb-16">
-            Post. Match. Settle.
+            Posting, matching and settlement - all private.
           </p>
 
           <div className="grid md:grid-cols-2 gap-16">
@@ -392,17 +408,17 @@ export default function HomePage() {
               <div className="space-y-8">
                 <div>
                   <h4 className="font-medium text-foreground mb-2">
-                    Step 1 — Post your deal
+                    Post your deal
                   </h4>
                   <p className="text-muted-foreground text-sm leading-relaxed">
-                    Define your trade: asset pair, direction, and your price.
-                    Deposit funds. Everything is encrypted before it leaves your
-                    device.
+                    Define your trade: assets (buying and selling), amount, and
+                    your price. Deposit funds. Everything is encrypted before it
+                    leaves your wallet.
                   </p>
                 </div>
                 <div>
                   <h4 className="font-medium text-foreground mb-2">
-                    Step 2 — Receive blind offers
+                    Receive blind offers
                   </h4>
                   <p className="text-muted-foreground text-sm leading-relaxed">
                     Counterparties submit offers without seeing your price or
@@ -412,12 +428,12 @@ export default function HomePage() {
                 </div>
                 <div>
                   <h4 className="font-medium text-foreground mb-2">
-                    Step 3 — Execute when ready
+                    Execute the deal
                   </h4>
                   <p className="text-muted-foreground text-sm leading-relaxed">
-                    Once enough valid offers arrive, execute the trade.
-                    Settlement is on-chain, atomic, and final. Offerors always
-                    get their price or better.
+                    Once enough valid offers arrive, the trade is executed.
+                    Settlement is on-chain and private. You always get your
+                    price or better.
                   </p>
                 </div>
               </div>
@@ -431,30 +447,32 @@ export default function HomePage() {
               <div className="space-y-8">
                 <div>
                   <h4 className="font-medium text-foreground mb-2">
-                    Step 1 — Browse open deals
+                    Browse open deals
                   </h4>
                   <p className="text-muted-foreground text-sm leading-relaxed">
-                    See available pairs and directions. You won&apos;t see price
-                    or size — only what you need to decide if you&apos;re
+                    See available deals and their assets. You won&apos;t see
+                    price or size — only what you need to decide if you&apos;re
                     interested.
                   </p>
                 </div>
                 <div>
                   <h4 className="font-medium text-foreground mb-2">
-                    Step 2 — Submit your price
+                    Submit your offer
                   </h4>
                   <p className="text-muted-foreground text-sm leading-relaxed">
-                    Make a blind offer with your price parameters. If your offer
-                    passes the creator&apos;s threshold, it goes into the pool.
+                    Make a blind offer with your desired price and size. If your
+                    offer passes the creator&apos;s threshold, it gets silently
+                    added to the deal.
                   </p>
                 </div>
                 <div>
                   <h4 className="font-medium text-foreground mb-2">
-                    Step 3 — Get matched
+                    Get matched
                   </h4>
                   <p className="text-muted-foreground text-sm leading-relaxed">
-                    If the deal executes, you receive exactly your price or
-                    better. If it doesn&apos;t, your funds are returned.
+                    If the deal executes and your offer matches, you receive
+                    exactly your desired price or better. If it doesn&apos;t,
+                    your funds are returned.
                   </p>
                 </div>
               </div>
@@ -467,24 +485,25 @@ export default function HomePage() {
       <section id="security" className="py-32">
         <div className="max-w-6xl mx-auto px-6">
           <h2 className="text-3xl font-bold text-foreground text-center mb-6">
-            Built for Security
+            End-to-end privacy and security
           </h2>
           <p className="text-muted-foreground text-center max-w-2xl mx-auto mb-20">
             Powered by Arcium&apos;s confidential computing network. Your trades
             are encrypted and processed using multi-party computation—no single
             party ever sees your data.
           </p>
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-10">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-10">
             {/* Security Item 1 */}
             <div className="text-center">
               <div className="w-14 h-14 bg-primary/10 rounded-lg flex items-center justify-center mx-auto mb-6">
                 <span className="text-primary text-xl">🛡️</span>
               </div>
               <h3 className="font-semibold text-foreground mb-2">
-                MPC Protected
+                Private by design
               </h3>
               <p className="text-muted-foreground leading-relaxed">
-                Multi-party computation ensures no single point of failure
+                Veil enables fully on-chain, non-custodial trading that never
+                ties back to your wallet.
               </p>
             </div>
 
@@ -494,36 +513,25 @@ export default function HomePage() {
                 <span className="text-primary text-xl">🔐</span>
               </div>
               <h3 className="font-semibold text-foreground mb-2">
-                End-to-End Encrypted
+                Everything is encrypted
               </h3>
               <p className="text-muted-foreground leading-relaxed">
-                Data encrypted from submission to settlement
+                Deals, offers, balances - data and execution is end-to-end
+                encrypted by Arcium&apos;s MPC network.
               </p>
             </div>
 
             {/* Security Item 3 */}
             <div className="text-center">
               <div className="w-14 h-14 bg-primary/10 rounded-lg flex items-center justify-center mx-auto mb-6">
-                <span className="text-primary text-xl">📜</span>
-              </div>
-              <h3 className="font-semibold text-foreground mb-2">
-                Open Source
-              </h3>
-              <p className="text-muted-foreground leading-relaxed">
-                Fully auditable contracts on Solana
-              </p>
-            </div>
-
-            {/* Security Item 4 */}
-            <div className="text-center">
-              <div className="w-14 h-14 bg-primary/10 rounded-lg flex items-center justify-center mx-auto mb-6">
                 <span className="text-primary text-xl">🔑</span>
               </div>
               <h3 className="font-semibold text-foreground mb-2">
-                Non-Custodial
+                Full self-custody
               </h3>
               <p className="text-muted-foreground leading-relaxed">
-                You control your assets at all times
+                All funds are escrowed on-chain through private shared pools,
+                always retrievable.
               </p>
             </div>
           </div>
