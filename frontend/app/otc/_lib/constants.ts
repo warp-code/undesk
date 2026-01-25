@@ -1,4 +1,29 @@
+import { PublicKey } from "@solana/web3.js";
 import type { Deal, MarketDeal, Offer } from "./types";
+
+// OTC Program Configuration
+export const OTC_PROGRAM_ID = new PublicKey(
+  process.env.NEXT_PUBLIC_OTC_PROGRAM_ID ||
+    "8wCCLUv68ofgoNg3AKbahgeqZitorLcgbRXQeHj7FpMd"
+);
+
+// Cluster offset: null = localnet env, number = devnet/testnet
+export const CLUSTER_OFFSET: number | null = process.env
+  .NEXT_PUBLIC_CLUSTER_OFFSET
+  ? parseInt(process.env.NEXT_PUBLIC_CLUSTER_OFFSET, 10)
+  : null;
+
+// Arcium ciphertext structure (account layout: [8-byte disc][16-byte nonce][ciphertext...])
+export const CIPHERTEXT_OFFSET = 24;
+export const CIPHERTEXT_SIZE = 32;
+
+// Computation definition names
+export const COMP_DEF_NAMES = {
+  CREATE_DEAL: "create_deal",
+  SUBMIT_OFFER: "submit_offer",
+  CRANK_DEAL: "crank_deal",
+  CRANK_OFFER: "crank_offer",
+} as const;
 
 // Mint addresses for mock data
 const MINTS = {

@@ -1,7 +1,7 @@
 # Frontend Integration - Implementation Overview
 
 **Date:** 2026-01-24
-**Status:** Ready to implement
+**Status:** In progress (Phases 1-3 complete)
 **Reference:** `vibes/frontend/004-solana-anchor-integration-plan.md`
 
 ---
@@ -36,8 +36,8 @@ The frontend is currently a fully-functional UI with **mock data only**. This do
 | Component | Purpose |
 |-----------|---------|
 | ~~Wallet connection~~ | ~~Connect Phantom/Solflare~~ ✅ |
-| Key derivation | Derive controller + encryption keys from wallet signatures |
-| Anchor program | Create deals and submit offers on-chain |
+| ~~Key derivation~~ | ~~Derive controller + encryption keys from wallet signatures~~ ✅ |
+| ~~Anchor program~~ | ~~Create deals and submit offers on-chain~~ ✅ |
 | Supabase client | Read deals/offers from database |
 | Encryption utils | Encrypt inputs, decrypt user's own data |
 | Data hooks | Replace mock data with live Supabase queries |
@@ -98,7 +98,7 @@ The frontend is currently a fully-functional UI with **mock data only**. This do
 
 ---
 
-### Phase 2: Key Derivation System
+### Phase 2: Key Derivation System ✅ COMPLETE
 **Effort: Small**
 
 1. **Create `_lib/encryption.ts`**:
@@ -125,36 +125,43 @@ The frontend is currently a fully-functional UI with **mock data only**. This do
 
 ---
 
-### Phase 3: OTC Program Integration
+### Phase 3: OTC Program Integration ✅ COMPLETE
 **Effort: Medium**
 
 1. **Update `_lib/constants.ts`**:
    - Add `OTC_PROGRAM_ID`
-   - Add `ARCIUM_CLUSTER_OFFSET`
-   - Add account offsets for encrypted fields
+   - Add `CLUSTER_OFFSET`
+   - Add `CIPHERTEXT_OFFSET`, `CIPHERTEXT_SIZE`
+   - Add `COMP_DEF_NAMES` for computation definitions
 
 2. **Create `_lib/accounts.ts`**:
    - `getDealAddress()` - derive deal PDA
    - `getOfferAddress()` - derive offer PDA
 
 3. **Copy IDL files**:
-   - Copy `target/idl/otc.json` to frontend
-   - Copy `target/types/otc.ts` to frontend
+   - Copy `target/idl/otc.json` to `_lib/idl/otc.json`
+   - Create `_lib/idl/otc.ts` for type re-exports
 
 4. **Create `_providers/OtcProvider.tsx`**:
    - Create Anchor Program instance
-   - Fetch MXE public key for encryption
-   - Provide Arcium account addresses
-   - Helper to get computation definition accounts
+   - Fetch MXE public key with retry logic (10 attempts, 1s delay)
+   - Provide Arcium account address helpers
+   - Exports: `useOtc()`, `useOtcProgram()`, `useMxePublicKey()`
 
-**Files to create:**
+5. **Update `.env.local`**:
+   - Add `NEXT_PUBLIC_OTC_PROGRAM_ID`
+   - Add `NEXT_PUBLIC_CLUSTER_OFFSET`
+
+**Files created:**
 - `_lib/accounts.ts`
+- `_lib/idl/otc.json`
+- `_lib/idl/otc.ts`
 - `_providers/OtcProvider.tsx`
-- `_lib/idl/otc.json` (copy)
-- `_lib/types/otc.ts` (copy)
 
-**Files to modify:**
+**Files modified:**
 - `_lib/constants.ts`
+- `.env.local`
+- `app/otc/layout.tsx` (added OtcProvider to hierarchy)
 
 ---
 
@@ -344,16 +351,33 @@ The frontend is currently a fully-functional UI with **mock data only**. This do
 
 ## File Summary
 
-### New Files to Create (18 total)
+### Files Created (Phases 1-3)
 
-**Providers (4):**
-- `_providers/SolanaProvider.tsx`
+**Providers (3):** ✅
+- `_providers/SolanaProvider.tsx` ✅
+- `_providers/OtcProvider.tsx` ✅
+- `_providers/DerivedKeysProvider.tsx` ✅
+
+**Hooks (1):** ✅
+- `_hooks/useDerivedKeys.ts` ✅
+
+**Utilities (2):** ✅
+- `_lib/encryption.ts` ✅
+- `_lib/accounts.ts` ✅
+
+**IDL (2):** ✅
+- `_lib/idl/otc.json` ✅
+- `_lib/idl/otc.ts` ✅
+
+**Components (1):** ✅
+- `_components/WalletButton.tsx` ✅
+
+### Files Still to Create
+
+**Providers (1):**
 - `_providers/SupabaseProvider.tsx`
-- `_providers/OtcProvider.tsx`
-- `_providers/DerivedKeysProvider.tsx`
 
-**Hooks (7):**
-- `_hooks/useDerivedKeys.ts`
+**Hooks (6):**
 - `_hooks/useCreateDeal.ts`
 - `_hooks/useSubmitOffer.ts`
 - `_hooks/useMarketDeals.ts`
@@ -361,28 +385,28 @@ The frontend is currently a fully-functional UI with **mock data only**. This do
 - `_hooks/useMyOffers.ts`
 - `_hooks/useOffersForDeal.ts`
 
-**Utilities (4):**
-- `_lib/encryption.ts`
+**Utilities (2):**
 - `_lib/decryption.ts`
-- `_lib/accounts.ts`
 - `_lib/supabase.ts`
 
-**IDL/Types (2):**
-- `_lib/idl/otc.json`
+**Types (1):**
 - `_lib/database.types.ts`
 
-**Components (2):**
-- `_components/WalletButton.tsx`
+**Components (1):**
 - `_components/TransactionStatus.tsx`
 
-### Files to Modify (9 total)
+### Files Modified (Phases 1-3) ✅
 
-- `frontend/package.json` - add dependencies
-- `app/globals.css` - wallet adapter styles
-- `app/otc/layout.tsx` - create + add providers
+- `frontend/package.json` - added dependencies ✅
+- `app/globals.css` - wallet adapter styles ✅
+- `app/otc/layout.tsx` - added providers ✅
+- `_lib/constants.ts` - added program constants ✅
+- `_components/Navbar.tsx` - added WalletButton ✅
+- `.env.local` - added program ID and cluster offset ✅
+
+### Files Still to Modify
+
 - `app/otc/page.tsx` - wire up hooks
-- `_lib/constants.ts` - add program constants
-- `_components/Navbar.tsx` - add WalletButton
 - `_components/CreateDealForm.tsx` - wire up useCreateDeal
 - `_components/MakeOfferForm.tsx` - wire up useSubmitOffer
 - `_components/DealsTable.tsx` - loading states
@@ -394,13 +418,13 @@ The frontend is currently a fully-functional UI with **mock data only**. This do
 ## Implementation Order
 
 ```
-Phase 1: Dependencies & Wallet ──┐
-                                 ├──► Phase 2: Key Derivation ──┐
-Phase 3.5: Supabase Setup ───────┤                              │
-                                 │                              │
-Phase 3: OTC Program ────────────┴──────────────────────────────┤
-                                                                │
-                                 ┌──────────────────────────────┘
+Phase 1: Dependencies & Wallet ✅ ──┐
+                                    ├──► Phase 2: Key Derivation ✅ ──┐
+Phase 3.5: Supabase Setup ──────────┤                                 │
+                                    │                                 │
+Phase 3: OTC Program ✅ ────────────┴─────────────────────────────────┤
+                                                                      │
+                                 ┌────────────────────────────────────┘
                                  │
                                  ├──► Phase 4: Create Deal
                                  │
@@ -467,16 +491,20 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=<anon-key>
 - [x] Address shown in Navbar
 - [x] Auto-reconnect on refresh
 
-### Phase 2: Key Derivation
-- [ ] Prompts for signature when needed
-- [ ] Signs both messages successfully
-- [ ] Keys persist during session
-- [ ] Keys clear on disconnect
+### Phase 2: Key Derivation ✅
+- [x] Prompts for signature when needed
+- [x] Signs both messages successfully
+- [x] Keys persist during session
+- [x] Keys clear on disconnect
 
-### Phase 3/3.5: Providers
+### Phase 3: OTC Program ✅
+- [x] Anchor program loads
+- [x] MXE public key fetched (with retry)
+- [x] Arcium account helpers work
+- [x] No console errors
+
+### Phase 3.5: Supabase
 - [ ] Supabase client connects
-- [ ] Anchor program loads
-- [ ] MXE public key fetched
 - [ ] No console errors
 
 ### Phase 6: Data Hooks
@@ -574,9 +602,10 @@ yarn workspace @otc/cranker start
 ## Next Steps
 
 1. ~~**Start with Phase 1**: Install dependencies and set up wallet connection~~ ✅
-2. **Phase 2**: Key derivation system (encryption.ts, useDerivedKeys, DerivedKeysProvider)
-3. **Phase 3 + 3.5**: OTC Program + Supabase integration (can be done in parallel)
-4. **Generate database types** from Supabase before writing hooks
-5. **Copy IDL** from `target/idl/otc.json` after running `arcium build`
+2. ~~**Phase 2**: Key derivation system (encryption.ts, useDerivedKeys, DerivedKeysProvider)~~ ✅
+3. ~~**Phase 3**: OTC Program integration (OtcProvider, accounts.ts, IDL)~~ ✅
+4. **Phase 3.5**: Supabase integration (SupabaseProvider, database types)
+5. **Generate database types** from Supabase before writing hooks
+6. **Phase 4-8**: Deal creation, offer submission, data hooks, wiring, polish
 
-Phase 1 complete. Ready for Phase 2.
+Phases 1-3 complete. Ready for Phase 3.5 (Supabase integration).

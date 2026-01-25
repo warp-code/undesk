@@ -27,7 +27,10 @@ export function buildCrankDealAccounts(
   return {
     payer,
     deal,
-    computationAccount: getComputationAccAddress(clusterOffset, computationOffset),
+    computationAccount: getComputationAccAddress(
+      clusterOffset,
+      computationOffset
+    ),
     clusterAccount: getClusterAccAddress(clusterOffset),
     mxeAccount: getMXEAccAddress(programId),
     mempoolAccount: getMempoolAccAddress(clusterOffset),
@@ -54,7 +57,10 @@ export function buildCrankOfferAccounts(
     payer,
     deal,
     offer,
-    computationAccount: getComputationAccAddress(clusterOffset, computationOffset),
+    computationAccount: getComputationAccAddress(
+      clusterOffset,
+      computationOffset
+    ),
     clusterAccount: getClusterAccAddress(clusterOffset),
     mxeAccount: getMXEAccAddress(programId),
     mempoolAccount: getMempoolAccAddress(clusterOffset),

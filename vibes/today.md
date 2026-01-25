@@ -10,7 +10,7 @@
 | **Tests** | Done | All passing |
 | **Indexer** | Done | `packages/indexer/` with .env defaults |
 | **Cranker** | Done | `packages/cranker/` with .env defaults |
-| **Frontend Integration** | Not started | Plan in `vibes/frontend/004-*` |
+| **Frontend Integration** | In progress | Phases 1-3 done, see `vibes/frontend/004-*` |
 
 ---
 
@@ -89,17 +89,17 @@ Done. `packages/indexer/` with:
 
 **8 phases** documented in `vibes/frontend/004-solana-anchor-integration-plan.md`
 
-| Phase | Description |
-|-------|-------------|
-| 1 | Wallet connection (SolanaProvider, WalletButton) |
-| 2 | Key derivation (encryption.ts, useDerivedKeys) |
-| 3 | OTC Program (OtcProvider, accounts.ts) |
-| 3.5 | Supabase integration (SupabaseProvider, useMarketDeals) |
-| 4 | Deal creation (useCreateDeal) |
-| 5 | Offer submission (useSubmitOffer) |
-| 6 | User's offers (useMyOffers) |
-| 7 | Data flow (wire up providers, replace mock data) |
-| 8 | Error handling & UX |
+| Phase | Description | Status |
+|-------|-------------|--------|
+| 1 | Wallet connection (SolanaProvider, WalletButton) | ✅ |
+| 2 | Key derivation (encryption.ts, useDerivedKeys) | ✅ |
+| 3 | OTC Program (OtcProvider, accounts.ts) | ✅ |
+| 3.5 | Supabase integration (SupabaseProvider, useMarketDeals) | |
+| 4 | Deal creation (useCreateDeal) | |
+| 5 | Offer submission (useSubmitOffer) | |
+| 6 | User's offers (useMyOffers) | |
+| 7 | Data flow (wire up providers, replace mock data) | |
+| 8 | Error handling & UX | |
 
 ---
 
@@ -133,6 +133,7 @@ Run: `yarn workspace @otc/cranker start`
    │         │
    ▼         ▼
 5. Frontend  6. Cranker ✅
+   (phases 1-3 ✅)
    ◄── You are here
 ```
 

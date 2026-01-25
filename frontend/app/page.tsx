@@ -194,9 +194,7 @@ function FAQItem({ question, answer }: { question: string; answer: string }) {
         onClick={() => setIsOpen(!isOpen)}
         className="w-full px-8 py-6 flex items-center justify-between text-left"
       >
-        <span className="font-medium text-foreground">
-          {question}
-        </span>
+        <span className="font-medium text-foreground">{question}</span>
         <svg
           className={`w-4 h-4 text-muted-foreground transition-transform duration-300 ease-out ${
             isOpen ? "rotate-180" : ""
@@ -206,7 +204,11 @@ function FAQItem({ question, answer }: { question: string; answer: string }) {
           stroke="currentColor"
           strokeWidth={2}
         >
-          <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M19 9l-7 7-7-7"
+          />
         </svg>
       </button>
       <div
@@ -258,7 +260,10 @@ export default function HomePage() {
         lineIdx < 17
           ? lineIdx + 10 + Math.floor(Math.random() * 10)
           : Math.max(0, lineIdx - 10 - Math.floor(Math.random() * 10));
-      triggerPing(getLineKey(tierIdx, lineIdx), getLineKey(otherTier, partnerIdx));
+      triggerPing(
+        getLineKey(tierIdx, lineIdx),
+        getLineKey(otherTier, partnerIdx)
+      );
     },
     [triggerPing]
   );
@@ -550,7 +555,6 @@ export default function HomePage() {
                 </li>
               </ul>
             </div>
-
           </div>
 
           {/* Bottom bar */}

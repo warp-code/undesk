@@ -63,8 +63,7 @@ export async function executeCrankDeal(
       signature,
     };
   } catch (error) {
-    const errorMessage =
-      error instanceof Error ? error.message : String(error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
     logger.warn("Failed to crank deal", {
       deal: dealAddress,
       error: errorMessage,
@@ -133,8 +132,7 @@ export async function executeCrankOffer(
       signature,
     };
   } catch (error) {
-    const errorMessage =
-      error instanceof Error ? error.message : String(error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
     logger.warn("Failed to crank offer", {
       offer: offerAddress,
       error: errorMessage,

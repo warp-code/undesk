@@ -19,7 +19,9 @@ export async function getExpiredOpenDeals(
     .limit(batchSize);
 
   if (error) {
-    logger.error("Failed to fetch expired open deals", { error: error.message });
+    logger.error("Failed to fetch expired open deals", {
+      error: error.message,
+    });
     throw error;
   }
 
