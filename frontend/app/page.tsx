@@ -54,12 +54,13 @@ function BackgroundPattern({
   onLineHover: (tierIdx: number, lineIdx: number) => void;
 }) {
   const tierLines = useMemo(() => {
-    const tiers: LineData[][] = [[], [], []];
+    const tiers: LineData[][] = [[], [], [], []];
 
     const tierConfigs = [
-      { yStart: 18, yEnd: 32, spacing: 6, offset: 0 },
-      { yStart: 34, yEnd: 48, spacing: 6.5, offset: 3 },
-      { yStart: 50, yEnd: 64, spacing: 5.5, offset: 6 },
+      { yStart: 0, yEnd: 25, spacing: 16, offset: 0 },
+      { yStart: 25, yEnd: 50, spacing: 16, offset: 5.33 },
+      { yStart: 50, yEnd: 75, spacing: 16, offset: 10.67 },
+      { yStart: 75, yEnd: 100, spacing: 16, offset: 0 },
     ];
 
     // Use a fixed width for calculations (will scale with viewBox)
@@ -87,9 +88,9 @@ function BackgroundPattern({
         if (rand > 0.9) weight = "thick";
         else if (rand > 0.6) weight = "medium";
 
-        // Accent lines (8% chance) - purple or orange
-        const isAccent = Math.random() > 0.92;
-        const accentColor = Math.random() > 0.5 ? "#a78bfa" : "#f97316";
+        // No fixed accent lines - all white by default, orange only when active
+        const isAccent = false;
+        const accentColor = "";
 
         tiers[tierIdx].push({
           x,
@@ -113,18 +114,18 @@ function BackgroundPattern({
     line: { weight: string; isAccent: boolean },
     isActive: boolean
   ) => {
-    if (isActive) return 1.8;
-    if (line.isAccent) return 0.75;
-    if (line.weight === "thick") return 0.6;
-    if (line.weight === "medium") return 0.42;
-    return 0.22;
+    if (isActive) return 2.5;
+    if (line.isAccent) return 1.2;
+    if (line.weight === "thick") return 1.0;
+    if (line.weight === "medium") return 0.7;
+    return 0.4;
   };
 
   return (
     <svg
       className="absolute inset-0 w-full h-full"
       viewBox="0 0 1200 600"
-      preserveAspectRatio="xMidYMid slice"
+      preserveAspectRatio="none"
       style={{ pointerEvents: "none" }}
     >
       <defs>
@@ -152,24 +153,38 @@ function BackgroundPattern({
           }
 
           return (
-            <line
-              key={key}
-              x1={line.x}
-              y1={`${line.yStart}%`}
-              x2={line.x}
-              y2={`${line.yEnd}%`}
-              stroke={strokeColor}
-              strokeWidth={getStrokeWidth(line, isActive)}
-              strokeLinecap="round"
-              filter={isActive ? "url(#pingGlow)" : "none"}
-              style={{
-                transition:
-                  "stroke 0.3s ease, stroke-width 0.3s ease, filter 0.3s ease",
-                cursor: "pointer",
-                pointerEvents: "auto",
-              }}
-              onMouseEnter={() => onLineHover(tierIdx, lineIdx)}
-            />
+            <g key={key}>
+              {/* Invisible hitbox for hover detection */}
+              <line
+                x1={line.x}
+                y1={`${line.yStart}%`}
+                x2={line.x}
+                y2={`${line.yEnd}%`}
+                stroke="transparent"
+                strokeWidth={16}
+                style={{
+                  cursor: "pointer",
+                  pointerEvents: "auto",
+                }}
+                onMouseEnter={() => onLineHover(tierIdx, lineIdx)}
+              />
+              {/* Visible line */}
+              <line
+                x1={line.x}
+                y1={`${line.yStart}%`}
+                x2={line.x}
+                y2={`${line.yEnd}%`}
+                stroke={strokeColor}
+                strokeWidth={getStrokeWidth(line, isActive)}
+                strokeLinecap="round"
+                filter={isActive ? "url(#pingGlow)" : "none"}
+                style={{
+                  transition:
+                    "stroke 0.3s ease, stroke-width 0.3s ease, filter 0.3s ease",
+                  pointerEvents: "none",
+                }}
+              />
+            </g>
           );
         })
       )}
@@ -224,54 +239,89 @@ function FAQItem({ question, answer }: { question: string; answer: string }) {
 
 export default function HomePage() {
   const [activeLines, setActiveLines] = useState<Set<string>>(new Set());
+  const lineTimeouts = useRef<Map<string, NodeJS.Timeout>>(new Map());
 
   const getLineKey = (tierIdx: number, lineIdx: number) =>
     `${tierIdx}-${lineIdx}`;
 
-  const triggerPing = useCallback((key1: string, key2: string) => {
-    // First line lights up
-    setActiveLines(new Set([key1]));
-    // Second line after 150ms delay
-    setTimeout(() => {
-      setActiveLines(new Set([key1, key2]));
-    }, 150);
-    // Both fade out
-    setTimeout(() => {
-      setActiveLines(new Set());
-    }, 1800);
+  // Activate a single line with its own independent timeout
+  const activateLine = useCallback((key: string, duration: number = 1200) => {
+    // Clear existing timeout for this line if any
+    const existingTimeout = lineTimeouts.current.get(key);
+    if (existingTimeout) clearTimeout(existingTimeout);
+
+    // Activate the line
+    setActiveLines((prev) => new Set([...prev, key]));
+
+    // Set timeout to deactivate this line independently
+    const timeout = setTimeout(() => {
+      setActiveLines((prev) => {
+        const next = new Set(prev);
+        next.delete(key);
+        return next;
+      });
+      lineTimeouts.current.delete(key);
+    }, duration);
+
+    lineTimeouts.current.set(key, timeout);
   }, []);
 
-  // Auto-ping every 3 seconds
+  // Idle animation - continuous staggered pings
   useEffect(() => {
-    const interval = setInterval(() => {
-      const t1 = Math.floor(Math.random() * 3);
-      const t2 = (t1 + 1 + Math.floor(Math.random() * 2)) % 3;
-      const l1 = Math.floor(Math.random() * 15);
-      const l2 = 20 + Math.floor(Math.random() * 15);
-      triggerPing(getLineKey(t1, l1), getLineKey(t2, l2));
-    }, 3000);
-    return () => clearInterval(interval);
-  }, [triggerPing]);
+    const triggerPair = () => {
+      const t1 = Math.floor(Math.random() * 4);
+      const t2 = (t1 + 1 + Math.floor(Math.random() * 3)) % 4;
+      const l1 = Math.floor(Math.random() * 50);
+      const l2 = Math.floor(Math.random() * 50);
+      activateLine(getLineKey(t1, l1), 1400);
+      setTimeout(() => activateLine(getLineKey(t2, l2), 1400), 120);
+    };
 
+    // Trigger pairs at staggered intervals for continuous activity
+    const intervals = [
+      setInterval(triggerPair, 1200),
+      setInterval(triggerPair, 1700),
+      setInterval(triggerPair, 2300),
+    ];
+
+    // Stagger initial triggers
+    setTimeout(triggerPair, 0);
+    setTimeout(triggerPair, 400);
+    setTimeout(triggerPair, 800);
+
+    return () => intervals.forEach(clearInterval);
+  }, [activateLine]);
+
+  // Hover lights up the hovered line + one random inactive line
   const handleLineHover = useCallback(
     (tierIdx: number, lineIdx: number) => {
-      const otherTier = (tierIdx + 1 + Math.floor(Math.random() * 2)) % 3;
-      const partnerIdx =
-        lineIdx < 17
-          ? lineIdx + 10 + Math.floor(Math.random() * 10)
-          : Math.max(0, lineIdx - 10 - Math.floor(Math.random() * 10));
-      triggerPing(
-        getLineKey(tierIdx, lineIdx),
-        getLineKey(otherTier, partnerIdx)
-      );
+      const hoveredKey = getLineKey(tierIdx, lineIdx);
+
+      // Activate the hovered line
+      activateLine(hoveredKey, 1200);
+
+      // Pick a random line that isn't currently active
+      let attempts = 0;
+      let partnerKey: string;
+      do {
+        const randomTier = Math.floor(Math.random() * 4);
+        const randomLine = Math.floor(Math.random() * 50);
+        partnerKey = getLineKey(randomTier, randomLine);
+        attempts++;
+      } while (activeLines.has(partnerKey) && attempts < 10);
+
+      // Activate the partner line with a slight delay
+      setTimeout(() => {
+        activateLine(partnerKey, 1200);
+      }, 100);
     },
-    [triggerPing]
+    [activateLine, activeLines]
   );
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
       {/* Navbar */}
-      <nav className="bg-background py-4 shrink-0 border-b border-border">
+      <nav className="relative z-50 bg-background py-4 shrink-0 border-b border-border">
         <div className="max-w-6xl mx-auto px-6 flex items-center justify-between">
           {/* Logo */}
           <div className="flex items-center gap-2">
@@ -314,7 +364,7 @@ export default function HomePage() {
       </nav>
 
       {/* Hero Section */}
-      <section className="relative min-h-[65vh] flex flex-col justify-center overflow-hidden">
+      <section className="relative h-[500px] flex flex-col justify-center overflow-hidden">
         {/* Background Pattern */}
         <BackgroundPattern
           activeLines={activeLines}
@@ -322,8 +372,8 @@ export default function HomePage() {
         />
 
         {/* Hero Content - aligned with navbar container */}
-        <div className="relative z-10 max-w-6xl mx-auto px-6 w-full -mt-[5vh]">
-          <div className="max-w-2xl space-y-6">
+        <div className="relative z-10 max-w-6xl mx-auto px-6 w-full mt-16 pointer-events-none">
+          <div className="max-w-2xl space-y-6 pointer-events-auto">
             <h1 className="text-4xl font-bold text-foreground">
               Private OTC Trading
             </h1>
@@ -347,7 +397,7 @@ export default function HomePage() {
       </section>
 
       {/* How it works Section */}
-      <section id="how-it-works" className="py-20">
+      <section id="how-it-works" className="pt-44 pb-20">
         <div className="max-w-6xl mx-auto px-6">
           <h2 className="text-3xl font-bold text-foreground text-center mb-20">
             Why Veil OTC?
