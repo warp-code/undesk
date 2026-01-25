@@ -1,4 +1,4 @@
-# OTC Project Status - 2026-01-23
+# OTC Project Status - 2026-01-24
 
 ## Current State
 
@@ -8,7 +8,7 @@
 | **Encrypted Instructions** | Done | Arcis circuits for MPC |
 | **Frontend UI** | Done (mock) | Full UI, mock data only |
 | **Tests** | Done | All passing |
-| **Indexer** | Not started | Architecture in `vibes/indexer/` |
+| **Indexer** | Done | `packages/indexer/` with .env defaults |
 | **Cranker** | Not started | Architecture in `vibes/cranker/` |
 | **Frontend Integration** | Not started | Plan in `vibes/frontend/004-*` |
 
@@ -72,21 +72,16 @@ Migrations: `supabase/migrations/`
 
 ---
 
-### 4. Implement Indexer
+### ~~4. Implement Indexer~~ ✅
 
-**Create:** `indexer/` workspace
-
-Captures on-chain events and stores in Supabase. Required before frontend integration.
-
-Components:
-- `parser.ts` - Anchor EventParser + IDL
-- `adapters/rpc.ts` - RPC subscription
-- `storage/supabase.ts` - Insert/upsert functions
-- `handler.ts` - Route events to storage
-- `index.ts` - Entry point
-- `backfill.ts` - Historical backfill
-
-Architecture: `vibes/indexer/000-indexer-architecture.md`
+Done. `packages/indexer/` with:
+- `parser.ts` - Anchor BorshCoder event parsing
+- `adapters/rpc.ts` - Real-time log subscription
+- `storage/supabase.ts` - Upserts with slot-based idempotency
+- `handler.ts` - Routes events to storage
+- `index.ts` - Entry point (`yarn start`)
+- `backfill.ts` - Historical backfill (`yarn backfill`)
+- `.env` support with localnet defaults
 
 ---
 
@@ -135,12 +130,12 @@ Architecture: `vibes/cranker/000-cranker-architecture.md`
 3. Supabase setup ✅
         │
         ▼
-4. Indexer  ◄── You are here
+4. Indexer ✅
         │
    ┌────┴────┐
    │         │
    ▼         ▼
-5. Frontend  6. Cranker
+5. Frontend  6. Cranker  ◄── You are here (parallel)
 ```
 
 ---
