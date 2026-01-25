@@ -1,7 +1,7 @@
 # Frontend Integration - Implementation Overview
 
 **Date:** 2026-01-24
-**Status:** In progress (Phases 1-3 complete)
+**Status:** In progress (Phases 1-3.5 complete)
 **Reference:** `vibes/frontend/004-solana-anchor-integration-plan.md`
 
 ---
@@ -38,8 +38,8 @@ The frontend is currently a fully-functional UI with **mock data only**. This do
 | ~~Wallet connection~~ | ~~Connect Phantom/Solflare~~ ✅ |
 | ~~Key derivation~~ | ~~Derive controller + encryption keys from wallet signatures~~ ✅ |
 | ~~Anchor program~~ | ~~Create deals and submit offers on-chain~~ ✅ |
-| Supabase client | Read deals/offers from database |
-| Encryption utils | Encrypt inputs, decrypt user's own data |
+| ~~Supabase client~~ | ~~Read deals/offers from database~~ ✅ |
+| Decryption utils | Decrypt user's own data from Supabase |
 | Data hooks | Replace mock data with live Supabase queries |
 
 ---
@@ -165,34 +165,38 @@ The frontend is currently a fully-functional UI with **mock data only**. This do
 
 ---
 
-### Phase 3.5: Supabase Integration
+### Phase 3.5: Supabase Integration ✅ COMPLETE
 **Effort: Small**
 
-1. **Create `_lib/supabase.ts`**:
-   - Supabase client factory
-   - Uses environment variables
+**Key Discovery:** The shared `@otc/supabase` package (in `packages/supabase/`) already provides everything needed:
+- `createAnonClient()` - frontend-safe client using `NEXT_PUBLIC_*` env vars
+- `TypedSupabaseClient` - fully typed Supabase client
+- Generated types: `DealRow`, `OfferRow`, `DealStatus`, `OfferStatus`
+- Local dev defaults (falls back to `http://127.0.0.1:54321`)
 
-2. **Generate database types**:
-   - Run `supabase gen types typescript`
-   - Save to `_lib/database.types.ts`
+**No need to create `_lib/supabase.ts` or `_lib/database.types.ts`** - just import from `@otc/supabase`.
 
-3. **Create `_providers/SupabaseProvider.tsx`**:
-   - Context wrapper for Supabase client
-   - Makes client available to all hooks
+1. **Create `_providers/SupabaseProvider.tsx`**: ✅
+   - Uses `createAnonClient()` from `@otc/supabase`
+   - Context wrapper with `useSupabase()` hook
+   - Client created once via `useMemo` (stable reference)
 
-4. **Add environment variables** to `.env.local`:
+2. **Update `app/otc/layout.tsx`**: ✅
+   - Added SupabaseProvider to hierarchy
+   - Order: SolanaProvider → SupabaseProvider → OtcProvider → DerivedKeysProvider
+
+3. **Add environment variables** to `.env.local`: ✅
    ```
-   NEXT_PUBLIC_SUPABASE_URL=http://localhost:54321
-   NEXT_PUBLIC_SUPABASE_ANON_KEY=<anon-key>
-   NEXT_PUBLIC_RPC_URL=http://localhost:8899
-   NEXT_PUBLIC_OTC_PROGRAM_ID=<program-id>
+   NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321
+   NEXT_PUBLIC_SUPABASE_ANON_KEY=<local-anon-key>
    ```
 
-**Files to create:**
-- `_lib/supabase.ts`
-- `_lib/database.types.ts`
+**Files created:**
 - `_providers/SupabaseProvider.tsx`
+
+**Files modified:**
 - `.env.local`
+- `app/otc/layout.tsx`
 
 ---
 
@@ -247,6 +251,35 @@ The frontend is currently a fully-functional UI with **mock data only**. This do
 ### Phase 6: Data Reading Hooks (Supabase)
 **Effort: Medium-Large**
 
+#### Type Imports
+
+All database types come from `@otc/supabase`:
+
+```typescript
+import type {
+  DealRow,
+  OfferRow,
+  DealStatus,
+  OfferStatus,
+} from "@otc/supabase";
+```
+
+#### Database Field Mappings (snake_case → camelCase)
+
+| Database Field | Frontend Type Field |
+|---------------|---------------------|
+| `base_mint` | `baseMint` |
+| `quote_mint` | `quoteMint` |
+| `allow_partial` | `allowPartial` |
+| `encryption_key` | `encryptionKey` |
+| `created_at` | `createdAt` |
+| `expires_at` | `expiresAt` |
+| `deal_address` | `dealAddress` |
+| `offer_index` | `offerIndex` |
+| `submitted_at` | `submittedAt` |
+
+#### Implementation Steps
+
 1. **Create `_lib/decryption.ts`**:
    - `hexToBytes()` / `bytesToHex()` - encoding helpers
    - `isOwnedByUser()` - check if encryption_key matches user's pubkey
@@ -292,15 +325,14 @@ The frontend is currently a fully-functional UI with **mock data only**. This do
 ### Phase 7: Wire Up Data Flow
 **Effort: Small**
 
-1. **Update `app/otc/layout.tsx`**:
-   - Add full provider hierarchy:
-     ```
-     SolanaProvider
-       └── SupabaseProvider
-             └── OtcProvider
-                   └── DerivedKeysProvider
-                         └── children
-     ```
+1. **Provider hierarchy already complete** ✅:
+   ```
+   SolanaProvider
+     └── SupabaseProvider
+           └── OtcProvider
+                 └── DerivedKeysProvider
+                       └── children
+   ```
 
 2. **Update `page.tsx`**:
    - Replace `useState` with hooks:
@@ -351,12 +383,13 @@ The frontend is currently a fully-functional UI with **mock data only**. This do
 
 ## File Summary
 
-### Files Created (Phases 1-3)
+### Files Created (Phases 1-3.5)
 
-**Providers (3):** ✅
+**Providers (4):** ✅
 - `_providers/SolanaProvider.tsx` ✅
 - `_providers/OtcProvider.tsx` ✅
 - `_providers/DerivedKeysProvider.tsx` ✅
+- `_providers/SupabaseProvider.tsx` ✅
 
 **Hooks (1):** ✅
 - `_hooks/useDerivedKeys.ts` ✅
@@ -374,9 +407,6 @@ The frontend is currently a fully-functional UI with **mock data only**. This do
 
 ### Files Still to Create
 
-**Providers (1):**
-- `_providers/SupabaseProvider.tsx`
-
 **Hooks (6):**
 - `_hooks/useCreateDeal.ts`
 - `_hooks/useSubmitOffer.ts`
@@ -385,24 +415,22 @@ The frontend is currently a fully-functional UI with **mock data only**. This do
 - `_hooks/useMyOffers.ts`
 - `_hooks/useOffersForDeal.ts`
 
-**Utilities (2):**
+**Utilities (1):**
 - `_lib/decryption.ts`
-- `_lib/supabase.ts`
-
-**Types (1):**
-- `_lib/database.types.ts`
 
 **Components (1):**
 - `_components/TransactionStatus.tsx`
 
-### Files Modified (Phases 1-3) ✅
+> **Note:** `_lib/supabase.ts` and `_lib/database.types.ts` are NOT needed - use `@otc/supabase` package instead.
+
+### Files Modified (Phases 1-3.5) ✅
 
 - `frontend/package.json` - added dependencies ✅
 - `app/globals.css` - wallet adapter styles ✅
-- `app/otc/layout.tsx` - added providers ✅
+- `app/otc/layout.tsx` - added providers (Solana, Supabase, OTC, DerivedKeys) ✅
 - `_lib/constants.ts` - added program constants ✅
 - `_components/Navbar.tsx` - added WalletButton ✅
-- `.env.local` - added program ID and cluster offset ✅
+- `.env.local` - added program ID, cluster offset, Supabase URL/key ✅
 
 ### Files Still to Modify
 
@@ -420,7 +448,7 @@ The frontend is currently a fully-functional UI with **mock data only**. This do
 ```
 Phase 1: Dependencies & Wallet ✅ ──┐
                                     ├──► Phase 2: Key Derivation ✅ ──┐
-Phase 3.5: Supabase Setup ──────────┤                                 │
+Phase 3.5: Supabase Setup ✅ ───────┤                                 │
                                     │                                 │
 Phase 3: OTC Program ✅ ────────────┴─────────────────────────────────┤
                                                                       │
@@ -440,8 +468,8 @@ Phase 3: OTC Program ✅ ────────────┴─────�
 ```
 
 **Recommended execution:**
-1. Do Phase 1 + 3.5 + 3 together (infrastructure)
-2. Do Phase 2 (key derivation)
+1. ~~Do Phase 1 + 3.5 + 3 together (infrastructure)~~ ✅
+2. ~~Do Phase 2 (key derivation)~~ ✅
 3. Do Phase 6 (data hooks) - can test with existing mock encryption keys
 4. Do Phase 4 + 5 (mutations)
 5. Do Phase 7 (wire up)
@@ -503,8 +531,10 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=<anon-key>
 - [x] Arcium account helpers work
 - [x] No console errors
 
-### Phase 3.5: Supabase
-- [ ] Supabase client connects
+### Phase 3.5: Supabase ✅
+- [x] SupabaseProvider created with `@otc/supabase`
+- [x] `useSupabase()` hook available
+- [ ] Supabase client connects (verify with dev server)
 - [ ] No console errors
 
 ### Phase 6: Data Hooks
@@ -579,16 +609,13 @@ SELECT * FROM deals;  -- Should work with anon key
 - Anchor: `@coral-xyz/anchor@0.32.1` (in root package.json)
 - Arcium: `@arcium-hq/client@0.5.4` (in root package.json)
 - Wallet: `@solana/wallet-adapter-react@^0.15.39`
-- Supabase: `@supabase/supabase-js@^2.90.0`
+- Supabase: `@otc/supabase` (shared package with types + client factories)
 - Noble: `@noble/curves@^1.9.5`, `@noble/hashes@^1.7.1` (v1.x required by arcium)
 
 ### Command Quick Reference
 ```bash
 # Build program (regenerates IDL)
 arcium build
-
-# Generate Supabase types
-supabase gen types typescript --local > frontend/app/otc/_lib/database.types.ts
 
 # Run indexer
 yarn workspace @otc/indexer start
@@ -597,6 +624,8 @@ yarn workspace @otc/indexer start
 yarn workspace @otc/cranker start
 ```
 
+> **Note:** No need to generate Supabase types - they're already in `@otc/supabase` package.
+
 ---
 
 ## Next Steps
@@ -604,8 +633,10 @@ yarn workspace @otc/cranker start
 1. ~~**Start with Phase 1**: Install dependencies and set up wallet connection~~ ✅
 2. ~~**Phase 2**: Key derivation system (encryption.ts, useDerivedKeys, DerivedKeysProvider)~~ ✅
 3. ~~**Phase 3**: OTC Program integration (OtcProvider, accounts.ts, IDL)~~ ✅
-4. **Phase 3.5**: Supabase integration (SupabaseProvider, database types)
-5. **Generate database types** from Supabase before writing hooks
-6. **Phase 4-8**: Deal creation, offer submission, data hooks, wiring, polish
+4. ~~**Phase 3.5**: Supabase integration (SupabaseProvider using `@otc/supabase`)~~ ✅
+5. **Phase 4**: Deal creation hook (useCreateDeal)
+6. **Phase 5**: Offer submission hook (useSubmitOffer)
+7. **Phase 6**: Data reading hooks (useMarketDeals, useMyDeals, useMyOffers, decryption.ts)
+8. **Phase 7-8**: Wire up data flow and UX polish
 
-Phases 1-3 complete. Ready for Phase 3.5 (Supabase integration).
+Phases 1-3.5 complete. Ready for Phase 4 (Deal Creation) or Phase 6 (Data Hooks).
