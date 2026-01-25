@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 
 const faqs = [
   {
@@ -36,43 +36,238 @@ const faqs = [
   },
 ];
 
+interface LineData {
+  x: number;
+  yStart: number;
+  yEnd: number;
+  weight: "thin" | "medium" | "thick";
+  opacity: number;
+  isAccent: boolean;
+  accentColor: string;
+}
+
+function BackgroundPattern({
+  activeLines,
+  onLineHover,
+}: {
+  activeLines: Set<string>;
+  onLineHover: (tierIdx: number, lineIdx: number) => void;
+}) {
+  const tierLines = useMemo(() => {
+    const tiers: LineData[][] = [[], [], []];
+
+    const tierConfigs = [
+      { yStart: 18, yEnd: 32, spacing: 6, offset: 0 },
+      { yStart: 34, yEnd: 48, spacing: 6.5, offset: 3 },
+      { yStart: 50, yEnd: 64, spacing: 5.5, offset: 6 },
+    ];
+
+    // Use a fixed width for calculations (will scale with viewBox)
+    const width = 1200;
+
+    tierConfigs.forEach((config, tierIdx) => {
+      const lineCount = Math.floor(width / config.spacing);
+
+      for (let i = 0; i < lineCount; i++) {
+        const x = config.offset + i * config.spacing;
+        const xPercent = x / width;
+
+        // Text safe zone: skip lines in left 48%
+        if (xPercent < 0.48) continue;
+
+        // Calculate opacity for transition zone (48-58%)
+        let opacity = 1;
+        if (xPercent < 0.58) {
+          opacity = (xPercent - 0.48) / 0.1;
+        }
+
+        // Random weight distribution: 60% thin, 30% medium, 10% thick
+        const rand = Math.random();
+        let weight: "thin" | "medium" | "thick" = "thin";
+        if (rand > 0.9) weight = "thick";
+        else if (rand > 0.6) weight = "medium";
+
+        // Accent lines (8% chance) - purple or orange
+        const isAccent = Math.random() > 0.92;
+        const accentColor = Math.random() > 0.5 ? "#a78bfa" : "#f97316";
+
+        tiers[tierIdx].push({
+          x,
+          yStart: config.yStart,
+          yEnd: config.yEnd,
+          weight,
+          opacity,
+          isAccent,
+          accentColor,
+        });
+      }
+    });
+    return tiers;
+  }, []);
+
+  const getLineKey = (tierIdx: number, lineIdx: number) =>
+    `${tierIdx}-${lineIdx}`;
+
+  // 1.5x stroke widths from v12 spec
+  const getStrokeWidth = (
+    line: { weight: string; isAccent: boolean },
+    isActive: boolean
+  ) => {
+    if (isActive) return 1.8;
+    if (line.isAccent) return 0.75;
+    if (line.weight === "thick") return 0.6;
+    if (line.weight === "medium") return 0.42;
+    return 0.22;
+  };
+
+  return (
+    <svg
+      className="absolute inset-0 w-full h-full"
+      viewBox="0 0 1200 600"
+      preserveAspectRatio="xMidYMid slice"
+      style={{ pointerEvents: "none" }}
+    >
+      <defs>
+        <filter id="pingGlow" x="-200%" y="-200%" width="500%" height="500%">
+          <feGaussianBlur stdDeviation="3" result="blur" />
+          <feMerge>
+            <feMergeNode in="blur" />
+            <feMergeNode in="blur" />
+            <feMergeNode in="blur" />
+            <feMergeNode in="SourceGraphic" />
+          </feMerge>
+        </filter>
+      </defs>
+
+      {tierLines.map((tier, tierIdx) =>
+        tier.map((line, lineIdx) => {
+          const key = getLineKey(tierIdx, lineIdx);
+          const isActive = activeLines.has(key);
+
+          let strokeColor = `rgba(255,255,255,${line.opacity * 0.7})`;
+          if (isActive) {
+            strokeColor = "#f97316";
+          } else if (line.isAccent) {
+            strokeColor = line.accentColor;
+          }
+
+          return (
+            <line
+              key={key}
+              x1={line.x}
+              y1={`${line.yStart}%`}
+              x2={line.x}
+              y2={`${line.yEnd}%`}
+              stroke={strokeColor}
+              strokeWidth={getStrokeWidth(line, isActive)}
+              strokeLinecap="round"
+              filter={isActive ? "url(#pingGlow)" : "none"}
+              style={{
+                transition:
+                  "stroke 0.3s ease, stroke-width 0.3s ease, filter 0.3s ease",
+                cursor: "pointer",
+                pointerEvents: "auto",
+              }}
+              onMouseEnter={() => onLineHover(tierIdx, lineIdx)}
+            />
+          );
+        })
+      )}
+    </svg>
+  );
+}
+
 function FAQItem({ question, answer }: { question: string; answer: string }) {
   const [isOpen, setIsOpen] = useState(false);
+  const contentRef = useRef<HTMLDivElement>(null);
+  const [contentHeight, setContentHeight] = useState(0);
+
+  useEffect(() => {
+    if (contentRef.current) {
+      setContentHeight(contentRef.current.scrollHeight);
+    }
+  }, [answer]);
 
   return (
     <div className="bg-card border border-border rounded-xl overflow-hidden">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full px-6 py-5 flex items-center justify-between text-left"
+        className="w-full px-8 py-6 flex items-center justify-between text-left"
       >
-        <span
-          className={`font-medium ${
-            isOpen ? "text-primary" : "text-foreground"
-          }`}
-        >
+        <span className="font-medium text-foreground">
           {question}
         </span>
-        <span
-          className={`text-muted-foreground transition-transform duration-200 ${
+        <svg
+          className={`w-4 h-4 text-muted-foreground transition-transform duration-300 ease-out ${
             isOpen ? "rotate-180" : ""
           }`}
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          strokeWidth={2}
         >
-          ↓
-        </span>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+        </svg>
       </button>
-      {isOpen && (
-        <div className="px-6 pb-5 text-muted-foreground">{answer}</div>
-      )}
+      <div
+        ref={contentRef}
+        className="overflow-hidden transition-all duration-300 ease-out"
+        style={{ maxHeight: isOpen ? contentHeight : 0 }}
+      >
+        <div className="px-8 pb-6 text-muted-foreground text-sm">{answer}</div>
+      </div>
     </div>
   );
 }
 
 export default function HomePage() {
+  const [activeLines, setActiveLines] = useState<Set<string>>(new Set());
+
+  const getLineKey = (tierIdx: number, lineIdx: number) =>
+    `${tierIdx}-${lineIdx}`;
+
+  const triggerPing = useCallback((key1: string, key2: string) => {
+    // First line lights up
+    setActiveLines(new Set([key1]));
+    // Second line after 150ms delay
+    setTimeout(() => {
+      setActiveLines(new Set([key1, key2]));
+    }, 150);
+    // Both fade out
+    setTimeout(() => {
+      setActiveLines(new Set());
+    }, 1800);
+  }, []);
+
+  // Auto-ping every 3 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const t1 = Math.floor(Math.random() * 3);
+      const t2 = (t1 + 1 + Math.floor(Math.random() * 2)) % 3;
+      const l1 = Math.floor(Math.random() * 15);
+      const l2 = 20 + Math.floor(Math.random() * 15);
+      triggerPing(getLineKey(t1, l1), getLineKey(t2, l2));
+    }, 3000);
+    return () => clearInterval(interval);
+  }, [triggerPing]);
+
+  const handleLineHover = useCallback(
+    (tierIdx: number, lineIdx: number) => {
+      const otherTier = (tierIdx + 1 + Math.floor(Math.random() * 2)) % 3;
+      const partnerIdx =
+        lineIdx < 17
+          ? lineIdx + 10 + Math.floor(Math.random() * 10)
+          : Math.max(0, lineIdx - 10 - Math.floor(Math.random() * 10));
+      triggerPing(getLineKey(tierIdx, lineIdx), getLineKey(otherTier, partnerIdx));
+    },
+    [triggerPing]
+  );
+
   return (
     <div className="min-h-screen flex flex-col bg-background">
       {/* Navbar */}
       <nav className="bg-background py-4 shrink-0 border-b border-border">
-        <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
+        <div className="max-w-6xl mx-auto px-6 flex items-center justify-between">
           {/* Logo */}
           <div className="flex items-center gap-2">
             <span className="text-primary text-xl">⬡</span>
@@ -106,81 +301,90 @@ export default function HomePage() {
           {/* CTA Button */}
           <Link
             href="/otc"
-            className="btn-primary-glow text-primary-foreground px-5 py-2 rounded-lg font-medium text-sm"
+            className="bg-secondary border border-border hover:bg-muted text-foreground px-5 py-2 rounded-lg font-medium text-sm transition-colors"
           >
-            Open app →
+            Launch App
           </Link>
         </div>
       </nav>
 
       {/* Hero Section */}
-      <section className="min-h-[80vh] flex flex-col items-center justify-center px-6">
-        <div className="max-w-2xl text-center space-y-6">
-          <h1 className="text-5xl font-bold text-foreground">
-            Private OTC Trading
-          </h1>
-          <p className="text-xl text-muted-foreground">
-            Execute large trades with complete privacy. No slippage, no
-            front-running, no information leakage.
-          </p>
-          <div className="pt-4">
-            <Link
-              href="/otc"
-              className="btn-primary-glow text-primary-foreground px-6 py-3 rounded-lg font-medium inline-flex items-center gap-2 group"
-            >
-              Start Trading
-              <span className="text-lg transition-transform duration-200 group-hover:translate-x-1">
-                →
-              </span>
-            </Link>
+      <section className="relative min-h-[65vh] flex flex-col justify-center overflow-hidden">
+        {/* Background Pattern */}
+        <BackgroundPattern
+          activeLines={activeLines}
+          onLineHover={handleLineHover}
+        />
+
+        {/* Hero Content - aligned with navbar container */}
+        <div className="relative z-10 max-w-6xl mx-auto px-6 w-full -mt-[5vh]">
+          <div className="max-w-2xl space-y-6">
+            <h1 className="text-4xl font-bold text-foreground">
+              Private OTC Trading
+            </h1>
+            <p className="text-base text-muted-foreground leading-relaxed">
+              Execute large trades with complete privacy. No slippage, no
+              front-running, no information leakage.
+            </p>
+            <div className="pt-2">
+              <Link
+                href="/otc"
+                className="btn-primary-glow text-primary-foreground px-4 py-2 rounded-lg font-medium text-sm inline-flex items-center gap-2 group"
+              >
+                Start Trading
+                <span className="text-base transition-transform duration-200 group-hover:translate-x-1">
+                  →
+                </span>
+              </Link>
+            </div>
           </div>
         </div>
       </section>
 
       {/* How it works Section */}
-      <section id="how-it-works" className="py-24 px-6">
+      <section id="how-it-works" className="py-20 px-6">
         <div className="max-w-6xl mx-auto">
-          <h2 className="text-3xl font-bold text-foreground text-center mb-16">
+          <h2 className="text-3xl font-bold text-foreground text-center mb-20">
             Why Veil OTC?
           </h2>
-          <div className="grid md:grid-cols-3 gap-8">
+          <div className="grid md:grid-cols-3 gap-10">
             {/* Feature 1 */}
-            <div className="bg-card border border-border rounded-xl p-6">
-              <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4">
+            <div className="bg-card border border-border rounded-xl p-10">
+              <div className="w-14 h-14 bg-primary/10 rounded-lg flex items-center justify-center mb-6">
                 <span className="text-primary text-2xl">🔒</span>
               </div>
-              <h3 className="text-xl font-semibold text-foreground mb-2">
+              <h3 className="text-xl font-semibold text-foreground mb-3">
                 Complete Privacy
               </h3>
-              <p className="text-muted-foreground">
+              <p className="text-muted-foreground leading-relaxed">
                 Encrypted order matching. Your trade intentions stay hidden
                 until execution.
               </p>
             </div>
 
             {/* Feature 2 */}
-            <div className="bg-card border border-border rounded-xl p-6">
-              <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4">
+            <div className="bg-card border border-border rounded-xl p-10">
+              <div className="w-14 h-14 bg-primary/10 rounded-lg flex items-center justify-center mb-6">
                 <span className="text-primary text-2xl">⚡</span>
               </div>
-              <h3 className="text-xl font-semibold text-foreground mb-2">
+              <h3 className="text-xl font-semibold text-foreground mb-3">
                 Zero Slippage
               </h3>
-              <p className="text-muted-foreground">
+              <p className="text-muted-foreground leading-relaxed">
                 Fixed price execution. No price impact, no MEV, no
                 front-running.
               </p>
             </div>
 
             {/* Feature 3 */}
-            <div className="bg-card border border-border rounded-xl p-6">
-              <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4">
+            <div className="bg-card border border-border rounded-xl p-10">
+              <div className="w-14 h-14 bg-primary/10 rounded-lg flex items-center justify-center mb-6">
                 <span className="text-primary text-2xl">🔗</span>
               </div>
-              <h3 className="text-xl font-semibold text-foreground mb-2">
+              <h3 className="text-xl font-semibold text-foreground mb-3">
                 Trustless Settlement
               </h3>
-              <p className="text-muted-foreground">
+              <p className="text-muted-foreground leading-relaxed">
                 On-chain atomic swaps. No counterparty risk, no custodians.
               </p>
             </div>
@@ -189,65 +393,65 @@ export default function HomePage() {
       </section>
 
       {/* Security Section */}
-      <section id="security" className="py-24 px-6 border-t border-border">
+      <section id="security" className="py-32 px-6 bg-card">
         <div className="max-w-6xl mx-auto">
-          <h2 className="text-3xl font-bold text-foreground text-center mb-4">
+          <h2 className="text-3xl font-bold text-foreground text-center mb-6">
             Built for Security
           </h2>
-          <p className="text-muted-foreground text-center max-w-2xl mx-auto mb-16">
+          <p className="text-muted-foreground text-center max-w-2xl mx-auto mb-20">
             Powered by Arcium&apos;s confidential computing network. Your trades
             are encrypted and processed using multi-party computation—no single
             party ever sees your data.
           </p>
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-10">
             {/* Security Item 1 */}
             <div className="text-center">
-              <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mx-auto mb-4">
+              <div className="w-14 h-14 bg-primary/10 rounded-lg flex items-center justify-center mx-auto mb-6">
                 <span className="text-primary text-xl">🛡️</span>
               </div>
-              <h3 className="font-semibold text-foreground mb-1">
+              <h3 className="font-semibold text-foreground mb-2">
                 MPC Protected
               </h3>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-muted-foreground leading-relaxed">
                 Multi-party computation ensures no single point of failure
               </p>
             </div>
 
             {/* Security Item 2 */}
             <div className="text-center">
-              <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mx-auto mb-4">
+              <div className="w-14 h-14 bg-primary/10 rounded-lg flex items-center justify-center mx-auto mb-6">
                 <span className="text-primary text-xl">🔐</span>
               </div>
-              <h3 className="font-semibold text-foreground mb-1">
+              <h3 className="font-semibold text-foreground mb-2">
                 End-to-End Encrypted
               </h3>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-muted-foreground leading-relaxed">
                 Data encrypted from submission to settlement
               </p>
             </div>
 
             {/* Security Item 3 */}
             <div className="text-center">
-              <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mx-auto mb-4">
+              <div className="w-14 h-14 bg-primary/10 rounded-lg flex items-center justify-center mx-auto mb-6">
                 <span className="text-primary text-xl">📜</span>
               </div>
-              <h3 className="font-semibold text-foreground mb-1">
+              <h3 className="font-semibold text-foreground mb-2">
                 Open Source
               </h3>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-muted-foreground leading-relaxed">
                 Fully auditable contracts on Solana
               </p>
             </div>
 
             {/* Security Item 4 */}
             <div className="text-center">
-              <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mx-auto mb-4">
+              <div className="w-14 h-14 bg-primary/10 rounded-lg flex items-center justify-center mx-auto mb-6">
                 <span className="text-primary text-xl">🔑</span>
               </div>
-              <h3 className="font-semibold text-foreground mb-1">
+              <h3 className="font-semibold text-foreground mb-2">
                 Non-Custodial
               </h3>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-muted-foreground leading-relaxed">
                 You control your assets at all times
               </p>
             </div>
@@ -256,15 +460,15 @@ export default function HomePage() {
       </section>
 
       {/* FAQ Section */}
-      <section id="faq" className="py-24 px-6 border-t border-border">
+      <section id="faq" className="py-32 px-6">
         <div className="max-w-3xl mx-auto">
-          <h2 className="text-3xl font-bold text-foreground text-center mb-4">
+          <h2 className="text-3xl font-bold text-foreground text-center mb-6">
             FAQ
           </h2>
-          <p className="text-muted-foreground text-center mb-12">
+          <p className="text-muted-foreground text-center mb-16">
             Everything you need to know about Veil OTC
           </p>
-          <div className="space-y-4">
+          <div className="space-y-6">
             {faqs.map((faq, index) => (
               <FAQItem
                 key={index}
@@ -277,9 +481,9 @@ export default function HomePage() {
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-border py-12 px-6">
+      <footer className="border-t border-border py-20 px-6">
         <div className="max-w-6xl mx-auto">
-          <div className="grid md:grid-cols-4 gap-8 mb-8">
+          <div className="grid md:grid-cols-4 gap-12 mb-12">
             {/* Brand */}
             <div className="md:col-span-1">
               <div className="flex items-center gap-2 mb-4">
@@ -295,8 +499,8 @@ export default function HomePage() {
 
             {/* Product Links */}
             <div>
-              <h4 className="font-semibold text-foreground mb-4">Product</h4>
-              <ul className="space-y-2 text-sm text-muted-foreground">
+              <h4 className="font-semibold text-foreground mb-6">Product</h4>
+              <ul className="space-y-3 text-sm text-muted-foreground">
                 <li>
                   <a
                     href="#how-it-works"
@@ -326,8 +530,8 @@ export default function HomePage() {
 
             {/* Resources Links */}
             <div>
-              <h4 className="font-semibold text-foreground mb-4">Resources</h4>
-              <ul className="space-y-2 text-sm text-muted-foreground">
+              <h4 className="font-semibold text-foreground mb-6">Resources</h4>
+              <ul className="space-y-3 text-sm text-muted-foreground">
                 <li>
                   <a
                     href="#"
@@ -347,26 +551,11 @@ export default function HomePage() {
               </ul>
             </div>
 
-            {/* Social Links */}
-            <div>
-              <h4 className="font-semibold text-foreground mb-4">Community</h4>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                <li>
-                  <a
-                    href="#"
-                    className="hover:text-foreground transition-colors"
-                  >
-                    Twitter
-                  </a>
-                </li>
-              </ul>
-            </div>
           </div>
 
           {/* Bottom bar */}
-          <div className="pt-8 border-t border-border flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-muted-foreground">
-            <p>© 2025 Veil OTC. All rights reserved.</p>
-            <p>Built on Solana • Powered by Arcium</p>
+          <div className="pt-12 border-t border-border text-sm text-muted-foreground">
+            <p>© 2025 Veil OTC</p>
           </div>
         </div>
       </footer>
