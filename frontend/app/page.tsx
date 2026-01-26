@@ -354,7 +354,7 @@ export default function HomePage() {
           <div className="grid md:grid-cols-2 gap-6 max-w-[1230px] mx-auto">
             {/* Traditional OTC Card */}
             <div className="bg-card border border-border rounded-2xl p-10 min-h-[395px]">
-              <h3 className="text-xl font-semibold text-foreground mb-6">
+              <h3 className="text-2xl font-semibold text-foreground mb-8">
                 Traditional OTC
               </h3>
               <ul className="space-y-4">
@@ -423,7 +423,7 @@ export default function HomePage() {
                   "0 0 20px rgba(249, 115, 22, 0.15), 0 0 40px rgba(249, 115, 22, 0.05)",
               }}
             >
-              <h3 className="text-xl font-semibold text-foreground mb-6">
+              <h3 className="text-2xl font-semibold text-foreground mb-8">
                 Veil OTC
               </h3>
               <ul className="space-y-4">
