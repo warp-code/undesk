@@ -517,7 +517,7 @@ export default function HomePage() {
             {/* Step 1 Row */}
             <div className="grid md:grid-cols-2 gap-16">
               <div className="grid grid-cols-[24px_1fr] gap-4 items-start">
-                <div className="flex justify-end items-start gap-1 pt-1">
+                <div className="flex justify-end items-start gap-1">
                   <div
                     className="w-0.5 h-8 bg-primary rounded-full"
                     style={{
@@ -537,7 +537,7 @@ export default function HomePage() {
                 </div>
               </div>
               <div className="grid grid-cols-[24px_1fr] gap-4 items-start">
-                <div className="flex justify-end items-start gap-1 pt-1">
+                <div className="flex justify-end items-start gap-1">
                   <div
                     className="w-0.5 h-8 bg-primary rounded-full"
                     style={{
@@ -561,7 +561,7 @@ export default function HomePage() {
             {/* Step 2 Row */}
             <div className="grid md:grid-cols-2 gap-16">
               <div className="grid grid-cols-[24px_1fr] gap-4 items-start">
-                <div className="flex justify-end items-start gap-1 pt-1">
+                <div className="flex justify-end items-start gap-1">
                   <div
                     className="w-0.5 h-8 bg-primary rounded-full"
                     style={{
@@ -587,7 +587,7 @@ export default function HomePage() {
                 </div>
               </div>
               <div className="grid grid-cols-[24px_1fr] gap-4 items-start">
-                <div className="flex justify-end items-start gap-1 pt-1">
+                <div className="flex justify-end items-start gap-1">
                   <div
                     className="w-0.5 h-8 bg-primary rounded-full"
                     style={{
@@ -617,7 +617,7 @@ export default function HomePage() {
             {/* Step 3 Row */}
             <div className="grid md:grid-cols-2 gap-16">
               <div className="grid grid-cols-[24px_1fr] gap-4 items-start">
-                <div className="flex justify-end items-start gap-1 pt-1">
+                <div className="flex justify-end items-start gap-1">
                   <div
                     className="w-0.5 h-8 bg-primary rounded-full"
                     style={{
@@ -649,7 +649,7 @@ export default function HomePage() {
                 </div>
               </div>
               <div className="grid grid-cols-[24px_1fr] gap-4 items-start">
-                <div className="flex justify-end items-start gap-1 pt-1">
+                <div className="flex justify-end items-start gap-1">
                   <div
                     className="w-0.5 h-8 bg-primary rounded-full"
                     style={{
