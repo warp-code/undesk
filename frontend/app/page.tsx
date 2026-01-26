@@ -748,7 +748,7 @@ export default function HomePage() {
                   <div>
                     <p className="font-medium text-foreground">Everything is encrypted.</p>
                     <p className="text-muted-foreground text-base mt-1">
-                      Deals, offers, balances — all data and execution is
+                      Deals, offers, balances: all data and execution is
                       end-to-end encrypted by Arcium&apos;s MPC network.
                     </p>
                   </div>
