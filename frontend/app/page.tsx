@@ -712,56 +712,72 @@ export default function HomePage() {
       {/* Security Section */}
       <section id="security" className="py-32">
         <div className="max-w-6xl mx-auto px-6">
-          <h2 className="text-3xl font-bold text-foreground text-center mb-6">
-            End-to-end privacy and security
-          </h2>
-          <p className="text-muted-foreground text-center max-w-2xl mx-auto mb-20">
-            Powered by Arcium&apos;s confidential computing network. Your trades
-            are encrypted and processed using multi-party computation—no single
-            party ever sees your data.
-          </p>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-10">
-            {/* Security Item 1 */}
-            <div className="text-center">
-              <div className="w-14 h-14 bg-primary/10 rounded-lg flex items-center justify-center mx-auto mb-6">
-                <span className="text-primary text-xl">🛡️</span>
-              </div>
-              <h3 className="font-semibold text-foreground mb-2">
-                Private by design
-              </h3>
-              <p className="text-muted-foreground leading-relaxed">
-                Veil enables fully on-chain, non-custodial trading that never
-                ties back to your wallet.
+          <div className="grid md:grid-cols-2 gap-16 items-start">
+            {/* Left column - text content */}
+            <div>
+              <h2 className="text-3xl font-bold text-foreground mb-6">
+                End-to-end privacy and security
+              </h2>
+              <p className="text-muted-foreground mb-12">
+                Powered by Arcium&apos;s confidential computing network. Your
+                trades are encrypted and processed using multi-party
+                computation—no single party ever sees your data.
               </p>
+
+              {/* Feature items stacked vertically */}
+              <div className="space-y-8">
+                {/* Feature 1 */}
+                <div className="flex items-start gap-4">
+                  <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center shrink-0">
+                    <span className="text-primary text-lg">🛡️</span>
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-foreground mb-1">
+                      Private by design
+                    </h3>
+                    <p className="text-muted-foreground">
+                      Fully on-chain, non-custodial trading that never ties back
+                      to your wallet.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Feature 2 */}
+                <div className="flex items-start gap-4">
+                  <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center shrink-0">
+                    <span className="text-primary text-lg">🔐</span>
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-foreground mb-1">
+                      Everything is encrypted
+                    </h3>
+                    <p className="text-muted-foreground">
+                      Deals, offers, balances — all data and execution is
+                      end-to-end encrypted by Arcium&apos;s MPC network.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Feature 3 */}
+                <div className="flex items-start gap-4">
+                  <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center shrink-0">
+                    <span className="text-primary text-lg">🔑</span>
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-foreground mb-1">
+                      Full self-custody
+                    </h3>
+                    <p className="text-muted-foreground">
+                      All funds are escrowed on-chain through private shared
+                      pools, always retrievable.
+                    </p>
+                  </div>
+                </div>
+              </div>
             </div>
 
-            {/* Security Item 2 */}
-            <div className="text-center">
-              <div className="w-14 h-14 bg-primary/10 rounded-lg flex items-center justify-center mx-auto mb-6">
-                <span className="text-primary text-xl">🔐</span>
-              </div>
-              <h3 className="font-semibold text-foreground mb-2">
-                Everything is encrypted
-              </h3>
-              <p className="text-muted-foreground leading-relaxed">
-                Deals, offers, balances - data and execution is end-to-end
-                encrypted by Arcium&apos;s MPC network.
-              </p>
-            </div>
-
-            {/* Security Item 3 */}
-            <div className="text-center">
-              <div className="w-14 h-14 bg-primary/10 rounded-lg flex items-center justify-center mx-auto mb-6">
-                <span className="text-primary text-xl">🔑</span>
-              </div>
-              <h3 className="font-semibold text-foreground mb-2">
-                Full self-custody
-              </h3>
-              <p className="text-muted-foreground leading-relaxed">
-                All funds are escrowed on-chain through private shared pools,
-                always retrievable.
-              </p>
-            </div>
+            {/* Right column - placeholder for illustration */}
+            <div>{/* Illustration will go here later */}</div>
           </div>
         </div>
       </section>
