@@ -319,6 +319,9 @@ export default function HomePage() {
         {/* Hero Content - aligned with navbar container */}
         <div className="relative z-10 max-w-6xl mx-auto px-6 w-full mt-16 pointer-events-none">
           <div className="max-w-2xl space-y-6 pointer-events-auto">
+            <p className="text-sm text-muted-foreground">
+              Powered by Arcium
+            </p>
             <h1 className="text-5xl font-bold text-foreground">
               Private peer-to-peer OTC trading
             </h1>
@@ -337,9 +340,6 @@ export default function HomePage() {
                   →
                 </span>
               </Link>
-              <p className="text-sm text-muted-foreground mt-3">
-                Powered by Arcium
-              </p>
             </div>
           </div>
         </div>
