@@ -337,6 +337,9 @@ export default function HomePage() {
                   →
                 </span>
               </Link>
+              <p className="text-sm text-muted-foreground mt-3">
+                Powered by Arcium
+              </p>
             </div>
           </div>
         </div>
