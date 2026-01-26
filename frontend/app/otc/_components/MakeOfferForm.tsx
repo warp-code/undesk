@@ -4,6 +4,8 @@ import { useState, useMemo } from "react";
 import type { MarketDeal } from "../_lib/types";
 import { sanitizeNumberInput } from "../_lib/format";
 import { getTokenSymbol } from "../_lib/tokens";
+import { useSubmitOffer } from "../_hooks/useSubmitOffer";
+import { useDerivedKeysContext } from "../_providers/DerivedKeysProvider";
 
 interface MakeOfferFormProps {
   deal: MarketDeal;
@@ -20,6 +22,10 @@ export const MakeOfferForm = ({
   const [offerPrice, setOfferPrice] = useState("");
   const [isOfferLoading, setIsOfferLoading] = useState(false);
 
+  const { submitOffer, isSubmitting } = useSubmitOffer();
+  const { hasDerivedKeys, deriveKeysFromWallet, isDerivingKeys } =
+    useDerivedKeysContext();
+
   const offerTotal = useMemo(() => {
     const amount = parseFloat(offerAmount) || 0;
     const price = parseFloat(offerPrice) || 0;
@@ -32,14 +38,36 @@ export const MakeOfferForm = ({
     parseFloat(offerAmount) > 0 &&
     parseFloat(offerPrice) > 0;
 
-  const handlePlaceOffer = () => {
+  const handlePlaceOffer = async () => {
     if (!canPlaceOffer) return;
+
+    if (!hasDerivedKeys) {
+      try {
+        await deriveKeysFromWallet();
+      } catch (e) {
+        console.error("Key derivation failed:", e);
+        return;
+      }
+      return; // Let user click again after signing
+    }
+
     setIsOfferLoading(true);
 
-    setTimeout(() => {
-      setIsOfferLoading(false);
+    try {
+      const offerAddress = await submitOffer({
+        dealAddress: deal.id,
+        baseMint: deal.baseMint,
+        amount: parseFloat(offerAmount),
+        price: parseFloat(offerPrice),
+      });
+
+      console.log("Offer submitted:", offerAddress);
       onOfferPlaced();
-    }, 1000);
+    } catch (err) {
+      console.error("Failed to submit offer:", err);
+    } finally {
+      setIsOfferLoading(false);
+    }
   };
 
   const base = getTokenSymbol(deal.baseMint);
@@ -148,14 +176,14 @@ export const MakeOfferForm = ({
         {/* Place Offer Button */}
         <button
           onClick={handlePlaceOffer}
-          disabled={!canPlaceOffer}
+          disabled={!canPlaceOffer || isSubmitting || isDerivingKeys}
           className={`w-full py-3 rounded-md font-medium transition-colors flex items-center justify-center ${
-            canPlaceOffer
+            canPlaceOffer && !isSubmitting && !isDerivingKeys
               ? "bg-primary hover:bg-primary/80 text-primary-foreground"
               : "bg-secondary text-muted-foreground cursor-not-allowed"
           }`}
         >
-          {isOfferLoading && (
+          {(isOfferLoading || isDerivingKeys) && (
             <svg
               className="animate-spin h-4 w-4 mr-2"
               xmlns="http://www.w3.org/2000/svg"
@@ -177,7 +205,13 @@ export const MakeOfferForm = ({
               />
             </svg>
           )}
-          Place Offer
+          {isDerivingKeys
+            ? "Signing..."
+            : isOfferLoading
+            ? "Submitting..."
+            : !hasDerivedKeys
+            ? "Sign & Submit"
+            : "Place Offer"}
         </button>
       </div>
     </>
