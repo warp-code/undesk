@@ -722,7 +722,7 @@ export default function HomePage() {
               <p className="text-muted-foreground mb-12">
                 Powered by Arcium&apos;s confidential computing network. Your
                 trades are encrypted and processed using multi-party
-                computation. <span className="text-primary">No single party ever sees your data.</span>
+                computation. <span className="text-foreground">No single party ever sees your data.</span>
               </p>
 
               {/* Feature cards */}
@@ -837,9 +837,9 @@ export default function HomePage() {
       {/* Footer */}
       <footer className="border-t border-border py-20">
         <div className="max-w-6xl mx-auto px-6">
-          <div className="grid md:grid-cols-4 gap-12 mb-12 items-start">
+          <div className="flex justify-between mb-12 items-start">
             {/* Brand */}
-            <div className="md:col-span-1">
+            <div>
               <div className="flex items-center gap-2 mb-4">
                 <span className="text-primary text-xl">⬡</span>
                 <span className="text-foreground font-semibold text-lg">
@@ -851,6 +851,8 @@ export default function HomePage() {
               </p>
             </div>
 
+            {/* Links */}
+            <div className="flex gap-16">
             {/* Product Links */}
             <div>
               <h4 className="font-semibold text-foreground mb-4">Product</h4>
@@ -904,10 +906,11 @@ export default function HomePage() {
                 </li>
               </ul>
             </div>
+            </div>
           </div>
 
           {/* Bottom bar */}
-          <div className="pt-12 border-t border-border text-base text-muted-foreground">
+          <div className="pt-12 border-t border-border text-base text-muted-foreground text-right">
             <p>© 2025 Veil OTC</p>
           </div>
         </div>
