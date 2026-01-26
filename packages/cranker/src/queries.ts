@@ -37,11 +37,31 @@ export async function getOpenOffersForSettledDeals(
   supabase: TypedSupabaseClient,
   batchSize: number
 ): Promise<CrankableOffer[]> {
+  // First, get non-open deal addresses (no FK constraint exists, so we can't use embedded joins)
+  const { data: settledDeals, error: dealsError } = await supabase
+    .from("deals")
+    .select("address")
+    .neq("status", "open");
+
+  if (dealsError) {
+    logger.error("Failed to fetch settled deals", {
+      error: dealsError.message,
+    });
+    throw dealsError;
+  }
+
+  if (!settledDeals?.length) {
+    return [];
+  }
+
+  const settledAddresses = settledDeals.map((d) => d.address);
+
+  // Then get open offers for those deals
   const { data, error } = await supabase
     .from("offers")
-    .select("address, deal_address, deals!inner(status)")
+    .select("address, deal_address")
     .eq("status", "open")
-    .neq("deals.status", "open")
+    .in("deal_address", settledAddresses)
     .limit(batchSize);
 
   if (error) {

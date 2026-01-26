@@ -1,6 +1,9 @@
 All commands assume we're starting from the root dir.
 
 ```sh
+# Spin up solana validator
+solana-test-validator --reset
+
 # Spin up arcium localnet
 arcium localnet
 
