@@ -499,175 +499,177 @@ export default function HomePage() {
 
           <div className="grid md:grid-cols-2 gap-16">
             {/* For Deal Creators */}
-            <div>
-              <h3 className="text-lg font-semibold text-foreground mb-10">
-                For Deal Creators
-              </h3>
-              <div className="space-y-10">
-                <div className="grid grid-cols-[24px_1fr] gap-4 items-start">
-                  <div className="flex justify-end items-start gap-1 pt-1">
-                    <div
-                      className="w-0.5 h-8 bg-primary rounded-full"
-                      style={{
-                        boxShadow: "0 0 8px #f97316, 0 0 16px #f97316",
-                      }}
-                    />
-                  </div>
-                  <div>
-                    <h4 className="font-medium text-foreground mb-2">
-                      Post your deal
-                    </h4>
-                    <p className="text-muted-foreground text-base leading-relaxed">
-                      Define your trade: assets, size, and your price. Deposit
-                      funds. Everything is encrypted before it leaves your
-                      wallet.
-                    </p>
-                  </div>
+            <div className="space-y-10">
+              <div className="grid grid-cols-[24px_1fr] gap-4 items-start">
+                <div></div>
+                <h3 className="text-lg font-semibold text-foreground">
+                  For Deal Creators
+                </h3>
+              </div>
+              <div className="grid grid-cols-[24px_1fr] gap-4 items-start">
+                <div className="flex justify-end items-start gap-1 pt-1">
+                  <div
+                    className="w-0.5 h-8 bg-primary rounded-full"
+                    style={{
+                      boxShadow: "0 0 8px #f97316, 0 0 16px #f97316",
+                    }}
+                  />
                 </div>
-                <div className="grid grid-cols-[24px_1fr] gap-4 items-start">
-                  <div className="flex justify-end items-start gap-1 pt-1">
-                    <div
-                      className="w-0.5 h-8 bg-primary rounded-full"
-                      style={{
-                        boxShadow: "0 0 8px #f97316, 0 0 16px #f97316",
-                      }}
-                    />
-                    <div
-                      className="w-0.5 h-8 bg-primary rounded-full"
-                      style={{
-                        boxShadow: "0 0 8px #f97316, 0 0 16px #f97316",
-                      }}
-                    />
-                  </div>
-                  <div>
-                    <h4 className="font-medium text-foreground mb-2">
-                      Receive blind offers
-                    </h4>
-                    <p className="text-muted-foreground text-base leading-relaxed">
-                      Counterparties submit offers without seeing your price or
-                      size. Offers that don&apos;t meet your threshold are
-                      rejected without information leaks.
-                    </p>
-                  </div>
+                <div>
+                  <h4 className="font-medium text-foreground mb-2">
+                    Post your deal
+                  </h4>
+                  <p className="text-muted-foreground text-base leading-relaxed">
+                    Define your trade: assets, size, and your price. Deposit
+                    funds. Everything is encrypted before it leaves your
+                    wallet.
+                  </p>
                 </div>
-                <div className="grid grid-cols-[24px_1fr] gap-4 items-start">
-                  <div className="flex justify-end items-start gap-1 pt-1">
-                    <div
-                      className="w-0.5 h-8 bg-primary rounded-full"
-                      style={{
-                        boxShadow: "0 0 8px #f97316, 0 0 16px #f97316",
-                      }}
-                    />
-                    <div
-                      className="w-0.5 h-8 bg-primary rounded-full"
-                      style={{
-                        boxShadow: "0 0 8px #f97316, 0 0 16px #f97316",
-                      }}
-                    />
-                    <div
-                      className="w-0.5 h-8 bg-primary rounded-full"
-                      style={{
-                        boxShadow: "0 0 8px #f97316, 0 0 16px #f97316",
-                      }}
-                    />
-                  </div>
-                  <div>
-                    <h4 className="font-medium text-foreground mb-2">
-                      Execute the deal
-                    </h4>
-                    <p className="text-muted-foreground text-base leading-relaxed">
-                      Once enough valid offers arrive, the trade is executed.
-                      Settlement is on-chain and private. You always get your
-                      price or better.
-                    </p>
-                  </div>
+              </div>
+              <div className="grid grid-cols-[24px_1fr] gap-4 items-start">
+                <div className="flex justify-end items-start gap-1 pt-1">
+                  <div
+                    className="w-0.5 h-8 bg-primary rounded-full"
+                    style={{
+                      boxShadow: "0 0 8px #f97316, 0 0 16px #f97316",
+                    }}
+                  />
+                  <div
+                    className="w-0.5 h-8 bg-primary rounded-full"
+                    style={{
+                      boxShadow: "0 0 8px #f97316, 0 0 16px #f97316",
+                    }}
+                  />
+                </div>
+                <div>
+                  <h4 className="font-medium text-foreground mb-2">
+                    Receive blind offers
+                  </h4>
+                  <p className="text-muted-foreground text-base leading-relaxed">
+                    Counterparties submit offers without seeing your price or
+                    size. Offers that don&apos;t meet your threshold are
+                    rejected without information leaks.
+                  </p>
+                </div>
+              </div>
+              <div className="grid grid-cols-[24px_1fr] gap-4 items-start">
+                <div className="flex justify-end items-start gap-1 pt-1">
+                  <div
+                    className="w-0.5 h-8 bg-primary rounded-full"
+                    style={{
+                      boxShadow: "0 0 8px #f97316, 0 0 16px #f97316",
+                    }}
+                  />
+                  <div
+                    className="w-0.5 h-8 bg-primary rounded-full"
+                    style={{
+                      boxShadow: "0 0 8px #f97316, 0 0 16px #f97316",
+                    }}
+                  />
+                  <div
+                    className="w-0.5 h-8 bg-primary rounded-full"
+                    style={{
+                      boxShadow: "0 0 8px #f97316, 0 0 16px #f97316",
+                    }}
+                  />
+                </div>
+                <div>
+                  <h4 className="font-medium text-foreground mb-2">
+                    Execute the deal
+                  </h4>
+                  <p className="text-muted-foreground text-base leading-relaxed">
+                    Once enough valid offers arrive, the trade is executed.
+                    Settlement is on-chain and private. You always get your
+                    price or better.
+                  </p>
                 </div>
               </div>
             </div>
 
             {/* For Offerors */}
-            <div>
-              <h3 className="text-lg font-semibold text-foreground mb-10">
-                For Offerors (Makers)
-              </h3>
-              <div className="space-y-10">
-                <div className="grid grid-cols-[24px_1fr] gap-4 items-start">
-                  <div className="flex justify-end items-start gap-1 pt-1">
-                    <div
-                      className="w-0.5 h-8 bg-primary rounded-full"
-                      style={{
-                        boxShadow: "0 0 8px #f97316, 0 0 16px #f97316",
-                      }}
-                    />
-                  </div>
-                  <div>
-                    <h4 className="font-medium text-foreground mb-2">
-                      Browse open deals
-                    </h4>
-                    <p className="text-muted-foreground text-base leading-relaxed">
-                      See available deals and their assets. You won&apos;t see
-                      price or size, only what you need to decide if you&apos;re
-                      interested.
-                    </p>
-                  </div>
+            <div className="space-y-10">
+              <div className="grid grid-cols-[24px_1fr] gap-4 items-start">
+                <div></div>
+                <h3 className="text-lg font-semibold text-foreground">
+                  For Offerors (Makers)
+                </h3>
+              </div>
+              <div className="grid grid-cols-[24px_1fr] gap-4 items-start">
+                <div className="flex justify-end items-start gap-1 pt-1">
+                  <div
+                    className="w-0.5 h-8 bg-primary rounded-full"
+                    style={{
+                      boxShadow: "0 0 8px #f97316, 0 0 16px #f97316",
+                    }}
+                  />
                 </div>
-                <div className="grid grid-cols-[24px_1fr] gap-4 items-start">
-                  <div className="flex justify-end items-start gap-1 pt-1">
-                    <div
-                      className="w-0.5 h-8 bg-primary rounded-full"
-                      style={{
-                        boxShadow: "0 0 8px #f97316, 0 0 16px #f97316",
-                      }}
-                    />
-                    <div
-                      className="w-0.5 h-8 bg-primary rounded-full"
-                      style={{
-                        boxShadow: "0 0 8px #f97316, 0 0 16px #f97316",
-                      }}
-                    />
-                  </div>
-                  <div>
-                    <h4 className="font-medium text-foreground mb-2">
-                      Submit your offer
-                    </h4>
-                    <p className="text-muted-foreground text-base leading-relaxed">
-                      Make a blind offer with your desired price and size. If
-                      your offer passes the creator&apos;s threshold, it gets
-                      silently added to the deal.
-                    </p>
-                  </div>
+                <div>
+                  <h4 className="font-medium text-foreground mb-2">
+                    Browse open deals
+                  </h4>
+                  <p className="text-muted-foreground text-base leading-relaxed">
+                    See available deals and their assets. You won&apos;t see
+                    price or size, only what you need to decide if you&apos;re
+                    interested.
+                  </p>
                 </div>
-                <div className="grid grid-cols-[24px_1fr] gap-4 items-start">
-                  <div className="flex justify-end items-start gap-1 pt-1">
-                    <div
-                      className="w-0.5 h-8 bg-primary rounded-full"
-                      style={{
-                        boxShadow: "0 0 8px #f97316, 0 0 16px #f97316",
-                      }}
-                    />
-                    <div
-                      className="w-0.5 h-8 bg-primary rounded-full"
-                      style={{
-                        boxShadow: "0 0 8px #f97316, 0 0 16px #f97316",
-                      }}
-                    />
-                    <div
-                      className="w-0.5 h-8 bg-primary rounded-full"
-                      style={{
-                        boxShadow: "0 0 8px #f97316, 0 0 16px #f97316",
-                      }}
-                    />
-                  </div>
-                  <div>
-                    <h4 className="font-medium text-foreground mb-2">
-                      Get matched
-                    </h4>
-                    <p className="text-muted-foreground text-base leading-relaxed">
-                      If the deal executes and your offer matches, you receive
-                      exactly your desired price or better. If it doesn&apos;t,
-                      your funds are returned.
-                    </p>
-                  </div>
+              </div>
+              <div className="grid grid-cols-[24px_1fr] gap-4 items-start">
+                <div className="flex justify-end items-start gap-1 pt-1">
+                  <div
+                    className="w-0.5 h-8 bg-primary rounded-full"
+                    style={{
+                      boxShadow: "0 0 8px #f97316, 0 0 16px #f97316",
+                    }}
+                  />
+                  <div
+                    className="w-0.5 h-8 bg-primary rounded-full"
+                    style={{
+                      boxShadow: "0 0 8px #f97316, 0 0 16px #f97316",
+                    }}
+                  />
+                </div>
+                <div>
+                  <h4 className="font-medium text-foreground mb-2">
+                    Submit your offer
+                  </h4>
+                  <p className="text-muted-foreground text-base leading-relaxed">
+                    Make a blind offer with your desired price and size. If
+                    your offer passes the creator&apos;s threshold, it gets
+                    silently added to the deal.
+                  </p>
+                </div>
+              </div>
+              <div className="grid grid-cols-[24px_1fr] gap-4 items-start">
+                <div className="flex justify-end items-start gap-1 pt-1">
+                  <div
+                    className="w-0.5 h-8 bg-primary rounded-full"
+                    style={{
+                      boxShadow: "0 0 8px #f97316, 0 0 16px #f97316",
+                    }}
+                  />
+                  <div
+                    className="w-0.5 h-8 bg-primary rounded-full"
+                    style={{
+                      boxShadow: "0 0 8px #f97316, 0 0 16px #f97316",
+                    }}
+                  />
+                  <div
+                    className="w-0.5 h-8 bg-primary rounded-full"
+                    style={{
+                      boxShadow: "0 0 8px #f97316, 0 0 16px #f97316",
+                    }}
+                  />
+                </div>
+                <div>
+                  <h4 className="font-medium text-foreground mb-2">
+                    Get matched
+                  </h4>
+                  <p className="text-muted-foreground text-base leading-relaxed">
+                    If the deal executes and your offer matches, you receive
+                    exactly your desired price or better. If it doesn&apos;t,
+                    your funds are returned.
+                  </p>
                 </div>
               </div>
             </div>
