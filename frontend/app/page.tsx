@@ -693,7 +693,7 @@ export default function HomePage() {
       {/* Footer */}
       <footer className="border-t border-border py-20">
         <div className="max-w-6xl mx-auto px-6">
-          <div className="grid md:grid-cols-4 gap-12 mb-12">
+          <div className="grid md:grid-cols-4 gap-12 mb-12 items-start">
             {/* Brand */}
             <div className="md:col-span-1">
               <div className="flex items-center gap-2 mb-4">
@@ -702,15 +702,15 @@ export default function HomePage() {
                   Veil OTC
                 </span>
               </div>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-base text-muted-foreground">
                 Private OTC trading on Solana
               </p>
             </div>
 
             {/* Product Links */}
             <div>
-              <h4 className="font-semibold text-foreground mb-6">Product</h4>
-              <ul className="space-y-3 text-sm text-muted-foreground">
+              <h4 className="font-semibold text-foreground mb-4">Product</h4>
+              <ul className="space-y-3 text-base text-muted-foreground">
                 <li>
                   <a
                     href="#how-it-works"
@@ -740,8 +740,8 @@ export default function HomePage() {
 
             {/* Resources Links */}
             <div>
-              <h4 className="font-semibold text-foreground mb-6">Resources</h4>
-              <ul className="space-y-3 text-sm text-muted-foreground">
+              <h4 className="font-semibold text-foreground mb-4">Resources</h4>
+              <ul className="space-y-3 text-base text-muted-foreground">
                 <li>
                   <a
                     href="#"
@@ -763,7 +763,7 @@ export default function HomePage() {
           </div>
 
           {/* Bottom bar */}
-          <div className="pt-12 border-t border-border text-sm text-muted-foreground">
+          <div className="pt-12 border-t border-border text-base text-muted-foreground">
             <p>© 2025 Veil OTC</p>
           </div>
         </div>
