@@ -721,7 +721,7 @@ export default function HomePage() {
               <p className="text-muted-foreground mb-12">
                 Powered by Arcium&apos;s confidential computing network. Your
                 trades are encrypted and processed using multi-party
-                computation—no single party ever sees your data.
+                computation. <span className="text-primary">No single party ever sees your data.</span>
               </p>
 
               {/* Feature items stacked vertically */}
