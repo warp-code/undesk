@@ -704,7 +704,7 @@ export default function HomePage() {
               <div className="space-y-4">
                 {/* Feature 1 */}
                 <div className="flex items-start gap-4 bg-card border border-primary/30 rounded-xl p-4">
-                  <div className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0">
+                  <div className="w-6 h-6 shrink-0 mt-0.5">
                     <svg
                       className="w-6 h-6 text-primary"
                       fill="none"
@@ -730,7 +730,7 @@ export default function HomePage() {
 
                 {/* Feature 2 */}
                 <div className="flex items-start gap-4 bg-card border border-primary/30 rounded-xl p-4">
-                  <div className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0">
+                  <div className="w-6 h-6 shrink-0 mt-0.5">
                     <svg
                       className="w-6 h-6 text-primary"
                       fill="none"
@@ -756,7 +756,7 @@ export default function HomePage() {
 
                 {/* Feature 3 */}
                 <div className="flex items-start gap-4 bg-card border border-primary/30 rounded-xl p-4">
-                  <div className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0">
+                  <div className="w-6 h-6 shrink-0 mt-0.5">
                     <svg
                       className="w-6 h-6 text-primary"
                       fill="none"
