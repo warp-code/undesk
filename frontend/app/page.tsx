@@ -177,14 +177,14 @@ function FAQItem({ question, answer }: { question: string; answer: string }) {
   }, [answer]);
 
   return (
-    <div className="bg-card border border-border rounded-xl overflow-hidden">
+    <div className="border-b border-border">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full px-8 py-6 flex items-center justify-between text-left"
+        className="w-full py-6 flex items-center justify-between text-left"
       >
         <span className="font-medium text-foreground">{question}</span>
         <svg
-          className={`w-4 h-4 text-primary transition-transform duration-300 ease-out ${
+          className={`w-4 h-4 text-muted-foreground transition-transform duration-300 ease-out ${
             isOpen ? "rotate-180" : ""
           }`}
           fill="none"
@@ -204,7 +204,7 @@ function FAQItem({ question, answer }: { question: string; answer: string }) {
         className="overflow-hidden transition-all duration-300 ease-out"
         style={{ maxHeight: isOpen ? contentHeight : 0 }}
       >
-        <div className="px-8 pb-6 text-muted-foreground text-sm">{answer}</div>
+        <div className="pb-6 text-muted-foreground text-base">{answer}</div>
       </div>
     </div>
   );
@@ -811,7 +811,7 @@ export default function HomePage() {
           <p className="text-muted-foreground text-center mb-16">
             Everything you need to know about Veil OTC
           </p>
-          <div className="space-y-6">
+          <div className="border-t border-border">
             {faqs.map((faq, index) => (
               <FAQItem
                 key={index}
