@@ -834,8 +834,19 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* Line Divider */}
+      <div className="w-full py-16">
+        <div
+          className="w-full h-24"
+          style={{
+            backgroundImage: 'repeating-linear-gradient(90deg, rgba(255,255,255,0.4) 0px, rgba(255,255,255,0.4) 1px, transparent 1px, transparent 14px)',
+            backgroundSize: '14px 100%'
+          }}
+        />
+      </div>
+
       {/* Footer */}
-      <footer className="border-t border-border py-20">
+      <footer className="py-20">
         <div className="max-w-6xl mx-auto px-6">
           <div className="flex justify-between mb-12 items-start">
             {/* Brand */}
