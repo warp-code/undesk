@@ -493,17 +493,17 @@ export default function HomePage() {
           <h2 className="text-3xl font-bold text-foreground text-center mb-2">
             How It Works
           </h2>
-          <p className="text-muted-foreground text-center mb-16">
+          <p className="text-muted-foreground text-center mb-12">
             Posting, matching, and settlement - everything is encrypted.
           </p>
 
           <div className="grid md:grid-cols-2 gap-16">
             {/* For Deal Creators */}
             <div>
-              <h3 className="text-lg font-semibold text-foreground mb-8">
+              <h3 className="text-lg font-semibold text-foreground mb-10">
                 For Deal Creators
               </h3>
-              <div className="space-y-8">
+              <div className="space-y-10">
                 <div className="grid grid-cols-[24px_1fr] gap-4 items-start">
                   <div className="flex justify-end items-start gap-1 pt-1">
                     <div
@@ -587,10 +587,10 @@ export default function HomePage() {
 
             {/* For Offerors */}
             <div>
-              <h3 className="text-lg font-semibold text-foreground mb-8">
+              <h3 className="text-lg font-semibold text-foreground mb-10">
                 For Offerors (Makers)
               </h3>
-              <div className="space-y-8">
+              <div className="space-y-10">
                 <div className="grid grid-cols-[24px_1fr] gap-4 items-start">
                   <div className="flex justify-end items-start gap-1 pt-1">
                     <div
