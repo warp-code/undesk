@@ -703,10 +703,10 @@ export default function HomePage() {
                 computation. <span className="text-foreground">No single party ever sees your data.</span>
               </p>
 
-              {/* Feature cards */}
-              <div className="space-y-4">
+              {/* Feature list */}
+              <div className="border-t border-border">
                 {/* Feature 1 */}
-                <div className="flex items-start gap-4 bg-card border border-primary/30 rounded-xl p-4">
+                <div className="flex items-start gap-4 border-b border-border py-6">
                   <div className="w-6 h-6 shrink-0 mt-0.5">
                     <svg
                       className="w-6 h-6 text-primary"
@@ -722,17 +722,17 @@ export default function HomePage() {
                       />
                     </svg>
                   </div>
-                  <p className="text-foreground text-base leading-relaxed">
-                    <span className="font-medium">Private by design.</span>{" "}
-                    <span className="text-muted-foreground">
+                  <div>
+                    <p className="font-medium text-foreground">Private by design.</p>
+                    <p className="text-muted-foreground text-base mt-1">
                       Fully on-chain, non-custodial trading that never ties back
                       to your wallet.
-                    </span>
-                  </p>
+                    </p>
+                  </div>
                 </div>
 
                 {/* Feature 2 */}
-                <div className="flex items-start gap-4 bg-card border border-primary/30 rounded-xl p-4">
+                <div className="flex items-start gap-4 border-b border-border py-6">
                   <div className="w-6 h-6 shrink-0 mt-0.5">
                     <svg
                       className="w-6 h-6 text-primary"
@@ -748,17 +748,17 @@ export default function HomePage() {
                       />
                     </svg>
                   </div>
-                  <p className="text-foreground text-base leading-relaxed">
-                    <span className="font-medium">Everything is encrypted.</span>{" "}
-                    <span className="text-muted-foreground">
+                  <div>
+                    <p className="font-medium text-foreground">Everything is encrypted.</p>
+                    <p className="text-muted-foreground text-base mt-1">
                       Deals, offers, balances — all data and execution is
                       end-to-end encrypted by Arcium&apos;s MPC network.
-                    </span>
-                  </p>
+                    </p>
+                  </div>
                 </div>
 
                 {/* Feature 3 */}
-                <div className="flex items-start gap-4 bg-card border border-primary/30 rounded-xl p-4">
+                <div className="flex items-start gap-4 border-b border-border py-6">
                   <div className="w-6 h-6 shrink-0 mt-0.5">
                     <svg
                       className="w-6 h-6 text-primary"
@@ -774,13 +774,13 @@ export default function HomePage() {
                       />
                     </svg>
                   </div>
-                  <p className="text-foreground text-base leading-relaxed">
-                    <span className="font-medium">Full self-custody.</span>{" "}
-                    <span className="text-muted-foreground">
+                  <div>
+                    <p className="font-medium text-foreground">Full self-custody.</p>
+                    <p className="text-muted-foreground text-base mt-1">
                       All funds are escrowed on-chain through private shared
                       pools, always retrievable.
-                    </span>
-                  </p>
+                    </p>
+                  </div>
                 </div>
               </div>
 
