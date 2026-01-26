@@ -116,6 +116,26 @@ export function useMyOffers(): UseMyOffersReturn {
     fetchOffers();
   }, [fetchOffers]);
 
+  // Realtime subscription for offer changes (only when user has derived keys)
+  useEffect(() => {
+    if (!userPubKeyHex) return;
+
+    const channel = supabase
+      .channel("my-offers-changes")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "offers" },
+        () => {
+          fetchOffers();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [supabase, fetchOffers, userPubKeyHex]);
+
   return { offers, isLoading, error, refetch: fetchOffers };
 }
 

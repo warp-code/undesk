@@ -57,7 +57,23 @@ export function useMarketDeals(): UseMarketDealsReturn {
     fetchDeals();
   }, [fetchDeals]);
 
-  // TODO: Add Supabase Realtime subscription for INSERT/UPDATE
+  // Realtime subscription for deal changes
+  useEffect(() => {
+    const channel = supabase
+      .channel("market-deals-changes")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "deals" },
+        () => {
+          fetchDeals();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [supabase, fetchDeals]);
 
   return { marketDeals, isLoading, error, refetch: fetchDeals };
 }

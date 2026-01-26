@@ -407,39 +407,9 @@ if (filteredDeals.length === 0) {
 
 ---
 
-### Task 7.7: Refresh After Mutations
+### Task 7.7: Add Realtime Subscriptions
 
-When a deal is created or offer is submitted, refresh the relevant data:
-
-**In CreateDealForm.tsx:**
-```typescript
-// After successful deal creation, trigger refetch
-// Option 1: Pass refetch as prop
-// Option 2: Use a shared state/event system
-// Option 3: Realtime subscription (see Task 7.8)
-```
-
-**Simplest approach - pass refetch callbacks:**
-```typescript
-// page.tsx
-<CreateDealForm onDealCreated={refetchDeals} />
-<MakeOfferForm deal={selectedDeal} onOfferSubmitted={refetchOffers} />
-
-// CreateDealForm.tsx
-interface CreateDealFormProps {
-  onDealCreated?: () => void;
-}
-
-// After successful creation:
-await createDeal(input);
-onDealCreated?.();
-```
-
----
-
-### Task 7.8: Add Realtime Subscriptions (Optional Enhancement)
-
-For live updates without manual refresh, add Supabase Realtime:
+Since the indexer may not immediately pick up on-chain changes, we rely on Supabase Realtime for live updates:
 
 **In useMarketDeals.ts:**
 ```typescript
@@ -459,7 +429,7 @@ useEffect(() => {
 }, [supabase, refetch]);
 ```
 
-This is optional for Phase 7 - can be added in Phase 8 for better UX.
+This ensures the UI stays in sync with on-chain state without relying on immediate indexer updates.
 
 ---
 
@@ -517,8 +487,9 @@ useMarketDeals() requires:
 | `_components/DealsTable.tsx` | Add empty state handling (if not present) |
 | `_components/OffersTable.tsx` | Add empty state handling (if not present) |
 | `_components/MarketTable.tsx` | Add empty state handling (if not present) |
-| `_components/CreateDealForm.tsx` | Add `onDealCreated` callback prop |
-| `_components/MakeOfferForm.tsx` | Add `onOfferSubmitted` callback prop |
+| `_hooks/useMyDeals.ts` | Add realtime subscription |
+| `_hooks/useMyOffers.ts` | Add realtime subscription |
+| `_hooks/useMarketDeals.ts` | Add realtime subscription |
 
 ---
 
@@ -552,8 +523,8 @@ To use mock data, set `NEXT_PUBLIC_USE_MOCK_DATA=true` in `.env.local`.
 - [ ] Empty state → shows appropriate message
 - [ ] Loading state → shows spinner
 - [ ] Error state → shows error message
-- [ ] Create deal → refreshes deals table
-- [ ] Submit offer → refreshes offers table
+- [ ] Create deal → realtime subscription updates deals table (may have delay)
+- [ ] Submit offer → realtime subscription updates offers table (may have delay)
 - [ ] Deal details view → works with real data
 
 ---
@@ -585,8 +556,7 @@ The Supabase hooks fall back to local defaults if env vars not set. Mock mode sk
 4. **Task 7.4** - Add loading states
 5. **Task 7.5** - Add error handling
 6. **Task 7.6** - Add empty states to tables
-7. **Task 7.7** - Wire up refresh callbacks
-8. **Task 7.8** - (Optional) Add realtime subscriptions
+7. **Task 7.7** - Add realtime subscriptions
 
 ---
 
