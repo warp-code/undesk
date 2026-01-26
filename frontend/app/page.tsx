@@ -353,7 +353,7 @@ export default function HomePage() {
           </p>
           <div className="grid md:grid-cols-2 gap-6">
             {/* Traditional OTC Card */}
-            <div className="bg-card border border-border rounded-2xl p-8">
+            <div className="bg-card border border-border rounded-2xl p-8 pb-6">
               <div className="flex items-center gap-3 mb-6">
                 <div className="w-10 h-10 bg-secondary rounded-lg flex items-center justify-center">
                   <svg
@@ -434,7 +434,7 @@ export default function HomePage() {
 
             {/* Veil OTC Card */}
             <div
-              className="border border-primary rounded-2xl p-8"
+              className="border border-primary rounded-2xl p-8 pb-6"
               style={{
                 background: "linear-gradient(180deg, rgba(249, 115, 22, 0.12) 0%, rgba(249, 115, 22, 0.04) 40%, #171717 100%)",
                 boxShadow:
