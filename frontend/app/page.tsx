@@ -1090,7 +1090,7 @@ export default function HomePage() {
               {/* Link */}
               <a
                 href="#"
-                className="inline-flex items-center gap-2 text-primary hover:text-primary/80 transition-colors mt-8 group text-sm"
+                className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors mt-8 group text-sm"
               >
                 <span>Protocol details</span>
                 <span className="transition-transform duration-200 group-hover:translate-x-1">
