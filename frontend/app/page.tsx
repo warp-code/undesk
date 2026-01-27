@@ -193,12 +193,25 @@ function MPCFlowDiagram() {
             </feMerge>
           </filter>
 
-          {/* Stronger glow for active elements */}
-          <filter id="strongGlow" x="-50%" y="-50%" width="200%" height="200%">
-            <feGaussianBlur stdDeviation="5" result="coloredBlur" />
+          {/* Prettier glow for active elements */}
+          <filter id="strongGlow" x="-100%" y="-100%" width="300%" height="300%">
+            <feGaussianBlur in="SourceGraphic" stdDeviation="10" result="blur1" />
+            <feColorMatrix
+              in="blur1"
+              type="matrix"
+              values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 0.5 0"
+              result="glow1"
+            />
+            <feGaussianBlur in="SourceGraphic" stdDeviation="3" result="blur2" />
+            <feColorMatrix
+              in="blur2"
+              type="matrix"
+              values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 0.7 0"
+              result="glow2"
+            />
             <feMerge>
-              <feMergeNode in="coloredBlur" />
-              <feMergeNode in="coloredBlur" />
+              <feMergeNode in="glow1" />
+              <feMergeNode in="glow2" />
               <feMergeNode in="SourceGraphic" />
             </feMerge>
           </filter>
