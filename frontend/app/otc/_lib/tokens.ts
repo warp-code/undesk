@@ -1,27 +1,28 @@
-// Token registry - source: https://token.jup.ag/strict
-// Last updated: 2026-01-23
+// Token registry with deterministic localnet mint support
 
-// Supported token mints (the source of truth for UI dropdowns)
-export const SUPPORTED_MINTS = [
-  "So11111111111111111111111111111111111111112", // SOL
-  "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v", // USDC
-  "7vfCXTUXx5WJV5JADk17DUJ4ksgau7utNKj4b963voxs", // ETH
-  "META111111111111111111111111111111111111111", // META
-] as const;
+import { LOCALNET_MINTS } from "./deterministic-mints";
 
-export type SupportedMint = (typeof SUPPORTED_MINTS)[number];
+// Check if we're on localnet (localhost RPC)
+const isLocalnet =
+  typeof window !== "undefined" &&
+  (process.env.NEXT_PUBLIC_RPC_URL?.includes("localhost") ||
+    process.env.NEXT_PUBLIC_RPC_URL?.includes("127.0.0.1"));
 
-// Named exports for convenience
-export const MINTS = {
+// Mainnet mint addresses
+const MAINNET_MINTS = {
   SOL: "So11111111111111111111111111111111111111112",
   USDC: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
   ETH: "7vfCXTUXx5WJV5JADk17DUJ4ksgau7utNKj4b963voxs",
-  META: "META111111111111111111111111111111111111111",
+  META: "META111111111111111111111111111111111111111", // Placeholder
 } as const;
 
-export function isSupportedMint(mint: string): mint is SupportedMint {
-  return SUPPORTED_MINTS.includes(mint as SupportedMint);
-}
+// Use localnet mints when on localhost, otherwise mainnet
+export const MINTS = isLocalnet ? LOCALNET_MINTS : MAINNET_MINTS;
+
+// Supported token mints for UI dropdowns
+export const SUPPORTED_MINTS = [MINTS.SOL, MINTS.USDC, MINTS.ETH, MINTS.META];
+
+export type SupportedMint = string;
 
 export interface TokenInfo {
   symbol: string;
@@ -30,136 +31,38 @@ export interface TokenInfo {
   logoURI?: string;
 }
 
-// Mint address → token metadata
-export const TOKEN_REGISTRY: Record<string, TokenInfo> = {
-  // Native SOL (wrapped)
-  So11111111111111111111111111111111111111112: {
-    symbol: "SOL",
-    decimals: 9,
-    name: "Wrapped SOL",
-  },
-  // USDC
-  EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v: {
-    symbol: "USDC",
-    decimals: 6,
-    name: "USD Coin",
-  },
-  // USDT
-  Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB: {
-    symbol: "USDT",
-    decimals: 6,
-    name: "Tether USD",
-  },
-  // ETH (Wormhole)
-  "7vfCXTUXx5WJV5JADk17DUJ4ksgau7utNKj4b963voxs": {
-    symbol: "ETH",
-    decimals: 8,
-    name: "Ether (Portal)",
-  },
-  // BONK
-  DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263: {
-    symbol: "BONK",
-    decimals: 5,
-    name: "Bonk",
-  },
-  // JUP
-  JUPyiwrYJFskUPiHa7hkeR8VUtAeFoSYbKedZNsDvCN: {
-    symbol: "JUP",
-    decimals: 6,
-    name: "Jupiter",
-  },
-  // WIF
-  EKpQGSJtjMFqKZ9KQanSqYXRcF8fBopzLHYxdM65zcjm: {
-    symbol: "WIF",
-    decimals: 6,
-    name: "dogwifhat",
-  },
-  // PYTH
-  HZ1JovNiVvGrGNiiYvEozEVgZ58xaU3RKwX8eACQBCt3: {
-    symbol: "PYTH",
-    decimals: 6,
-    name: "Pyth Network",
-  },
-  // RAY
-  "4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R": {
-    symbol: "RAY",
-    decimals: 6,
-    name: "Raydium",
-  },
-  // ORCA
-  orcaEKTdK7LKz57vaAYr9QeNsVEPfiu6QeMU1kektZE: {
-    symbol: "ORCA",
-    decimals: 6,
-    name: "Orca",
-  },
-  // RENDER
-  rndrizKT3MK1iimdxRdWabcF7Zg7AR5T4nud4EkHBof: {
-    symbol: "RENDER",
-    decimals: 8,
-    name: "Render Token",
-  },
-  // HNT
-  hntyVP6YFm1Hg25TN9WGLqM12b8TQmcknKrdu1oxWux: {
-    symbol: "HNT",
-    decimals: 8,
-    name: "Helium",
-  },
-  // JITO
-  J1toso1uCk3RLmjorhTtrVwY9HJ7X8V9yYac6Y7kGCPn: {
-    symbol: "JITO",
-    decimals: 9,
-    name: "Jito Staked SOL",
-  },
-  // W (Wormhole)
-  "85VBFQZC9TZkfaptBWjvUw7YbZjy52A6mjtPGjstQAmQ": {
-    symbol: "W",
-    decimals: 6,
-    name: "Wormhole",
-  },
-  // POPCAT
-  "7GCihgDB8fe6KNjn2MYtkzZcRjQy3t9GHdC8uHYmW2hr": {
-    symbol: "POPCAT",
-    decimals: 9,
-    name: "Popcat",
-  },
-  // TNSR
-  TNSRxcUxoT9xBG3de7PiJyTDYu7kskLqcpddxnEJAS6: {
-    symbol: "TNSR",
-    decimals: 9,
-    name: "Tensor",
-  },
-  // KMNO
-  KMNo3nJsBXfcpJTVhZcXLW7RmTwTt4GVFE7suUBo9sS: {
-    symbol: "KMNO",
-    decimals: 6,
-    name: "Kamino",
-  },
-  // MEW
-  MEW1gQWJ3nEXg2qgERiKu7FAFj79PHvQVREQUzScPP5: {
-    symbol: "MEW",
-    decimals: 5,
-    name: "cat in a dogs world",
-  },
-  // MOBILE
-  mb1eu7TzEc71KxDpsmsKoucSSuuoGLv1drys1oP2jh6: {
-    symbol: "MOBILE",
-    decimals: 6,
-    name: "Helium Mobile",
-  },
-  // DRIFT
-  DriFtupJYLTosbwoN8koMbEYSx54aFAVLddWsbksjwg7: {
-    symbol: "DRIFT",
-    decimals: 6,
-    name: "Drift",
-  },
-
-  // Placeholder tokens for mock data (clearly fake addresses)
-  META111111111111111111111111111111111111111: {
-    symbol: "META",
-    decimals: 9,
-    name: "Meta Token (Mock)",
-  },
+// Token metadata by symbol
+const TOKEN_METADATA: Record<string, TokenInfo> = {
+  SOL: { symbol: "SOL", decimals: 9, name: "Wrapped SOL" },
+  USDC: { symbol: "USDC", decimals: 6, name: "USD Coin" },
+  ETH: { symbol: "ETH", decimals: 8, name: "Ether (Portal)" },
+  META: { symbol: "META", decimals: 9, name: "Meta Token" },
 };
+
+// Build token registry dynamically
+function buildTokenRegistry(): Record<string, TokenInfo> {
+  const registry: Record<string, TokenInfo> = {};
+
+  // Add current mints (localnet or mainnet)
+  for (const [symbol, mint] of Object.entries(MINTS)) {
+    const meta = TOKEN_METADATA[symbol];
+    if (meta) {
+      registry[mint] = meta;
+    }
+  }
+
+  // Also add mainnet addresses for when viewing mainnet tokens
+  for (const [symbol, mint] of Object.entries(MAINNET_MINTS)) {
+    const meta = TOKEN_METADATA[symbol];
+    if (meta && !registry[mint]) {
+      registry[mint] = meta;
+    }
+  }
+
+  return registry;
+}
+
+export const TOKEN_REGISTRY = buildTokenRegistry();
 
 // Helper: get token info (with fallback for unknown)
 export function getTokenInfo(mint: string): TokenInfo {
@@ -185,10 +88,11 @@ export function formatPair(baseMint: string, quoteMint: string): string {
   return `${getTokenSymbol(baseMint)}/${getTokenSymbol(quoteMint)}`;
 }
 
-// Reverse lookup: symbol → mint (for form submission)
+// Reverse lookup: symbol → mint
 export function getMintFromSymbol(symbol: string): string | undefined {
-  for (const [mint, info] of Object.entries(TOKEN_REGISTRY)) {
-    if (info.symbol === symbol) return mint;
-  }
-  return undefined;
+  return MINTS[symbol as keyof typeof MINTS];
+}
+
+export function isSupportedMint(mint: string): boolean {
+  return SUPPORTED_MINTS.includes(mint);
 }

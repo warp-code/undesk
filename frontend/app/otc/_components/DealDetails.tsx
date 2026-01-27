@@ -1,13 +1,27 @@
-import type { MarketDeal } from "../_lib/types";
-import { formatTimeRemaining, isUrgent, getTimeProgress } from "../_lib/format";
+import type { MarketDeal, Deal } from "../_lib/types";
+import {
+  formatTimeRemaining,
+  isUrgent,
+  getTimeProgress,
+  toHumanAmount,
+  formatNumber,
+} from "../_lib/format";
 import { formatPair, getTokenSymbol } from "../_lib/tokens";
 
 interface DealDetailsProps {
   deal: MarketDeal;
+  /** If this is the user's own deal, pass the decrypted data */
+  userDeal?: Deal;
   onBack: () => void;
 }
 
-export const DealDetails = ({ deal, onBack }: DealDetailsProps) => {
+export const DealDetails = ({ deal, onBack, userDeal }: DealDetailsProps) => {
+  const isOwnDeal = !!userDeal;
+  // For own deals, calculate human-readable values
+  const humanAmount = userDeal
+    ? toHumanAmount(userDeal.amount, deal.baseMint)
+    : null;
+  const humanTotal = humanAmount !== null ? humanAmount * userDeal!.price : null;
   return (
     <div className="p-4">
       {/* Collapse header */}
@@ -76,38 +90,82 @@ export const DealDetails = ({ deal, onBack }: DealDetailsProps) => {
         </div>
 
         {/* Deal info grid */}
-        <div className="grid grid-cols-2 gap-4">
-          <div className="bg-secondary/30 rounded-lg p-4">
-            <p className="text-muted-foreground text-sm mb-1">Status</p>
-            <div className="flex items-center gap-2">
-              {deal.offerCount && deal.offerCount > 0 ? (
-                <span className="px-2 py-0.5 rounded text-xs font-medium bg-yellow-500/20 text-yellow-400 border border-yellow-500/30">
-                  has offers
-                </span>
-              ) : (
-                <span className="px-2 py-0.5 rounded text-xs font-medium bg-sky-500/20 text-sky-400 border border-sky-500/30">
-                  open
-                </span>
-              )}
+        {isOwnDeal ? (
+          // Own deal: show full details
+          <div className="grid grid-cols-2 gap-4">
+            <div className="bg-secondary/30 rounded-lg p-4">
+              <p className="text-muted-foreground text-sm mb-1">Amount</p>
+              <p className="text-foreground text-lg font-medium">
+                {formatNumber(humanAmount!)} {getTokenSymbol(deal.baseMint)}
+              </p>
+            </div>
+            <div className="bg-secondary/30 rounded-lg p-4">
+              <p className="text-muted-foreground text-sm mb-1">Your Price</p>
+              <p className="text-foreground text-lg font-medium">
+                {formatNumber(userDeal!.price)} {getTokenSymbol(deal.quoteMint)}
+              </p>
+            </div>
+            <div className="bg-secondary/30 rounded-lg p-4">
+              <p className="text-muted-foreground text-sm mb-1">Total Value</p>
+              <p className="text-foreground text-lg font-medium">
+                {formatNumber(humanTotal!)} {getTokenSymbol(deal.quoteMint)}
+              </p>
+            </div>
+            <div className="bg-secondary/30 rounded-lg p-4">
+              <p className="text-muted-foreground text-sm mb-1">Current Offers</p>
+              <p className="text-foreground text-lg font-medium">
+                {deal.offerCount || 0}
+              </p>
             </div>
           </div>
-          <div className="bg-secondary/30 rounded-lg p-4">
-            <p className="text-muted-foreground text-sm mb-1">Current Offers</p>
-            <p className="text-foreground text-lg font-medium">
-              {deal.offerCount || 0}
-            </p>
+        ) : (
+          // Other's deal: limited info
+          <div className="grid grid-cols-2 gap-4">
+            <div className="bg-secondary/30 rounded-lg p-4">
+              <p className="text-muted-foreground text-sm mb-1">Status</p>
+              <div className="flex items-center gap-2">
+                {deal.offerCount && deal.offerCount > 0 ? (
+                  <span className="px-2 py-0.5 rounded text-xs font-medium bg-yellow-500/20 text-yellow-400 border border-yellow-500/30">
+                    has offers
+                  </span>
+                ) : (
+                  <span className="px-2 py-0.5 rounded text-xs font-medium bg-sky-500/20 text-sky-400 border border-sky-500/30">
+                    open
+                  </span>
+                )}
+              </div>
+            </div>
+            <div className="bg-secondary/30 rounded-lg p-4">
+              <p className="text-muted-foreground text-sm mb-1">Current Offers</p>
+              <p className="text-foreground text-lg font-medium">
+                {deal.offerCount || 0}
+              </p>
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Info box */}
         <div className="bg-secondary/30 rounded-md p-4 text-sm text-muted-foreground">
-          <p className="font-medium text-foreground mb-2">How it works</p>
-          <ul className="space-y-1 list-disc list-inside">
-            <li>You won&apos;t see the creator&apos;s price</li>
-            <li>Submit your best offer price</li>
-            <li>If your price meets their threshold, your offer passes</li>
-            <li>Results are revealed when the deal expires or executes</li>
-          </ul>
+          {isOwnDeal ? (
+            <>
+              <p className="font-medium text-foreground mb-2">Your Deal</p>
+              <ul className="space-y-1 list-disc list-inside">
+                <li>This is your deal - you can see full details</li>
+                <li>Offers can now be submitted until the deal expires</li>
+                <li>The deal will execute automatically using best offers once it expires</li>
+              </ul>
+            </>
+          ) : (
+            <>
+              <p className="font-medium text-foreground mb-2">How it works</p>
+              <ul className="space-y-1 list-disc list-inside">
+                <li>You won&apos;t see the creator&apos;s price</li>
+                <li>Submit your best offer price</li>
+                <li>If your price meets their threshold, your offer passes</li>
+                <li>Results are revealed when the deal expires or executes</li>
+              </ul>
+            </>
+          )}
         </div>
       </div>
     </div>

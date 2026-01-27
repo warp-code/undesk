@@ -10,7 +10,6 @@ import {
   decryptOfferData,
   bytesToHex,
 } from "../_lib/decryption";
-import { formatTimeRemaining } from "../_lib/format";
 
 interface UseMyOffersReturn {
   offers: Offer[];
@@ -48,64 +47,80 @@ export function useMyOffers(): UseMyOffersReturn {
     setError(null);
 
     try {
-      // Fetch offers with deal data via join
-      const { data, error: queryError } = await supabase
+      // Fetch offers first (no FK, so we fetch separately)
+      const { data: offersData, error: offersError } = await supabase
         .from("offers")
-        .select(
-          `
-          address,
-          deal_address,
-          ciphertexts,
-          nonce,
-          submitted_at,
-          status,
-          deals!inner (
-            base_mint,
-            quote_mint,
-            status
-          )
-        `
-        )
+        .select("address, deal_address, ciphertexts, nonce, submitted_at, status")
         .eq("encryption_key", userPubKeyHex)
         .order("submitted_at", { ascending: false });
 
-      if (queryError) throw queryError;
+      if (offersError) {
+        console.error("Supabase offers query error:", offersError);
+        throw offersError;
+      }
+
+      if (!offersData || offersData.length === 0) {
+        setOffers([]);
+        return;
+      }
+
+      // Fetch deals for these offers
+      const dealAddresses = [...new Set(offersData.map((o) => o.deal_address))];
+      const { data: dealsData, error: dealsError } = await supabase
+        .from("deals")
+        .select("address, base_mint, quote_mint, status, expires_at")
+        .in("address", dealAddresses);
+
+      if (dealsError) {
+        console.error("Supabase deals query error:", dealsError);
+        throw dealsError;
+      }
+
+      // Map deals by address for quick lookup
+      const dealsMap = new Map(
+        (dealsData ?? []).map((d) => [d.address, d])
+      );
 
       const cipher = createDecryptionCipher(
         derivedKeys.encryption.privateKey,
         mxePublicKey
       );
 
-      const decrypted: Offer[] = (data ?? []).map((row) => {
-        const { price, amount } = decryptOfferData(
-          row.ciphertexts,
-          row.nonce,
-          cipher
-        );
+      const decrypted: Offer[] = [];
 
-        // Handle deals as object (Supabase join returns object for !inner)
-        const deal = row.deals as {
-          base_mint: string;
-          quote_mint: string;
-          status: string;
-        };
+      for (const row of offersData) {
+        try {
+          const deal = dealsMap.get(row.deal_address);
+          if (!deal) {
+            console.warn("Offer missing deal:", row.address, row.deal_address);
+            continue;
+          }
 
-        return {
-          id: row.address,
-          baseMint: deal.base_mint,
-          quoteMint: deal.quote_mint,
-          amount,
-          yourPrice: price,
-          submittedAt: formatTimeRemaining(
-            new Date(row.submitted_at).getTime()
-          ),
-          dealStatus: deal.status as "open" | "executed" | "expired",
-          offerStatus: mapOfferStatus(row.status),
-        };
-      });
+          const { price, amount } = decryptOfferData(
+            row.ciphertexts,
+            row.nonce,
+            cipher
+          );
+
+          decrypted.push({
+            id: row.address,
+            dealId: row.deal_address,
+            baseMint: deal.base_mint,
+            quoteMint: deal.quote_mint,
+            amount,
+            yourPrice: price,
+            dealExpiresAt: new Date(deal.expires_at).getTime(),
+            dealStatus: deal.status as "open" | "executed" | "expired",
+            offerStatus: mapOfferStatus(row.status),
+          });
+        } catch (decryptErr) {
+          console.error("Failed to decrypt offer:", row.address, decryptErr);
+        }
+      }
 
       setOffers(decrypted);
     } catch (err) {
+      console.error("Failed to fetch offers:", err);
       setError(err instanceof Error ? err.message : "Failed to fetch offers");
     } finally {
       setIsLoading(false);
@@ -115,6 +130,26 @@ export function useMyOffers(): UseMyOffersReturn {
   useEffect(() => {
     fetchOffers();
   }, [fetchOffers]);
+
+  // Realtime subscription for offer changes (only when user has derived keys)
+  useEffect(() => {
+    if (!userPubKeyHex) return;
+
+    const channel = supabase
+      .channel("my-offers-changes")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "offers" },
+        () => {
+          fetchOffers();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [supabase, fetchOffers, userPubKeyHex]);
 
   return { offers, isLoading, error, refetch: fetchOffers };
 }

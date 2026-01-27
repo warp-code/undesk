@@ -26,7 +26,8 @@ export function useMarketDeals(): UseMarketDealsReturn {
     setError(null);
 
     try {
-      const { data, error: queryError } = await supabase
+      // Fetch deals
+      const { data: dealsData, error: dealsError } = await supabase
         .from("deals")
         .select(
           "address, base_mint, quote_mint, allow_partial, expires_at, created_at, status"
@@ -34,15 +35,37 @@ export function useMarketDeals(): UseMarketDealsReturn {
         .eq("status", "open")
         .order("created_at", { ascending: false });
 
-      if (queryError) throw queryError;
+      if (dealsError) throw dealsError;
 
-      const mapped: MarketDeal[] = (data ?? []).map((row) => ({
+      // Fetch offer counts for all open deals
+      const dealAddresses = (dealsData ?? []).map((d) => d.address);
+      let offerCountMap: Record<string, number> = {};
+
+      if (dealAddresses.length > 0) {
+        const { data: offersData, error: offersError } = await supabase
+          .from("offers")
+          .select("deal_address")
+          .in("deal_address", dealAddresses);
+
+        if (offersError) {
+          console.warn("Failed to fetch offer counts:", offersError);
+        } else {
+          // Count offers per deal
+          for (const offer of offersData ?? []) {
+            offerCountMap[offer.deal_address] =
+              (offerCountMap[offer.deal_address] || 0) + 1;
+          }
+        }
+      }
+
+      const mapped: MarketDeal[] = (dealsData ?? []).map((row) => ({
         id: row.address,
         baseMint: row.base_mint,
         quoteMint: row.quote_mint,
         allowPartial: row.allow_partial,
         expiresAt: new Date(row.expires_at).getTime(),
         createdAt: new Date(row.created_at).getTime(),
+        offerCount: offerCountMap[row.address] || 0,
       }));
 
       setMarketDeals(mapped);
@@ -57,7 +80,30 @@ export function useMarketDeals(): UseMarketDealsReturn {
     fetchDeals();
   }, [fetchDeals]);
 
-  // TODO: Add Supabase Realtime subscription for INSERT/UPDATE
+  // Realtime subscription for deal and offer changes
+  useEffect(() => {
+    const channel = supabase
+      .channel("market-deals-changes")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "deals" },
+        () => {
+          fetchDeals();
+        }
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "offers" },
+        () => {
+          fetchDeals();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [supabase, fetchDeals]);
 
   return { marketDeals, isLoading, error, refetch: fetchDeals };
 }

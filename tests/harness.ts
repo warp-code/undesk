@@ -37,18 +37,32 @@ export {
 } from "@arcium-hq/client";
 
 // Cluster configuration
-// For localnet testing: null (uses ARCIUM_CLUSTER_PUBKEY from env)
-// For devnet/testnet: specific cluster offset
-const CLUSTER_OFFSET: number | null = null;
+// Read from env var, or default to 0 for localnet
+const CLUSTER_OFFSET: number = process.env.ARCIUM_CLUSTER_OFFSET
+  ? parseInt(process.env.ARCIUM_CLUSTER_OFFSET, 10)
+  : 0;
 
 /**
- * Gets the cluster account address based on configuration.
- * - If CLUSTER_OFFSET is set: Uses getClusterAccAddress (devnet/testnet)
- * - If null: Uses getArciumEnv().arciumClusterOffset (localnet)
+ * Gets the cluster account address.
  */
 export function getClusterAccount(): PublicKey {
-  const offset = CLUSTER_OFFSET ?? getArciumEnv().arciumClusterOffset;
-  return getClusterAccAddress(offset);
+  return getClusterAccAddress(CLUSTER_OFFSET);
+}
+
+/**
+ * Safely gets arcium env, or creates a minimal fallback for localnet.
+ */
+function getArciumEnvSafe(): ReturnType<typeof getArciumEnv> {
+  try {
+    return getArciumEnv();
+  } catch {
+    // Fallback for when running outside of `arcium test`
+    // (e.g., via local.sh with arcium localnet running separately)
+    console.log("[harness] Using fallback arciumEnv with CLUSTER_OFFSET:", CLUSTER_OFFSET);
+    return {
+      arciumClusterOffset: CLUSTER_OFFSET,
+    } as ReturnType<typeof getArciumEnv>;
+  }
 }
 
 export interface TestHarness {
@@ -73,7 +87,7 @@ export function getTestHarness(): TestHarness {
   const program = anchor.workspace.Otc as Program<Otc>;
   const provider = anchor.getProvider() as anchor.AnchorProvider;
   const owner = readKpJson(`${os.homedir()}/.config/solana/id.json`);
-  const arciumEnv = getArciumEnv();
+  const arciumEnv = getArciumEnvSafe();
   const clusterAccount = getClusterAccount();
 
   cachedHarness = {
@@ -103,7 +117,7 @@ export function readKpJson(path: string): anchor.web3.Keypair {
 export async function getMXEPublicKeyWithRetry(
   provider: anchor.AnchorProvider,
   programId: PublicKey,
-  maxRetries: number = 20,
+  maxRetries: number = 3,
   retryDelayMs: number = 500
 ): Promise<Uint8Array> {
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
@@ -683,4 +697,38 @@ export async function initCrankOfferCompDef(
     await finalizeCompDefWithRetry(provider, offset, program.programId, owner);
   }
   return sig;
+}
+
+/**
+ * Initializes a comp_def, gracefully handling "already exists" errors.
+ * Returns tx signature if initialized, null if already exists.
+ */
+export async function initCompDefIfNeeded(
+  initFn: () => Promise<string>,
+  displayName: string
+): Promise<string | null> {
+  try {
+    const sig = await initFn();
+    console.log(`[${displayName}] Initialized:`, sig);
+    return sig;
+  } catch (error: any) {
+    const msg = error.message || "";
+    const logs = error.logs || [];
+
+    // Check for "already initialized" type errors
+    if (
+      msg.includes("already in use") ||
+      msg.includes("already initialized") ||
+      logs.some(
+        (log: string) =>
+          log.includes("already in use") || log.includes("already initialized")
+      )
+    ) {
+      console.log(`[${displayName}] Already initialized, skipping`);
+      return null;
+    }
+
+    // Re-throw unexpected errors
+    throw error;
+  }
 }

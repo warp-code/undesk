@@ -135,51 +135,56 @@ export const MOCK_MARKET_DEALS: MarketDeal[] = [
 export const MOCK_OFFERS: Offer[] = [
   {
     id: "off001",
+    dealId: "mkt001",
     baseMint: MINTS.META,
     quoteMint: MINTS.USDC,
     amount: 10,
     yourPrice: 442,
-    submittedAt: "2h ago",
+    dealExpiresAt: Date.now() + 2 * 60 * 60 * 1000, // 2h from now
     dealStatus: "open",
     offerStatus: "pending",
   },
   {
     id: "off002",
+    dealId: "mkt003",
     baseMint: MINTS.ETH,
     quoteMint: MINTS.USDC,
     amount: 2,
     yourPrice: 3200,
-    submittedAt: "5h ago",
+    dealExpiresAt: 0, // executed, no expiry
     dealStatus: "executed",
     offerStatus: "executed",
   },
   {
     id: "off003",
+    dealId: "mkt001",
     baseMint: MINTS.META,
     quoteMint: MINTS.USDC,
     amount: 25,
     yourPrice: 448,
-    submittedAt: "1d ago",
+    dealExpiresAt: Date.now() - 24 * 60 * 60 * 1000, // expired 1d ago
     dealStatus: "expired",
     offerStatus: "failed",
   },
   {
     id: "off004",
+    dealId: "mkt002",
     baseMint: MINTS.SOL,
     quoteMint: MINTS.USDC,
     amount: 50,
     yourPrice: 185,
-    submittedAt: "3h ago",
+    dealExpiresAt: Date.now() + 3 * 60 * 60 * 1000, // 3h from now
     dealStatus: "open",
     offerStatus: "pending",
   },
   {
     id: "off005",
+    dealId: "mkt003",
     baseMint: MINTS.ETH,
     quoteMint: MINTS.USDC,
     amount: 1,
     yourPrice: 3150,
-    submittedAt: "6h ago",
+    dealExpiresAt: 0, // executed, no expiry
     dealStatus: "executed",
     offerStatus: "partial",
   },

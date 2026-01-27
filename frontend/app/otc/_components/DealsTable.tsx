@@ -1,12 +1,13 @@
 import type { Deal } from "../_lib/types";
-import { formatTimeRemaining } from "../_lib/format";
+import { formatTimeRemaining, toHumanAmount, formatNumber } from "../_lib/format";
 import { getTokenSymbol } from "../_lib/tokens";
 
 interface DealsTableProps {
   deals: Deal[];
+  onDealClick: (deal: Deal) => void;
 }
 
-export const DealsTable = ({ deals }: DealsTableProps) => {
+export const DealsTable = ({ deals, onDealClick }: DealsTableProps) => {
   if (deals.length === 0) {
     return (
       <div className="text-muted-foreground text-sm text-center py-8">
@@ -41,19 +42,26 @@ export const DealsTable = ({ deals }: DealsTableProps) => {
             const base = getTokenSymbol(deal.baseMint);
             const quote = getTokenSymbol(deal.quoteMint);
             // Deal creator offers BASE in exchange for QUOTE
+            // Amount is raw, price is human-readable (from X64.64 conversion)
+            const humanAmount = toHumanAmount(deal.amount, deal.baseMint);
+            const humanTotal = humanAmount * deal.price;
 
             return (
-              <tr key={deal.id} className="border-b border-border/50">
+              <tr
+                key={deal.id}
+                className="border-b border-border/50 cursor-pointer hover:bg-secondary/30 transition-colors"
+                onClick={() => onDealClick(deal)}
+              >
                 <td className="py-3 pr-4 text-foreground">{base}</td>
                 <td className="py-3 pr-4 text-foreground">{quote}</td>
                 <td className="py-3 pr-4 text-right text-foreground">
-                  {deal.amount.toLocaleString()}
+                  {formatNumber(humanAmount)}
                 </td>
                 <td className="py-3 pr-4 text-right text-foreground">
-                  {deal.price.toLocaleString()}
+                  {formatNumber(deal.price)}
                 </td>
                 <td className="py-3 pr-4 text-right text-foreground">
-                  {deal.total.toLocaleString()}
+                  {formatNumber(humanTotal)}
                 </td>
                 <td className="py-3 pr-4 text-center text-muted-foreground">
                   {deal.status === "executed"

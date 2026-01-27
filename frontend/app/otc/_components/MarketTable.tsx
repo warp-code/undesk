@@ -52,43 +52,56 @@ export const MarketTable = ({
             </tr>
           </thead>
           <tbody>
-            {filteredDeals.map((deal) => {
-              const base = getTokenSymbol(deal.baseMint);
-              const quote = getTokenSymbol(deal.quoteMint);
-              // Deal creator offers BASE in exchange for QUOTE
-
-              return (
-                <tr
-                  key={deal.id}
-                  className="border-b border-border/50 hover:bg-secondary/20 cursor-pointer transition-colors"
-                  onClick={() => onDealClick(deal)}
+            {filteredDeals.length === 0 ? (
+              <tr>
+                <td
+                  colSpan={4}
+                  className="py-8 text-center text-muted-foreground text-sm"
                 >
-                  <td className="py-3 text-foreground">{base}</td>
-                  <td className="py-3 text-foreground">{quote}</td>
-                  <td className="py-3 text-left">
-                    {deal.offerCount != null && deal.offerCount > 0 ? (
-                      <span className="text-foreground">
-                        {deal.offerCount}{" "}
-                        {deal.offerCount === 1 ? "offer" : "offers"}
+                  {baseMintFilter !== null
+                    ? `No open deals for ${getTokenSymbol(baseMintFilter)}`
+                    : "No open deals in the market"}
+                </td>
+              </tr>
+            ) : (
+              filteredDeals.map((deal) => {
+                const base = getTokenSymbol(deal.baseMint);
+                const quote = getTokenSymbol(deal.quoteMint);
+                // Deal creator offers BASE in exchange for QUOTE
+
+                return (
+                  <tr
+                    key={deal.id}
+                    className="border-b border-border/50 hover:bg-secondary/20 cursor-pointer transition-colors"
+                    onClick={() => onDealClick(deal)}
+                  >
+                    <td className="py-3 text-foreground">{base}</td>
+                    <td className="py-3 text-foreground">{quote}</td>
+                    <td className="py-3 text-left">
+                      {deal.offerCount != null && deal.offerCount > 0 ? (
+                        <span className="text-foreground">
+                          {deal.offerCount}{" "}
+                          {deal.offerCount === 1 ? "offer" : "offers"}
+                        </span>
+                      ) : (
+                        <span className="text-muted-foreground">Open</span>
+                      )}
+                    </td>
+                    <td className="py-3 text-center">
+                      <span
+                        className={
+                          isUrgent(deal.expiresAt)
+                            ? "text-yellow-400"
+                            : "text-muted-foreground"
+                        }
+                      >
+                        {formatTimeRemaining(deal.expiresAt)}
                       </span>
-                    ) : (
-                      <span className="text-muted-foreground">Open</span>
-                    )}
-                  </td>
-                  <td className="py-3 text-center">
-                    <span
-                      className={
-                        isUrgent(deal.expiresAt)
-                          ? "text-yellow-400"
-                          : "text-muted-foreground"
-                      }
-                    >
-                      {formatTimeRemaining(deal.expiresAt)}
-                    </span>
-                  </td>
-                </tr>
-              );
-            })}
+                    </td>
+                  </tr>
+                );
+              })
+            )}
           </tbody>
         </table>
       </div>

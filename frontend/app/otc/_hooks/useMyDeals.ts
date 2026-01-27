@@ -98,5 +98,25 @@ export function useMyDeals(): UseMyDealsReturn {
     fetchDeals();
   }, [fetchDeals]);
 
+  // Realtime subscription for deal changes (only when user has derived keys)
+  useEffect(() => {
+    if (!userPubKeyHex) return;
+
+    const channel = supabase
+      .channel("my-deals-changes")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "deals" },
+        () => {
+          fetchDeals();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [supabase, fetchDeals, userPubKeyHex]);
+
   return { deals, isLoading, error, refetch: fetchDeals };
 }

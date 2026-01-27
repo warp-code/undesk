@@ -113,7 +113,7 @@ function BackgroundPattern({ activeLines }: { activeLines: Set<string> }) {
   // 1.5x stroke widths from v12 spec
   const getStrokeWidth = (
     line: { weight: string; isAccent: boolean },
-    isActive: boolean,
+    isActive: boolean
   ) => {
     if (isActive) return 2.5;
     if (line.isAccent) return 1.2;
@@ -159,7 +159,7 @@ function BackgroundPattern({ activeLines }: { activeLines: Set<string> }) {
               }}
             />
           );
-        }),
+        })
       )}
     </svg>
   );

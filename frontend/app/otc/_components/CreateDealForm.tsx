@@ -5,6 +5,8 @@ import { type Deal } from "../_lib/types";
 import { sanitizeNumberInput } from "../_lib/format";
 import { MINTS, getTokenSymbol } from "../_lib/tokens";
 import { TokenDropdown } from "./TokenDropdown";
+import { useCreateDeal } from "../_hooks/useCreateDeal";
+import { useDerivedKeysContext } from "../_providers/DerivedKeysProvider";
 
 interface CreateDealFormProps {
   onDealCreated: (deal: Deal) => void;
@@ -19,6 +21,11 @@ export const CreateDealForm = ({ onDealCreated }: CreateDealFormProps) => {
   const [allowPartial, setAllowPartial] = useState(true);
   const [isLocked, setIsLocked] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+
+  // Hooks for on-chain deal creation
+  const { createDeal, isCreating } = useCreateDeal();
+  const { hasDerivedKeys, deriveKeysFromWallet, isDerivingKeys } =
+    useDerivedKeysContext();
 
   const calculatedTotal = useMemo(() => {
     const amount = parseFloat(sellAmount) || 0;
@@ -36,15 +43,39 @@ export const CreateDealForm = ({ onDealCreated }: CreateDealFormProps) => {
     parseFloat(expiresIn) > 0 &&
     sellMint !== quoteMint;
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!canSubmit || isLocked) return;
+
+    // Prompt key derivation if not yet derived
+    if (!hasDerivedKeys) {
+      try {
+        await deriveKeysFromWallet();
+      } catch (e) {
+        console.error("Key derivation failed:", e);
+        return;
+      }
+      // Let user click again after signing to confirm intent
+      return;
+    }
+
     setIsLocked(true);
     setIsLoading(true);
 
-    setTimeout(() => {
-      setIsLoading(false);
+    try {
+      // Convert hours to seconds for expiration
+      const expiresInSeconds = parseFloat(expiresIn) * 3600;
+
+      const dealAddress = await createDeal({
+        baseMint: sellMint,
+        quoteMint: quoteMint,
+        amount: parseFloat(sellAmount),
+        price: parseFloat(pricePerUnit),
+        expiresInSeconds,
+        allowPartial,
+      });
+
       const newDeal: Deal = {
-        id: crypto.randomUUID().slice(0, 8),
+        id: dealAddress,
         baseMint: sellMint,
         quoteMint: quoteMint,
         amount: parseFloat(sellAmount),
@@ -52,13 +83,17 @@ export const CreateDealForm = ({ onDealCreated }: CreateDealFormProps) => {
         total: calculatedTotal,
         status: "open",
         isPartial: false,
-        allowPartial: allowPartial,
-        expiresAt: Date.now() + parseFloat(expiresIn) * 3600000,
+        allowPartial,
+        expiresAt: Date.now() + expiresInSeconds * 1000,
         createdAt: Date.now(),
       };
       onDealCreated(newDeal);
+    } catch (err) {
+      console.error("Failed to create deal:", err);
+    } finally {
+      setIsLoading(false);
       setIsLocked(false);
-    }, 1000);
+    }
   };
 
   return (
@@ -205,14 +240,14 @@ export const CreateDealForm = ({ onDealCreated }: CreateDealFormProps) => {
 
         <button
           onClick={handleSubmit}
-          disabled={!canSubmit}
+          disabled={!canSubmit || isCreating || isDerivingKeys}
           className={`w-full py-3 rounded-md font-medium transition-colors flex items-center justify-center ${
-            canSubmit
+            canSubmit && !isCreating && !isDerivingKeys
               ? "bg-primary hover:bg-primary/80 text-primary-foreground"
               : "bg-secondary text-muted-foreground cursor-not-allowed"
           }`}
         >
-          {isLoading && (
+          {(isLoading || isDerivingKeys) && (
             <svg
               className="animate-spin h-4 w-4 mr-2"
               xmlns="http://www.w3.org/2000/svg"
@@ -234,7 +269,13 @@ export const CreateDealForm = ({ onDealCreated }: CreateDealFormProps) => {
               />
             </svg>
           )}
-          Create Deal
+          {isDerivingKeys
+            ? "Signing..."
+            : isLoading
+            ? "Creating..."
+            : !hasDerivedKeys
+            ? "Sign & Create"
+            : "Create Deal"}
         </button>
       </div>
     </>

@@ -1,11 +1,13 @@
 import type { Offer } from "../_lib/types";
 import { getTokenSymbol } from "../_lib/tokens";
+import { toHumanAmount, formatNumber, formatTimeRemaining } from "../_lib/format";
 
 interface OffersTableProps {
   offers: Offer[];
+  onOfferClick: (offer: Offer) => void;
 }
 
-export const OffersTable = ({ offers }: OffersTableProps) => {
+export const OffersTable = ({ offers, onOfferClick }: OffersTableProps) => {
   if (offers.length === 0) {
     return (
       <div className="text-muted-foreground text-sm text-center py-8">
@@ -27,7 +29,7 @@ export const OffersTable = ({ offers }: OffersTableProps) => {
               <th className="text-right py-3 font-medium">Your price</th>
               <th className="text-right py-3 font-medium">You send</th>
               <th className="text-right py-3 font-medium">You receive</th>
-              <th className="text-center py-3 font-medium">Submitted</th>
+              <th className="text-center py-3 font-medium">Deal closes</th>
               <th className="text-left py-3 font-medium">Status</th>
             </tr>
           </thead>
@@ -35,32 +37,35 @@ export const OffersTable = ({ offers }: OffersTableProps) => {
             {offers.map((offer) => {
               const base = getTokenSymbol(offer.baseMint);
               const quote = getTokenSymbol(offer.quoteMint);
-              const total = offer.amount * offer.yourPrice;
+              // Amount is raw, price is human-readable (from X64.64 conversion)
+              const humanAmount = toHumanAmount(offer.amount, offer.baseMint);
+              const humanTotal = humanAmount * offer.yourPrice;
               // When making an offer, you send QUOTE and receive BASE
-              const youSend = `${total.toLocaleString()} ${quote}`;
-              const youReceive = `${offer.amount} ${base}`;
+              const youSend = `${formatNumber(humanTotal)} ${quote}`;
+              const youReceive = `${formatNumber(humanAmount)} ${base}`;
 
               return (
                 <tr
                   key={offer.id}
-                  className={`border-b border-border/50 ${
+                  className={`border-b border-border/50 cursor-pointer hover:bg-secondary/30 transition-colors ${
                     offer.dealStatus === "expired" &&
                     offer.offerStatus === "failed"
                       ? "opacity-50"
                       : ""
                   }`}
+                  onClick={() => onOfferClick(offer)}
                 >
                   <td className="py-3 text-foreground">{base}</td>
                   <td className="py-3 text-foreground">{quote}</td>
                   <td className="py-3 text-right text-foreground">
-                    {offer.yourPrice.toLocaleString()}
+                    {formatNumber(offer.yourPrice)}
                   </td>
                   <td className="py-3 text-right text-foreground">{youSend}</td>
                   <td className="py-3 text-right text-foreground">
                     {youReceive}
                   </td>
                   <td className="py-3 text-center text-muted-foreground">
-                    {offer.submittedAt}
+                    {formatTimeRemaining(offer.dealExpiresAt)}
                   </td>
                   <td className="py-3 text-left">
                     {offer.dealStatus === "open" &&

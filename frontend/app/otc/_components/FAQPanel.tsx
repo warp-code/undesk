@@ -16,7 +16,7 @@ export const FAQPanel = () => {
             <h4 className="text-foreground font-medium">
               Private Negotiation Chat
             </h4>
-            <span className="px-2 py-0.5 rounded text-xs font-medium bg-primary/20 text-primary border border-primary/30">
+            <span className="px-2 py-0.5 rounded text-xs font-medium bg-secondary text-muted-foreground border border-border">
               Coming Soon
             </span>
           </div>

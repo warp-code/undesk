@@ -33,11 +33,12 @@ export interface MarketDeal {
 // When making an offer, you send QUOTE and receive BASE
 export interface Offer {
   id: string;
+  dealId: string;
   baseMint: string;
   quoteMint: string;
   amount: number;
   yourPrice: number;
-  submittedAt: string;
+  dealExpiresAt: number;
   dealStatus: "open" | "executed" | "expired";
   offerStatus: "pending" | "executed" | "partial" | "failed";
 }

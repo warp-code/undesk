@@ -10,8 +10,8 @@ interface Tab {
 }
 
 const TABS: Tab[] = [
-  { id: "deals", label: "Your Deals" },
   { id: "market", label: "Open Market" },
+  { id: "deals", label: "Your Deals" },
   { id: "offers", label: "Your Offers" },
 ];
 

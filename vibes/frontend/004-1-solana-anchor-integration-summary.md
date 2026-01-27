@@ -1,7 +1,7 @@
 # Solana/Anchor/Supabase Integration Summary
 
 **Date:** 2026-01-23
-**Status:** Planning
+**Status:** In Progress
 **Parent:** `004-solana-anchor-integration-plan.md`
 
 ---
@@ -67,29 +67,30 @@
 
 ## Implementation Phases
 
-### Phase 1: Wallet Connection
+### Phase 1: Wallet Connection ✅
 - `SolanaProvider.tsx` - ConnectionProvider, WalletProvider, WalletModalProvider
 - `WalletButton.tsx` - Styled connect/disconnect button
 - CSS overrides for dark theme
 
-### Phase 2: Key Derivation
+### Phase 2: Key Derivation ✅
 - `encryption.ts` - Derive ed25519 (controller) + x25519 (encryption) from wallet signatures
 - `useDerivedKeys.ts` - Hook to manage derived keys
+- `DerivedKeysProvider.tsx` - Context provider
 - User signs 2 messages -> deterministic keypairs
 
-### Phase 3: OTC Program Integration
+### Phase 3: OTC Program Integration ✅
 - `OtcProvider.tsx` - Anchor program instance, MXE public key, Arcium accounts
 - `accounts.ts` - PDA derivation (getDealAddress, getOfferAddress)
 - `constants.ts` - Program ID, cluster config, token mints
 
-### Phase 3.5: Supabase Integration
-- `supabase.ts` - Client factory
+### Phase 3.5: Supabase Integration ✅
+- `supabase.ts` - Client factory (in `@otc/supabase` package)
 - `SupabaseProvider.tsx` - Context provider
 - `useMarketDeals.ts` - All open deals (public fields only)
 - `useMyDeals.ts` - User's deals with decryption
 - `decryption.ts` - Decrypt ciphertexts from Supabase rows
 
-### Phase 4: Deal Creation
+### Phase 4: Deal Creation ✅
 - `useCreateDeal.ts` - Encrypt amount/price, build tx, send to Solana
 - Integrate with `CreateDealForm.tsx`
 - After tx confirms -> Indexer captures -> Supabase updated -> UI reflects
@@ -99,13 +100,13 @@
 - Integrate with `MakeOfferForm.tsx`
 - Same flow: Solana -> Indexer -> Supabase -> UI
 
-### Phase 6: User's Offers
+### Phase 6: User's Offers ✅
 - `useMyOffers.ts` - User's offers with decryption
 - `useOffersForDeal.ts` - Offer count per deal (public)
 
-### Phase 7: Data Flow Integration
-- Wire up all providers in `layout.tsx`
-- Replace mock data in `page.tsx` with hooks
+### Phase 7: Data Flow Integration (Partial)
+- ✅ Wire up all providers in `layout.tsx`
+- ⏳ Replace mock data in `page.tsx` with hooks (some tables still use mock data)
 - Components receive live data from Supabase
 
 ### Phase 8: Error Handling & UX

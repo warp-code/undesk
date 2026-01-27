@@ -1,7 +1,7 @@
 # Solana & Anchor Integration Plan
 
 **Date:** 2026-01-22
-**Status:** Planning
+**Status:** In Progress
 
 ---
 
@@ -1111,9 +1111,11 @@ function getTokenSymbol(mint: string): string {
 
 ---
 
-## Phase 4: Deal Creation
+## Phase 4: Deal Creation ✅
 
-### Task 4.1: Create useCreateDeal Hook
+### Task 4.1: Create useCreateDeal Hook ✅
+
+**Implemented:** `frontend/app/otc/_hooks/useCreateDeal.ts`
 
 **File:** `_hooks/useCreateDeal.ts`
 
@@ -1252,11 +1254,11 @@ export function useCreateDeal(): UseCreateDealReturn {
 }
 ```
 
-### Task 4.2: Integrate with CreateDealForm
+### Task 4.2: Integrate with CreateDealForm ✅
 
-**File:** Modify `_components/CreateDealForm.tsx`
+**File:** Modified `_components/CreateDealForm.tsx`
 
-Replace mock submission with actual blockchain transaction.
+Integrated `useCreateDeal` hook with key derivation flow and proper button states.
 
 ```typescript
 // Add imports
@@ -1310,9 +1312,11 @@ const buttonText = !connected
 
 ---
 
-## Phase 5: Offer Submission
+## Phase 5: Offer Submission ✅
 
-### Task 5.1: Create useSubmitOffer Hook
+### Task 5.1: Create useSubmitOffer Hook ✅
+
+**Implemented:** `frontend/app/otc/_hooks/useSubmitOffer.ts`
 
 **File:** `_hooks/useSubmitOffer.ts`
 
@@ -1443,11 +1447,11 @@ export function useSubmitOffer(): UseSubmitOfferReturn {
 }
 ```
 
-### Task 5.2: Integrate with MakeOfferForm
+### Task 5.2: Integrate with MakeOfferForm ✅
 
-**File:** Modify `_components/MakeOfferForm.tsx`
+**File:** Modified `_components/MakeOfferForm.tsx`
 
-Similar pattern to CreateDealForm.
+Integrated `useSubmitOffer` hook with key derivation flow and proper button states.
 
 ---
 
@@ -1667,7 +1671,26 @@ export function useOffersForDeal(dealAddress: string | null) {
 
 ---
 
-## Phase 7: Data Flow Integration
+## Phase 7: Data Flow Integration ✅
+
+**Implemented:** 2026-01-25
+
+**Files created/modified:**
+- `frontend/app/otc/_components/ConnectPrompt.tsx` - Wallet/key derivation prompt
+- `frontend/app/otc/_components/MarketTable.tsx` - Added empty state
+- `frontend/app/otc/_hooks/useMarketDeals.ts` - Added Realtime subscription
+- `frontend/app/otc/_hooks/useMyDeals.ts` - Added Realtime subscription
+- `frontend/app/otc/_hooks/useMyOffers.ts` - Added Realtime subscription
+- `frontend/app/otc/page.tsx` - Replaced mock data with hooks, added loading/error states
+- `frontend/.env.example` - Documented all env vars including `NEXT_PUBLIC_USE_MOCK_DATA`
+
+**Key features:**
+- Mock data toggle via `NEXT_PUBLIC_USE_MOCK_DATA` env var
+- Loading spinners during data fetch
+- Error messages on fetch failure
+- ConnectPrompt for Deals/Offers tabs when not authenticated
+- Market tab works without wallet (public data)
+- Supabase Realtime subscriptions for live updates
 
 ### Task 7.1: Create DerivedKeysProvider
 
@@ -1832,17 +1855,17 @@ export function KeyDerivationModal({ isOpen, onSign, onCancel }: KeyDerivationMo
 
 ## Implementation Order
 
-| Phase | Priority | Dependencies |
-|-------|----------|--------------|
-| Phase 1: Wallet Connection | High | None |
-| Phase 2: Key Derivation | High | Phase 1 |
-| Phase 3: OTC Program | High | Phase 1 |
-| Phase 3.5: Supabase Integration | High | Indexer deployed, Supabase schema ready |
-| Phase 4: Deal Creation | High | Phase 2, 3 |
-| Phase 5: Offer Submission | High | Phase 2, 3 |
-| Phase 6: User's Offers | Medium | Phase 3.5 |
-| Phase 7: Data Flow | Medium | Phase 3.5, 4, 5, 6 |
-| Phase 8: Error Handling | Medium | All above |
+| Phase | Priority | Dependencies | Status |
+|-------|----------|--------------|--------|
+| Phase 1: Wallet Connection | High | None | ✅ Done |
+| Phase 2: Key Derivation | High | Phase 1 | ✅ Done |
+| Phase 3: OTC Program | High | Phase 1 | ✅ Done |
+| Phase 3.5: Supabase Integration | High | Indexer deployed, Supabase schema ready | ✅ Done |
+| Phase 4: Deal Creation | High | Phase 2, 3 | ✅ Done |
+| Phase 5: Offer Submission | High | Phase 2, 3 | ✅ Done |
+| Phase 6: User's Offers | Medium | Phase 3.5 | ✅ Done |
+| Phase 7: Data Flow | Medium | Phase 3.5, 4, 5, 6 | ✅ Done |
+| Phase 8: Error Handling | Medium | All above | ◄── Next |
 
 **Prerequisites:**
 1. **Indexer must be deployed** - The frontend reads from Supabase, which is populated by the indexer
@@ -1853,7 +1876,7 @@ export function KeyDerivationModal({ isOpen, onSign, onCancel }: KeyDerivationMo
 
 ## Environment Variables
 
-Add to `.env.local`:
+Add to `.env.local` (see `frontend/.env.example`):
 
 ```bash
 # Solana RPC endpoint
@@ -1863,11 +1886,14 @@ NEXT_PUBLIC_RPC_URL=https://api.devnet.solana.com
 NEXT_PUBLIC_OTC_PROGRAM_ID=<your_program_id>
 
 # Arcium cluster offset (leave empty for localnet default)
-NEXT_PUBLIC_ARCIUM_CLUSTER_OFFSET=
+NEXT_PUBLIC_CLUSTER_OFFSET=
 
 # Supabase
 NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+
+# Use mock data instead of Supabase (for development without backend)
+NEXT_PUBLIC_USE_MOCK_DATA=false
 ```
 
 ---
@@ -1875,39 +1901,39 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
 ## Testing Checklist
 
 ### Wallet Connection
-- [ ] Phantom connects successfully
-- [ ] Solflare connects successfully
-- [ ] Disconnect works
-- [ ] Auto-reconnect on page reload
+- [x] Phantom connects successfully
+- [x] Solflare connects successfully
+- [x] Disconnect works
+- [x] Auto-reconnect on page reload
 
 ### Key Derivation
-- [ ] User signs both messages
-- [ ] Keys are derived correctly
-- [ ] Keys persist during session
-- [ ] Keys clear on disconnect
+- [x] User signs both messages
+- [x] Keys are derived correctly
+- [x] Keys persist during session
+- [x] Keys clear on disconnect
 
 ### Supabase Integration
-- [ ] Market deals load from Supabase
-- [ ] New deals appear via Realtime subscription
-- [ ] Deal status updates reflected in UI
-- [ ] User's deals filtered and decrypted correctly
-- [ ] User's offers filtered and decrypted correctly
+- [x] Market deals load from Supabase
+- [x] New deals appear via Realtime subscription
+- [x] Deal status updates reflected in UI
+- [x] User's deals filtered and decrypted correctly
+- [x] User's offers filtered and decrypted correctly
 
 ### Deal Creation
-- [ ] Form validation works
-- [ ] Transaction submits successfully
-- [ ] Deal appears in "Your Deals" tab (via Supabase)
-- [ ] Deal amount/price decrypted correctly
+- [x] Form validation works
+- [x] Transaction submits successfully
+- [x] Deal appears in "Your Deals" tab
+- [x] Deal amount/price decrypted correctly
 
 ### Offer Submission
-- [ ] Can submit offer to market deal
-- [ ] Transaction submits successfully
-- [ ] Offer appears in "Your Offers" tab (via Supabase)
-- [ ] Offer amount/price decrypted correctly
+- [x] Can submit offer to market deal
+- [x] Transaction submits successfully
+- [x] Offer appears in "Your Offers" tab
+- [x] Offer amount/price decrypted correctly
 
 ### Error Handling
-- [ ] Wallet not connected → shows connect message
-- [ ] Keys not derived → prompts for signature
+- [x] Wallet not connected → shows connect message (ConnectPrompt)
+- [x] Keys not derived → prompts for signature (ConnectPrompt)
 - [ ] Transaction fails → shows error message
 - [ ] Insufficient balance → shows error
 - [ ] Supabase unavailable → graceful degradation
