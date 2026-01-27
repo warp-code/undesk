@@ -389,18 +389,6 @@ function MPCFlowDiagram() {
             style={{ transition: "all 0.5s ease" }}
           />
 
-          {/* "Encrypted Matching" label at top of box */}
-          <text
-            x="170"
-            y="125"
-            className="fill-muted-foreground text-[10px]"
-            textAnchor="middle"
-            opacity={activeStep === 2 ? 0.9 : 0.5}
-            style={{ transition: "opacity 0.5s ease" }}
-          >
-            Encrypted Matching
-          </text>
-
           {/* MPC Node Row - 4 nodes */}
           {[0, 1, 2, 3].map((i) => (
             <g key={i} transform={`translate(${40 + i * 70}, 165)`}>
@@ -464,9 +452,8 @@ function MPCFlowDiagram() {
               x2={110 + i * 70}
               y2="190"
               stroke={activeStep === 2 ? "#f97316" : "#404040"}
-              strokeWidth="1.5"
-              strokeDasharray="4 3"
-              opacity={activeStep === 2 ? 0.8 : 0.4}
+              strokeWidth="2"
+              strokeDasharray="6 4"
               style={{ transition: "all 0.5s ease" }}
             >
               {activeStep === 2 && (
@@ -481,6 +468,16 @@ function MPCFlowDiagram() {
             </line>
           ))}
         </g>
+
+        {/* "Encrypted Matching" label below box */}
+        <text
+          x="170"
+          y="305"
+          className="fill-muted-foreground text-[11px] font-medium"
+          textAnchor="middle"
+        >
+          Encrypted Matching
+        </text>
       </svg>
     </div>
   );
