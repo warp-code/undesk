@@ -726,6 +726,7 @@ export default function HomePage() {
                       viewBox="0 0 24 24"
                       stroke="currentColor"
                       strokeWidth={1.5}
+                      style={{ filter: "drop-shadow(0 0 8px #f97316) drop-shadow(0 0 16px #f97316)" }}
                     >
                       <path
                         strokeLinecap="round"
@@ -752,6 +753,7 @@ export default function HomePage() {
                       viewBox="0 0 24 24"
                       stroke="currentColor"
                       strokeWidth={1.5}
+                      style={{ filter: "drop-shadow(0 0 8px #f97316) drop-shadow(0 0 16px #f97316)" }}
                     >
                       <path
                         strokeLinecap="round"
@@ -778,6 +780,7 @@ export default function HomePage() {
                       viewBox="0 0 24 24"
                       stroke="currentColor"
                       strokeWidth={1.5}
+                      style={{ filter: "drop-shadow(0 0 8px #f97316) drop-shadow(0 0 16px #f97316)" }}
                     >
                       <path
                         strokeLinecap="round"
