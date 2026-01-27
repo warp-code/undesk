@@ -5,9 +5,9 @@ import { useState, useEffect, useMemo, useRef } from "react";
 
 const faqs = [
   {
-    question: "What is Veil OTC?",
+    question: "What is Undesk?",
     answer:
-      "Veil OTC is a private over-the-counter trading platform built on Solana. It uses Arcium's confidential computing network to enable encrypted order matching. Your trade intentions stay completely private, even during execution.",
+      "Undesk is a private over-the-counter trading platform built on Solana. It uses Arcium's confidential computing network to enable encrypted order matching. Your trade intentions stay completely private, even during execution.",
   },
   {
     question: "How does the privacy work?",
@@ -22,7 +22,7 @@ const faqs = [
   {
     question: "Is there a minimum trade size?",
     answer:
-      "There's no minimum trade size, but Veil OTC is designed for larger trades where privacy and zero price impact matter most.",
+      "There's no minimum trade size, but Undesk is designed for larger trades where privacy and zero price impact matter most.",
   },
   {
     question: "How are trades settled?",
@@ -40,9 +40,9 @@ const faqs = [
       "All deal, deposit, and balance accounts are created using deterministically derived private addresses paired with random keypairs for frontrunning protection. Accounts on mainnet will be created through a private SOL pre-deposit scheme using Privacy Cash.",
   },
   {
-    question: "Can veil also do RFQ?",
+    question: "Can Undesk also do RFQ?",
     answer:
-      "Veil OTC is our first step towards fully private OTC trading. We are building an RFQ system on top of Veil that will allow you to make and receive quotes through a fully private market structure. Coming soon.",
+      "Undesk is our first step towards fully private OTC trading. We are building an RFQ system on top of Undesk that will allow you to make and receive quotes through a fully private market structure. Coming soon.",
   },
 ];
 
@@ -596,7 +596,7 @@ export default function HomePage() {
           <div className="flex items-center gap-2">
             <span className="text-primary text-xl">⬡</span>
             <span className="text-foreground font-semibold text-lg">
-              Veil OTC
+              Undesk
             </span>
           </div>
 
@@ -673,7 +673,7 @@ export default function HomePage() {
             The OTC desk without third parties
           </h2>
           <p className="text-muted-foreground text-center mb-24">
-            Don't rely on others to execute large trades for you.<br/>Veil OTC makes private deals possible without the middlemen.
+            Don't rely on others to execute large trades for you.<br/>Undesk makes private deals possible without the middlemen.
           </p>
           <div className="grid md:grid-cols-[1fr_auto_1fr] gap-12 max-w-[900px] mx-auto">
             {/* Traditional OTC */}
@@ -750,7 +750,7 @@ export default function HomePage() {
               />
             </div>
 
-            {/* Veil OTC - with subtle glow background */}
+            {/* Undesk - with subtle glow background */}
             <div className="text-center relative">
               {/* Ambient glow background */}
               <div
@@ -760,7 +760,7 @@ export default function HomePage() {
                 }}
               />
               <h3 className="text-2xl font-semibold text-foreground mb-8">
-                Veil OTC
+                Undesk
               </h3>
               <ul className="inline-block text-left">
                 <li className="flex items-start gap-3 py-4 border-b border-primary/20">
@@ -1147,7 +1147,7 @@ export default function HomePage() {
             FAQ
           </h2>
           <p className="text-muted-foreground text-center mb-16">
-            Everything you need to know about Veil OTC
+            Everything you need to know about Undesk
           </p>
           <div className="border-t border-border">
             {faqs.map((faq, index) => (
@@ -1181,7 +1181,7 @@ export default function HomePage() {
               <div className="flex items-center gap-2 mb-4">
                 <span className="text-primary text-xl">⬡</span>
                 <span className="text-foreground font-semibold text-lg">
-                  Veil OTC
+                  Undesk
                 </span>
               </div>
               <p className="text-base text-muted-foreground">
@@ -1249,7 +1249,7 @@ export default function HomePage() {
 
           {/* Bottom bar */}
           <div className="pt-12 border-t border-border text-base text-muted-foreground text-right">
-            <p>© 2025 Veil OTC</p>
+            <p>© 2025 Undesk</p>
           </div>
         </div>
       </footer>

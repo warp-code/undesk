@@ -13,7 +13,7 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Veil OTC",
+  title: "Undesk",
   description: "Private peer-to-peer OTC trading on Solana",
 };
 

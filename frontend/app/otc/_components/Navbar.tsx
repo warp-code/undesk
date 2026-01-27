@@ -9,7 +9,7 @@ export const Navbar = () => {
             href="/"
             className="text-foreground font-semibold text-lg hover:text-primary transition-colors"
           >
-            Veil OTC
+            Undesk
           </a>
           <div className="flex gap-4 text-sm">
             <a href="/otc" className="text-foreground font-medium">
