@@ -45,7 +45,7 @@ export const TokenDropdown = ({
         disabled={disabled}
         className="flex items-center gap-1.5 text-foreground hover:text-primary transition-colors"
       >
-        <TokenIcon mint={selected} className="w-4 h-4" />
+        <TokenIcon mint={selected} />
         <span>{getTokenSymbol(selected)}</span>
         <svg
           className="w-4 h-4"
@@ -74,7 +74,7 @@ export const TokenDropdown = ({
                 mint === selected ? "text-primary" : "text-foreground"
               }`}
             >
-              <TokenIcon mint={mint} className="w-4 h-4" />
+              <TokenIcon mint={mint} />
               {getTokenSymbol(mint)}
             </button>
           ))}

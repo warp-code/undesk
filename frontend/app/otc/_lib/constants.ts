@@ -28,7 +28,7 @@ export const COMP_DEF_NAMES = {
 // Mint addresses for mock data
 const MINTS = {
   META: "META111111111111111111111111111111111111111",
-  ETH: "7vfCXTUXx5WJV5JADk17DUJ4ksgau7utNKj4b963voxs",
+  JTO: "jtojtomepa8beP8AuQc6eXt5FriJwfFMwQx2v2f9mCL",
   SOL: "So11111111111111111111111111111111111111112",
   USDC: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
 } as const;
@@ -51,7 +51,7 @@ export const MOCK_DEALS: Deal[] = [
   },
   {
     id: "d2",
-    baseMint: MINTS.ETH,
+    baseMint: MINTS.JTO,
     quoteMint: MINTS.USDC,
     amount: 10,
     price: 3200,
@@ -102,7 +102,7 @@ export const MOCK_MARKET_DEALS: MarketDeal[] = [
   },
   {
     id: "mkt003",
-    baseMint: MINTS.ETH,
+    baseMint: MINTS.JTO,
     quoteMint: MINTS.USDC,
     expiresAt: Date.now() + 22140000,
     createdAt: Date.now() - 64260000,
@@ -112,7 +112,7 @@ export const MOCK_MARKET_DEALS: MarketDeal[] = [
   },
   {
     id: "mkt004",
-    baseMint: MINTS.ETH,
+    baseMint: MINTS.JTO,
     quoteMint: MINTS.USDC,
     expiresAt: Date.now() + 3900000,
     createdAt: Date.now() - 82500000,
@@ -147,7 +147,7 @@ export const MOCK_OFFERS: Offer[] = [
   {
     id: "off002",
     dealId: "mkt003",
-    baseMint: MINTS.ETH,
+    baseMint: MINTS.JTO,
     quoteMint: MINTS.USDC,
     amount: 2,
     yourPrice: 3200,
@@ -180,7 +180,7 @@ export const MOCK_OFFERS: Offer[] = [
   {
     id: "off005",
     dealId: "mkt003",
-    baseMint: MINTS.ETH,
+    baseMint: MINTS.JTO,
     quoteMint: MINTS.USDC,
     amount: 1,
     yourPrice: 3150,

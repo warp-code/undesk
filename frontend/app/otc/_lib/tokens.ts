@@ -12,7 +12,7 @@ const isLocalnet =
 const MAINNET_MINTS = {
   SOL: "So11111111111111111111111111111111111111112",
   USDC: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
-  ETH: "7vfCXTUXx5WJV5JADk17DUJ4ksgau7utNKj4b963voxs",
+  JTO: "jtojtomepa8beP8AuQc6eXt5FriJwfFMwQx2v2f9mCL",
   META: "META111111111111111111111111111111111111111", // Placeholder
 } as const;
 
@@ -20,7 +20,7 @@ const MAINNET_MINTS = {
 export const MINTS = isLocalnet ? LOCALNET_MINTS : MAINNET_MINTS;
 
 // Supported token mints for UI dropdowns
-export const SUPPORTED_MINTS = [MINTS.SOL, MINTS.USDC, MINTS.ETH, MINTS.META];
+export const SUPPORTED_MINTS = [MINTS.SOL, MINTS.USDC, MINTS.JTO, MINTS.META];
 
 export type SupportedMint = string;
 
@@ -35,7 +35,7 @@ export interface TokenInfo {
 const TOKEN_METADATA: Record<string, TokenInfo> = {
   SOL: { symbol: "SOL", decimals: 9, name: "Wrapped SOL" },
   USDC: { symbol: "USDC", decimals: 6, name: "USD Coin" },
-  ETH: { symbol: "ETH", decimals: 8, name: "Ether (Portal)" },
+  JTO: { symbol: "JTO", decimals: 9, name: "Jito" },
   META: { symbol: "META", decimals: 9, name: "Meta Token" },
 };
 

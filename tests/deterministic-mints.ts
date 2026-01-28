@@ -21,7 +21,7 @@ export function deriveMintKeypair(
 export function deriveMintAddresses(
   walletPubkey: PublicKey
 ): Record<string, string> {
-  const symbols = ["META", "USDC", "ETH", "SOL"];
+  const symbols = ["META", "USDC", "JTO", "SOL"];
   const mints: Record<string, string> = {};
 
   for (const symbol of symbols) {
@@ -38,6 +38,6 @@ export function deriveMintAddresses(
 export const TOKEN_DECIMALS: Record<string, number> = {
   META: 9,
   USDC: 6,
-  ETH: 8,
+  JTO: 9,
   SOL: 9,
 };
