@@ -15,9 +15,10 @@ interface CreateDealFormProps {
 export const CreateDealForm = ({ onDealCreated }: CreateDealFormProps) => {
   const [sellMint, setSellMint] = useState<string>(MINTS.META);
   const [quoteMint, setQuoteMint] = useState<string>(MINTS.USDC);
-  const [sellAmount, setSellAmount] = useState("4444");
-  const [pricePerUnit, setPricePerUnit] = useState("444");
-  const [expiresIn, setExpiresIn] = useState("24");
+  const [sellAmount, setSellAmount] = useState("");
+  const [pricePerUnit, setPricePerUnit] = useState("");
+  const [expiresIn, setExpiresIn] = useState("15");
+  const [expiresUnit, setExpiresUnit] = useState<"minutes" | "hours">("minutes");
   const [allowPartial, setAllowPartial] = useState(true);
   const [isLocked, setIsLocked] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -62,8 +63,9 @@ export const CreateDealForm = ({ onDealCreated }: CreateDealFormProps) => {
     setIsLoading(true);
 
     try {
-      // Convert hours to seconds for expiration
-      const expiresInSeconds = parseFloat(expiresIn) * 3600;
+      // Convert to seconds for expiration
+      const multiplier = expiresUnit === "hours" ? 3600 : 60;
+      const expiresInSeconds = parseFloat(expiresIn) * multiplier;
 
       const dealAddress = await createDeal({
         baseMint: sellMint,
@@ -171,11 +173,40 @@ export const CreateDealForm = ({ onDealCreated }: CreateDealFormProps) => {
                 const sanitized = sanitizeNumberInput(e.target.value);
                 if (sanitized !== null) setExpiresIn(sanitized);
               }}
-              placeholder="24"
+              placeholder="15"
               disabled={isLocked}
               className="flex-1 bg-transparent text-foreground outline-none"
             />
-            <span className="text-muted-foreground">hours</span>
+            <button
+              type="button"
+              onClick={() =>
+                !isLocked &&
+                setExpiresUnit((prev) =>
+                  prev === "minutes" ? "hours" : "minutes"
+                )
+              }
+              disabled={isLocked}
+              className={`flex items-center gap-1 text-muted-foreground transition-colors ${
+                isLocked
+                  ? "cursor-not-allowed"
+                  : "hover:text-primary cursor-pointer"
+              }`}
+            >
+              {expiresUnit}
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M8 9l4-4 4 4m0 6l-4 4-4-4"
+                />
+              </svg>
+            </button>
           </div>
         </div>
 
