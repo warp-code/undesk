@@ -56,6 +56,35 @@ interface LineData {
   accentColor: string;
 }
 
+function StaticLineBackground() {
+  // SVG pattern tile: 48px wide (3 lines per tier), 300px tall (3 tiers of 100px each)
+  const svgPattern = `
+    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="300">
+      <line x1="0" y1="0" x2="0" y2="100" stroke="rgba(255,255,255,0.025)" stroke-width="2"/>
+      <line x1="16" y1="0" x2="16" y2="100" stroke="rgba(255,255,255,0.025)" stroke-width="2"/>
+      <line x1="32" y1="0" x2="32" y2="100" stroke="rgba(255,255,255,0.025)" stroke-width="2"/>
+      <line x1="5.33" y1="100" x2="5.33" y2="200" stroke="rgba(255,255,255,0.025)" stroke-width="2"/>
+      <line x1="21.33" y1="100" x2="21.33" y2="200" stroke="rgba(255,255,255,0.025)" stroke-width="2"/>
+      <line x1="37.33" y1="100" x2="37.33" y2="200" stroke="rgba(255,255,255,0.025)" stroke-width="2"/>
+      <line x1="10.67" y1="200" x2="10.67" y2="300" stroke="rgba(255,255,255,0.025)" stroke-width="2"/>
+      <line x1="26.67" y1="200" x2="26.67" y2="300" stroke="rgba(255,255,255,0.025)" stroke-width="2"/>
+      <line x1="42.67" y1="200" x2="42.67" y2="300" stroke="rgba(255,255,255,0.025)" stroke-width="2"/>
+    </svg>
+  `;
+
+  const encodedSvg = `data:image/svg+xml,${encodeURIComponent(svgPattern.trim())}`;
+
+  return (
+    <div
+      className="absolute inset-0 pointer-events-none"
+      style={{
+        backgroundImage: `url("${encodedSvg}")`,
+        backgroundRepeat: "repeat",
+      }}
+    />
+  );
+}
+
 function BackgroundPattern({ activeLines }: { activeLines: Set<string> }) {
   const tierLines = useMemo(() => {
     const tiers: LineData[][] = [[], [], [], []];
@@ -506,8 +535,9 @@ export default function HomePage() {
       </section>
 
       {/* How It Works Section */}
-      <section className="pt-32 bg-card">
-        <div className="max-w-6xl mx-auto px-6">
+      <section className="py-32 bg-card relative overflow-hidden">
+        <StaticLineBackground />
+        <div className="max-w-6xl mx-auto px-6 relative z-10">
           <h2 className="text-3xl font-bold text-foreground text-center mb-2">
             How It Works
           </h2>
@@ -700,18 +730,6 @@ export default function HomePage() {
             </div>
           </div>
         </div>
-
-        {/* Line Divider */}
-        <div className="w-full pt-16">
-          <div
-            className="w-full h-24"
-            style={{
-              backgroundImage:
-                "repeating-linear-gradient(90deg, rgba(255,255,255,0.2) 0px, rgba(255,255,255,0.2) 1px, transparent 1px, transparent 18px)",
-              backgroundSize: "18px 100%",
-            }}
-          />
-        </div>
       </section>
 
       {/* Security Section */}
@@ -878,9 +896,9 @@ export default function HomePage() {
       </div>
 
       {/* Footer */}
-      <footer className="py-20">
-        <div className="max-w-6xl mx-auto px-6">
-          <div className="flex justify-between mb-12 items-start">
+      <footer>
+        <div className="max-w-6xl mx-auto px-6 py-20">
+          <div className="flex justify-between items-start">
             {/* Brand */}
             <div>
               <span className="text-foreground font-semibold text-lg block mb-4">
@@ -950,10 +968,12 @@ export default function HomePage() {
               </div>
             </div>
           </div>
+        </div>
 
-          {/* Bottom bar */}
-          <div className="pt-12 border-t border-border text-base text-muted-foreground text-right">
-            <p>© 2025 Undesk</p>
+        {/* Bottom bar */}
+        <div className="border-t border-border">
+          <div className="max-w-6xl mx-auto px-6 py-8 text-base text-muted-foreground text-right">
+            <p>© {new Date().getFullYear()} Undesk</p>
           </div>
         </div>
       </footer>
