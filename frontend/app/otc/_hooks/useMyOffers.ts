@@ -8,6 +8,7 @@ import type { Offer } from "../_lib/types";
 import {
   createDecryptionCipher,
   decryptOfferData,
+  decryptOfferSettlementData,
   bytesToHex,
 } from "../_lib/decryption";
 
@@ -50,7 +51,9 @@ export function useMyOffers(): UseMyOffersReturn {
       // Fetch offers first (no FK, so we fetch separately)
       const { data: offersData, error: offersError } = await supabase
         .from("offers")
-        .select("address, deal_address, ciphertexts, nonce, submitted_at, status")
+        .select(
+          "address, deal_address, ciphertexts, nonce, submitted_at, status, settlement_ciphertexts, settlement_nonce"
+        )
         .eq("encryption_key", userPubKeyHex)
         .order("submitted_at", { ascending: false });
 
@@ -77,9 +80,7 @@ export function useMyOffers(): UseMyOffersReturn {
       }
 
       // Map deals by address for quick lookup
-      const dealsMap = new Map(
-        (dealsData ?? []).map((d) => [d.address, d])
-      );
+      const dealsMap = new Map((dealsData ?? []).map((d) => [d.address, d]));
 
       const cipher = createDecryptionCipher(
         derivedKeys.encryption.privateKey,
@@ -102,6 +103,25 @@ export function useMyOffers(): UseMyOffersReturn {
             cipher
           );
 
+          // Decrypt settlement if available
+          let settlementOutcome: number | null = null;
+          if (
+            row.status === "settled" &&
+            row.settlement_ciphertexts &&
+            row.settlement_nonce
+          ) {
+            try {
+              const settlement = decryptOfferSettlementData(
+                row.settlement_ciphertexts,
+                row.settlement_nonce,
+                cipher
+              );
+              settlementOutcome = settlement.outcome;
+            } catch (e) {
+              console.error("Failed to decrypt settlement:", row.address, e);
+            }
+          }
+
           decrypted.push({
             id: row.address,
             dealId: row.deal_address,
@@ -111,7 +131,7 @@ export function useMyOffers(): UseMyOffersReturn {
             yourPrice: price,
             dealExpiresAt: new Date(deal.expires_at).getTime(),
             dealStatus: deal.status as "open" | "executed" | "expired",
-            offerStatus: mapOfferStatus(row.status),
+            offerStatus: mapOfferStatus(row.status, settlementOutcome),
           });
         } catch (decryptErr) {
           console.error("Failed to decrypt offer:", row.address, decryptErr);
@@ -158,14 +178,21 @@ export function useMyOffers(): UseMyOffersReturn {
  * Map database status to frontend status.
  */
 function mapOfferStatus(
-  status: string
+  status: string,
+  settlementOutcome: number | null
 ): "pending" | "executed" | "partial" | "failed" {
-  switch (status) {
-    case "open":
-      return "pending";
-    case "settled":
-      return "executed"; // May need more nuance based on settlement data
-    default:
-      return "pending";
+  if (status === "open") return "pending";
+  if (status === "settled" && settlementOutcome !== null) {
+    switch (settlementOutcome) {
+      case 0:
+        return "executed";
+      case 1:
+        return "partial";
+      case 2:
+        return "failed";
+    }
   }
+  // Fallback for settled without decrypted outcome
+  if (status === "settled") return "executed";
+  return "pending";
 }

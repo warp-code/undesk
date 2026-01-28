@@ -1,14 +1,14 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import type { MarketDeal } from "../_lib/types";
+import type { DealWithDetails } from "../_lib/types";
 import { sanitizeNumberInput } from "../_lib/format";
 import { getTokenSymbol } from "../_lib/tokens";
 import { useSubmitOffer } from "../_hooks/useSubmitOffer";
 import { useDerivedKeysContext } from "../_providers/DerivedKeysProvider";
 
 interface MakeOfferFormProps {
-  deal: MarketDeal;
+  deal: DealWithDetails;
   onOfferPlaced: () => void;
   onClose: () => void;
 }

@@ -1,5 +1,9 @@
 import type { Deal } from "../_lib/types";
-import { formatTimeRemaining, toHumanAmount, formatNumber } from "../_lib/format";
+import {
+  formatTimeRemaining,
+  toHumanAmount,
+  formatNumber,
+} from "../_lib/format";
 import { getTokenSymbol } from "../_lib/tokens";
 
 interface DealsTableProps {

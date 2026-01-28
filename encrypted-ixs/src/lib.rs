@@ -98,7 +98,7 @@ mod circuits {
     pub struct OfferSettledBlob {
         /// Outcome: EXECUTED(0), PARTIAL(1), FAILED(2)
         outcome: u8,
-        /// Amount of base asset executed
+        /// Amount of base asset bought
         executed_amt: u64,
         /// Quote tokens refunded to offeror
         refund_amt: u64,

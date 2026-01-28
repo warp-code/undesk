@@ -11,13 +11,17 @@ import { DealsTable } from "./_components/DealsTable";
 import { MarketTable } from "./_components/MarketTable";
 import { OffersTable } from "./_components/OffersTable";
 import { DealDetails } from "./_components/DealDetails";
+import { OfferDetails } from "./_components/OfferDetails";
 import { MakeOfferForm } from "./_components/MakeOfferForm";
 import { CreateDealForm } from "./_components/CreateDealForm";
 import { DealNotFound } from "./_components/DealNotFound";
+import { OfferNotFound } from "./_components/OfferNotFound";
 import { ConnectPrompt } from "./_components/ConnectPrompt";
 import { useUrlState } from "./_hooks/useUrlState";
 import { useMyDeals } from "./_hooks/useMyDeals";
 import { useMyOffers } from "./_hooks/useMyOffers";
+import { useOffer } from "./_hooks/useOffer";
+import { useDeal } from "./_hooks/useDeal";
 import { useMarketDeals } from "./_hooks/useMarketDeals";
 import { useDerivedKeysContext } from "./_providers/DerivedKeysProvider";
 import { useMxePublicKey } from "./_providers/OtcProvider";
@@ -78,7 +82,14 @@ function ErrorMessage({ message }: { message: string }) {
 }
 
 function OTCPageContent() {
-  const { state, setView, navigateToDeal, navigateBack } = useUrlState();
+  const {
+    state,
+    setView,
+    navigateToDeal,
+    navigateToOffer,
+    navigateBack,
+    navigateBackFromOffer,
+  } = useUrlState();
 
   // Wallet and key state
   const { connected } = useWallet();
@@ -90,6 +101,16 @@ function OTCPageContent() {
   const realDeals = useMyDeals();
   const realMarket = useMarketDeals();
   const realOffers = useMyOffers();
+  const {
+    offer: selectedOffer,
+    isLoading: offerLoading,
+    error: offerError,
+  } = useOffer(state.offerId);
+  const {
+    deal: selectedDeal,
+    isLoading: dealLoading,
+    error: dealError,
+  } = useDeal(state.dealId);
 
   // Choose data source based on mock toggle
   const deals = USE_MOCK ? MOCK_DEALS : realDeals.deals;
@@ -113,39 +134,14 @@ function OTCPageContent() {
 
   const [baseMintFilter, setBaseMintFilter] = useState<string | null>(null);
 
-  // Check if selected deal is user's own deal (for showing decrypted data)
-  const selectedUserDeal = state.dealId
-    ? deals.find((d) => d.id === state.dealId)
-    : undefined;
-
-  // Derive selected deal from URL - check marketDeals first, then user's deals
-  const selectedMarketDeal: MarketDeal | null = state.dealId
-    ? marketDeals.find((d) => d.id === state.dealId) ??
-      // If not in market (e.g., executed/expired), create from user's deal
-      (selectedUserDeal
-        ? {
-            id: selectedUserDeal.id,
-            baseMint: selectedUserDeal.baseMint,
-            quoteMint: selectedUserDeal.quoteMint,
-            expiresAt: selectedUserDeal.expiresAt,
-            createdAt: selectedUserDeal.createdAt,
-            allowPartial: selectedUserDeal.allowPartial,
-            offerCount: selectedUserDeal.offerCount,
-          }
-        : null)
-    : null;
-
-  // Check if deal ID is in URL but deal not found
-  const dealNotFound = state.dealId !== null && selectedMarketDeal === null;
-
   // Real-time countdown state for DealDetails
   const [, setTick] = useState(0);
 
   useEffect(() => {
-    if (!selectedMarketDeal) return;
+    if (!selectedDeal) return;
     const interval = setInterval(() => setTick((t) => t + 1), 1000);
     return () => clearInterval(interval);
-  }, [selectedMarketDeal]);
+  }, [selectedDeal]);
 
   // Filter market deals
   const filteredMarketDeals =
@@ -163,7 +159,15 @@ function OTCPageContent() {
   };
 
   const handleOfferClick = (offer: Offer) => {
-    navigateToDeal(offer.dealId);
+    navigateToOffer(offer.id);
+  };
+
+  const handleViewDealFromOffer = (dealId: string) => {
+    navigateToDeal(dealId);
+  };
+
+  const handleBackFromOffer = () => {
+    navigateBackFromOffer();
   };
 
   // Collapse back to table
@@ -195,9 +199,9 @@ function OTCPageContent() {
         <div className="w-[440px] shrink-0 border-r border-border p-4 overflow-y-auto">
           <div className="bg-card/50 border border-border rounded-lg p-4">
             {/* Show Make Offer form when deal is selected, otherwise Create Deal */}
-            {selectedMarketDeal ? (
+            {selectedDeal ? (
               <MakeOfferForm
-                deal={selectedMarketDeal}
+                deal={selectedDeal}
                 onOfferPlaced={handleOfferPlaced}
                 onClose={handleCollapse}
               />
@@ -207,18 +211,39 @@ function OTCPageContent() {
           </div>
         </div>
 
-        {/* Center Panel - Tables or Deal Details */}
+        {/* Center Panel - Tables, Deal Details, or Offer Details */}
         <div className="flex-1 p-4 overflow-y-auto">
           <div className="bg-card/50 border border-border rounded-lg">
-            {/* Show Deal Not Found error */}
-            {dealNotFound ? (
-              <DealNotFound dealId={state.dealId!} onBack={handleCollapse} />
-            ) : selectedMarketDeal ? (
-              <DealDetails
-                deal={selectedMarketDeal}
-                userDeal={selectedUserDeal}
-                onBack={handleCollapse}
-              />
+            {/* Show Offer Details when offer is selected */}
+            {state.offerId !== null ? (
+              offerLoading ? (
+                <div className="p-4">
+                  <LoadingSpinner />
+                </div>
+              ) : offerError || !selectedOffer ? (
+                <OfferNotFound
+                  offerId={state.offerId}
+                  error={offerError}
+                  onBack={handleBackFromOffer}
+                />
+              ) : (
+                <OfferDetails
+                  offer={selectedOffer}
+                  onBack={handleBackFromOffer}
+                  onViewDeal={handleViewDealFromOffer}
+                />
+              )
+            ) : /* Show Deal Details when deal is selected */
+            state.dealId !== null ? (
+              dealLoading ? (
+                <div className="p-4">
+                  <LoadingSpinner />
+                </div>
+              ) : dealError || !selectedDeal ? (
+                <DealNotFound dealId={state.dealId} onBack={handleCollapse} />
+              ) : (
+                <DealDetails deal={selectedDeal} onBack={handleCollapse} />
+              )
             ) : (
               <>
                 {/* Tab Navigation */}
@@ -239,7 +264,9 @@ function OTCPageContent() {
                         hasDerivedKeys={hasDerivedKeys}
                         onDeriveKeys={deriveKeysFromWallet}
                         isDerivingKeys={isDerivingKeys}
-                        mxeKeyLoading={connected && hasDerivedKeys && mxePublicKey === null}
+                        mxeKeyLoading={
+                          connected && hasDerivedKeys && mxePublicKey === null
+                        }
                       />
                     ))}
                   {state.view === "market" &&
@@ -262,14 +289,19 @@ function OTCPageContent() {
                     ) : offersLoading ? (
                       <LoadingSpinner />
                     ) : canViewPrivateData ? (
-                      <OffersTable offers={offers} onOfferClick={handleOfferClick} />
+                      <OffersTable
+                        offers={offers}
+                        onOfferClick={handleOfferClick}
+                      />
                     ) : (
                       <ConnectPrompt
                         connected={connected}
                         hasDerivedKeys={hasDerivedKeys}
                         onDeriveKeys={deriveKeysFromWallet}
                         isDerivingKeys={isDerivingKeys}
-                        mxeKeyLoading={connected && hasDerivedKeys && mxePublicKey === null}
+                        mxeKeyLoading={
+                          connected && hasDerivedKeys && mxePublicKey === null
+                        }
                       />
                     ))}
                 </div>

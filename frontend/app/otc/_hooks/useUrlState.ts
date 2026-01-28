@@ -6,13 +6,16 @@ import type { TabId } from "../_components/TabNavigation";
 interface UrlState {
   view: TabId;
   dealId: string | null;
+  offerId: string | null;
 }
 
 interface UseUrlStateReturn {
   state: UrlState;
   setView: (view: TabId) => void;
   navigateToDeal: (dealId: string) => void;
+  navigateToOffer: (offerId: string) => void;
   navigateBack: () => void;
+  navigateBackFromOffer: () => void;
 }
 
 export function useUrlState(): UseUrlStateReturn {
@@ -29,6 +32,7 @@ export function useUrlState(): UseUrlStateReturn {
   const state: UrlState = {
     view,
     dealId: searchParams.get("deal"),
+    offerId: searchParams.get("offer"),
   };
 
   const updateParams = (updates: Partial<UrlState>) => {
@@ -46,13 +50,25 @@ export function useUrlState(): UseUrlStateReturn {
       }
     }
 
+    if (updates.offerId !== undefined) {
+      if (updates.offerId === null) {
+        params.delete("offer");
+      } else {
+        params.set("offer", updates.offerId);
+      }
+    }
+
     router.push(`${pathname}?${params.toString()}`);
   };
 
   return {
     state,
-    setView: (view) => updateParams({ view, dealId: null }),
-    navigateToDeal: (dealId) => updateParams({ view: state.view, dealId }),
+    setView: (view) => updateParams({ view, dealId: null, offerId: null }),
+    navigateToDeal: (dealId) =>
+      updateParams({ view: state.view, dealId, offerId: null }),
+    navigateToOffer: (offerId) =>
+      updateParams({ view: "offers", offerId, dealId: null }),
     navigateBack: () => updateParams({ dealId: null }),
+    navigateBackFromOffer: () => updateParams({ offerId: null }),
   };
 }

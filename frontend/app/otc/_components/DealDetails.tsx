@@ -1,4 +1,4 @@
-import type { MarketDeal, Deal } from "../_lib/types";
+import type { DealWithDetails } from "../_lib/types";
 import {
   formatTimeRemaining,
   isUrgent,
@@ -9,19 +9,21 @@ import {
 import { formatPair, getTokenSymbol } from "../_lib/tokens";
 
 interface DealDetailsProps {
-  deal: MarketDeal;
-  /** If this is the user's own deal, pass the decrypted data */
-  userDeal?: Deal;
+  deal: DealWithDetails;
   onBack: () => void;
 }
 
-export const DealDetails = ({ deal, onBack, userDeal }: DealDetailsProps) => {
-  const isOwnDeal = !!userDeal;
+export const DealDetails = ({ deal, onBack }: DealDetailsProps) => {
   // For own deals, calculate human-readable values
-  const humanAmount = userDeal
-    ? toHumanAmount(userDeal.amount, deal.baseMint)
-    : null;
-  const humanTotal = humanAmount !== null ? humanAmount * userDeal!.price : null;
+  const humanAmount =
+    deal.isOwner && deal.amount !== undefined
+      ? toHumanAmount(deal.amount, deal.baseMint)
+      : null;
+  const humanTotal =
+    humanAmount !== null && deal.price !== undefined
+      ? humanAmount * deal.price
+      : null;
+
   return (
     <div className="p-4">
       {/* Collapse header */}
@@ -90,19 +92,19 @@ export const DealDetails = ({ deal, onBack, userDeal }: DealDetailsProps) => {
         </div>
 
         {/* Deal info grid */}
-        {isOwnDeal ? (
+        {deal.isOwner && humanAmount !== null && deal.price !== undefined ? (
           // Own deal: show full details
           <div className="grid grid-cols-2 gap-4">
             <div className="bg-secondary/30 rounded-lg p-4">
               <p className="text-muted-foreground text-sm mb-1">Amount</p>
               <p className="text-foreground text-lg font-medium">
-                {formatNumber(humanAmount!)} {getTokenSymbol(deal.baseMint)}
+                {formatNumber(humanAmount)} {getTokenSymbol(deal.baseMint)}
               </p>
             </div>
             <div className="bg-secondary/30 rounded-lg p-4">
               <p className="text-muted-foreground text-sm mb-1">Your Price</p>
               <p className="text-foreground text-lg font-medium">
-                {formatNumber(userDeal!.price)} {getTokenSymbol(deal.quoteMint)}
+                {formatNumber(deal.price)} {getTokenSymbol(deal.quoteMint)}
               </p>
             </div>
             <div className="bg-secondary/30 rounded-lg p-4">
@@ -112,7 +114,9 @@ export const DealDetails = ({ deal, onBack, userDeal }: DealDetailsProps) => {
               </p>
             </div>
             <div className="bg-secondary/30 rounded-lg p-4">
-              <p className="text-muted-foreground text-sm mb-1">Current Offers</p>
+              <p className="text-muted-foreground text-sm mb-1">
+                Current Offers
+              </p>
               <p className="text-foreground text-lg font-medium">
                 {deal.offerCount || 0}
               </p>
@@ -136,7 +140,9 @@ export const DealDetails = ({ deal, onBack, userDeal }: DealDetailsProps) => {
               </div>
             </div>
             <div className="bg-secondary/30 rounded-lg p-4">
-              <p className="text-muted-foreground text-sm mb-1">Current Offers</p>
+              <p className="text-muted-foreground text-sm mb-1">
+                Current Offers
+              </p>
               <p className="text-foreground text-lg font-medium">
                 {deal.offerCount || 0}
               </p>
@@ -146,13 +152,16 @@ export const DealDetails = ({ deal, onBack, userDeal }: DealDetailsProps) => {
 
         {/* Info box */}
         <div className="bg-secondary/30 rounded-md p-4 text-sm text-muted-foreground">
-          {isOwnDeal ? (
+          {deal.isOwner ? (
             <>
               <p className="font-medium text-foreground mb-2">Your Deal</p>
               <ul className="space-y-1 list-disc list-inside">
                 <li>This is your deal - you can see full details</li>
                 <li>Offers can now be submitted until the deal expires</li>
-                <li>The deal will execute automatically using best offers once it expires</li>
+                <li>
+                  The deal will execute automatically using best offers once it
+                  expires
+                </li>
               </ul>
             </>
           ) : (

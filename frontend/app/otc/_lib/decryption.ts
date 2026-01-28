@@ -125,3 +125,29 @@ export function decryptOfferData(
     amount: Number(decrypted[1]),
   };
 }
+
+export interface DecryptedOfferSettlement {
+  outcome: number; // 0=EXECUTED, 1=PARTIAL, 2=FAILED
+  executedAmt: bigint;
+  refundAmt: bigint;
+}
+
+/**
+ * Decrypts offer settlement data from database ciphertexts.
+ * Field order: [outcome (u8), executed_amt (u64), refund_amt (u64)]
+ */
+export function decryptOfferSettlementData(
+  ciphertextsHex: string,
+  nonceHex: string,
+  cipher: RescueCipher
+): DecryptedOfferSettlement {
+  const ciphertexts = parseCiphertexts(ciphertextsHex, 3);
+  const nonce = hexToBytes(nonceHex);
+  const decrypted = cipher.decrypt(ciphertexts, nonce);
+
+  return {
+    outcome: Number(decrypted[0]),
+    executedAmt: decrypted[1],
+    refundAmt: decrypted[2],
+  };
+}

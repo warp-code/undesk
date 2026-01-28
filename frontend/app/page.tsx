@@ -194,15 +194,29 @@ function MPCFlowDiagram() {
           </filter>
 
           {/* Prettier glow for active elements */}
-          <filter id="strongGlow" x="-100%" y="-100%" width="300%" height="300%">
-            <feGaussianBlur in="SourceGraphic" stdDeviation="10" result="blur1" />
+          <filter
+            id="strongGlow"
+            x="-100%"
+            y="-100%"
+            width="300%"
+            height="300%"
+          >
+            <feGaussianBlur
+              in="SourceGraphic"
+              stdDeviation="10"
+              result="blur1"
+            />
             <feColorMatrix
               in="blur1"
               type="matrix"
               values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 0.5 0"
               result="glow1"
             />
-            <feGaussianBlur in="SourceGraphic" stdDeviation="3" result="blur2" />
+            <feGaussianBlur
+              in="SourceGraphic"
+              stdDeviation="3"
+              result="blur2"
+            />
             <feColorMatrix
               in="blur2"
               type="matrix"
@@ -309,7 +323,10 @@ function MPCFlowDiagram() {
             fontSize="22"
             fontWeight="300"
             fill={activeStep === 0 ? "#f97316" : "#666"}
-            style={{ transition: "fill 0.5s ease", fontFamily: "Inter, sans-serif" }}
+            style={{
+              transition: "fill 0.5s ease",
+              fontFamily: "Inter, sans-serif",
+            }}
           >
             $
           </text>
@@ -341,7 +358,10 @@ function MPCFlowDiagram() {
             fontSize="22"
             fontWeight="300"
             fill={activeStep === 1 ? "#f97316" : "#666"}
-            style={{ transition: "fill 0.5s ease", fontFamily: "Inter, sans-serif" }}
+            style={{
+              transition: "fill 0.5s ease",
+              fontFamily: "Inter, sans-serif",
+            }}
           >
             $
           </text>
@@ -615,9 +635,7 @@ export default function HomePage() {
         {/* Hero Content - aligned with navbar container */}
         <div className="relative z-10 max-w-6xl mx-auto px-6 w-full mt-16 pointer-events-none">
           <div className="max-w-2xl space-y-6 pointer-events-auto">
-            <p className="text-sm text-muted-foreground">
-              Powered by Arcium
-            </p>
+            <p className="text-sm text-muted-foreground">Powered by Arcium</p>
             <h1 className="text-5xl font-bold text-foreground">
               Private peer-to-peer OTC trading
             </h1>
@@ -642,13 +660,18 @@ export default function HomePage() {
       </section>
 
       {/* OTC Comparison Section */}
-      <section id="how-it-works" className="pt-80 pb-32 relative overflow-hidden">
+      <section
+        id="how-it-works"
+        className="pt-80 pb-32 relative overflow-hidden"
+      >
         <div className="max-w-6xl mx-auto px-6 relative z-10">
           <h2 className="text-3xl font-bold text-foreground text-center mb-2">
             The OTC desk without third parties
           </h2>
           <p className="text-muted-foreground text-center mb-24">
-            Don't rely on others to execute large trades for you.<br/>Undesk makes private deals possible without the middlemen.
+            Don't rely on others to execute large trades for you.
+            <br />
+            Undesk makes private deals possible without the middlemen.
           </p>
           <div className="grid md:grid-cols-[1fr_auto_1fr] gap-12 max-w-[900px] mx-auto">
             {/* Traditional OTC */}
@@ -672,7 +695,8 @@ export default function HomePage() {
                     />
                   </svg>
                   <span className="text-muted-foreground">
-                    <span className="text-foreground/70">Third parties</span> hold your funds
+                    <span className="text-foreground/70">Third parties</span>{" "}
+                    hold your funds
                   </span>
                 </li>
                 <li className="flex items-start gap-3 py-4 border-b border-border/50">
@@ -690,7 +714,10 @@ export default function HomePage() {
                     />
                   </svg>
                   <span className="text-muted-foreground">
-                    Requires <span className="text-foreground/70">trust in intermediaries</span>
+                    Requires{" "}
+                    <span className="text-foreground/70">
+                      trust in intermediaries
+                    </span>
                   </span>
                 </li>
                 <li className="flex items-start gap-3 py-4">
@@ -708,7 +735,10 @@ export default function HomePage() {
                     />
                   </svg>
                   <span className="text-muted-foreground">
-                    Risk of <span className="text-foreground/70">information disclosure</span>
+                    Risk of{" "}
+                    <span className="text-foreground/70">
+                      information disclosure
+                    </span>
                   </span>
                 </li>
               </ul>
@@ -725,7 +755,8 @@ export default function HomePage() {
               <div
                 className="absolute -inset-8 -z-10 rounded-3xl"
                 style={{
-                  background: 'radial-gradient(ellipse at center, rgba(249,115,22,0.08) 0%, transparent 70%)',
+                  background:
+                    "radial-gradient(ellipse at center, rgba(249,115,22,0.08) 0%, transparent 70%)",
                 }}
               />
               <h3 className="text-2xl font-semibold text-foreground mb-8">
@@ -747,7 +778,8 @@ export default function HomePage() {
                     />
                   </svg>
                   <span className="text-foreground">
-                    <span className="text-primary">Full control</span> of your funds
+                    <span className="text-primary">Full control</span> of your
+                    funds
                   </span>
                 </li>
                 <li className="flex items-start gap-3 py-4 border-b border-primary/20">
@@ -765,7 +797,8 @@ export default function HomePage() {
                     />
                   </svg>
                   <span className="text-foreground">
-                    <span className="text-primary">Trustless</span> on-chain trading
+                    <span className="text-primary">Trustless</span> on-chain
+                    trading
                   </span>
                 </li>
                 <li className="flex items-start gap-3 py-4">
@@ -783,7 +816,8 @@ export default function HomePage() {
                     />
                   </svg>
                   <span className="text-foreground">
-                    <span className="text-primary">Encrypted</span>, private execution
+                    <span className="text-primary">Encrypted</span>, private
+                    execution
                   </span>
                 </li>
               </ul>
@@ -836,8 +870,7 @@ export default function HomePage() {
                   </h4>
                   <p className="text-muted-foreground text-base leading-relaxed">
                     Define your trade: assets, size, and your price. Deposit
-                    funds. Everything is encrypted before it leaves your
-                    wallet.
+                    funds. Everything is encrypted before it leaves your wallet.
                   </p>
                 </div>
               </div>
@@ -911,9 +944,9 @@ export default function HomePage() {
                     Submit your offer
                   </h4>
                   <p className="text-muted-foreground text-base leading-relaxed">
-                    Make a blind offer with your desired price and size. If
-                    your offer passes the creator&apos;s threshold, it gets
-                    silently added to the deal.
+                    Make a blind offer with your desired price and size. If your
+                    offer passes the creator&apos;s threshold, it gets silently
+                    added to the deal.
                   </p>
                 </div>
               </div>
@@ -1002,7 +1035,10 @@ export default function HomePage() {
               <p className="text-muted-foreground mb-12">
                 Powered by Arcium&apos;s confidential computing network. Your
                 trades are encrypted and processed using multi-party
-                computation. <span className="text-foreground">No single party ever sees your data.</span>
+                computation.{" "}
+                <span className="text-foreground">
+                  No single party ever sees your data.
+                </span>
               </p>
 
               {/* Feature list */}
@@ -1016,7 +1052,10 @@ export default function HomePage() {
                       viewBox="0 0 24 24"
                       stroke="currentColor"
                       strokeWidth={1.5}
-                      style={{ filter: "drop-shadow(0 0 8px #f97316) drop-shadow(0 0 16px #f97316)" }}
+                      style={{
+                        filter:
+                          "drop-shadow(0 0 8px #f97316) drop-shadow(0 0 16px #f97316)",
+                      }}
                     >
                       <path
                         strokeLinecap="round"
@@ -1026,7 +1065,9 @@ export default function HomePage() {
                     </svg>
                   </div>
                   <div>
-                    <p className="font-medium text-foreground">Private by design.</p>
+                    <p className="font-medium text-foreground">
+                      Private by design.
+                    </p>
                     <p className="text-muted-foreground text-base mt-1">
                       Fully on-chain, non-custodial trading that never ties back
                       to your wallet.
@@ -1043,7 +1084,10 @@ export default function HomePage() {
                       viewBox="0 0 24 24"
                       stroke="currentColor"
                       strokeWidth={1.5}
-                      style={{ filter: "drop-shadow(0 0 8px #f97316) drop-shadow(0 0 16px #f97316)" }}
+                      style={{
+                        filter:
+                          "drop-shadow(0 0 8px #f97316) drop-shadow(0 0 16px #f97316)",
+                      }}
                     >
                       <path
                         strokeLinecap="round"
@@ -1053,7 +1097,9 @@ export default function HomePage() {
                     </svg>
                   </div>
                   <div>
-                    <p className="font-medium text-foreground">Everything is encrypted.</p>
+                    <p className="font-medium text-foreground">
+                      Everything is encrypted.
+                    </p>
                     <p className="text-muted-foreground text-base mt-1">
                       Deals, offers, balances: all data and execution is
                       end-to-end encrypted by Arcium&apos;s MPC network.
@@ -1070,7 +1116,10 @@ export default function HomePage() {
                       viewBox="0 0 24 24"
                       stroke="currentColor"
                       strokeWidth={1.5}
-                      style={{ filter: "drop-shadow(0 0 8px #f97316) drop-shadow(0 0 16px #f97316)" }}
+                      style={{
+                        filter:
+                          "drop-shadow(0 0 8px #f97316) drop-shadow(0 0 16px #f97316)",
+                      }}
                     >
                       <circle cx="12" cy="12" r="9" />
                       <ellipse cx="12" cy="12" rx="4" ry="9" />
@@ -1078,7 +1127,9 @@ export default function HomePage() {
                     </svg>
                   </div>
                   <div>
-                    <p className="font-medium text-foreground">Full self-custody.</p>
+                    <p className="font-medium text-foreground">
+                      Full self-custody.
+                    </p>
                     <p className="text-muted-foreground text-base mt-1">
                       All funds are escrowed on-chain through private shared
                       pools, always retrievable.
@@ -1133,8 +1184,9 @@ export default function HomePage() {
         <div
           className="w-full h-24"
           style={{
-            backgroundImage: 'repeating-linear-gradient(90deg, rgba(255,255,255,0.4) 0px, rgba(255,255,255,0.4) 1px, transparent 1px, transparent 18px)',
-            backgroundSize: '18px 100%'
+            backgroundImage:
+              "repeating-linear-gradient(90deg, rgba(255,255,255,0.4) 0px, rgba(255,255,255,0.4) 1px, transparent 1px, transparent 18px)",
+            backgroundSize: "18px 100%",
           }}
         />
       </div>
@@ -1158,59 +1210,61 @@ export default function HomePage() {
 
             {/* Links */}
             <div className="flex gap-16">
-            {/* Product Links */}
-            <div>
-              <h4 className="font-semibold text-foreground mb-4">Product</h4>
-              <ul className="space-y-3 text-base text-muted-foreground">
-                <li>
-                  <a
-                    href="#how-it-works"
-                    className="hover:text-foreground transition-colors"
-                  >
-                    How it works
-                  </a>
-                </li>
-                <li>
-                  <a
-                    href="#security"
-                    className="hover:text-foreground transition-colors"
-                  >
-                    Security
-                  </a>
-                </li>
-                <li>
-                  <a
-                    href="#faq"
-                    className="hover:text-foreground transition-colors"
-                  >
-                    FAQ
-                  </a>
-                </li>
-              </ul>
-            </div>
+              {/* Product Links */}
+              <div>
+                <h4 className="font-semibold text-foreground mb-4">Product</h4>
+                <ul className="space-y-3 text-base text-muted-foreground">
+                  <li>
+                    <a
+                      href="#how-it-works"
+                      className="hover:text-foreground transition-colors"
+                    >
+                      How it works
+                    </a>
+                  </li>
+                  <li>
+                    <a
+                      href="#security"
+                      className="hover:text-foreground transition-colors"
+                    >
+                      Security
+                    </a>
+                  </li>
+                  <li>
+                    <a
+                      href="#faq"
+                      className="hover:text-foreground transition-colors"
+                    >
+                      FAQ
+                    </a>
+                  </li>
+                </ul>
+              </div>
 
-            {/* Resources Links */}
-            <div>
-              <h4 className="font-semibold text-foreground mb-4">Resources</h4>
-              <ul className="space-y-3 text-base text-muted-foreground">
-                <li>
-                  <a
-                    href="#"
-                    className="hover:text-foreground transition-colors"
-                  >
-                    Documentation
-                  </a>
-                </li>
-                <li>
-                  <a
-                    href="#"
-                    className="hover:text-foreground transition-colors"
-                  >
-                    GitHub
-                  </a>
-                </li>
-              </ul>
-            </div>
+              {/* Resources Links */}
+              <div>
+                <h4 className="font-semibold text-foreground mb-4">
+                  Resources
+                </h4>
+                <ul className="space-y-3 text-base text-muted-foreground">
+                  <li>
+                    <a
+                      href="#"
+                      className="hover:text-foreground transition-colors"
+                    >
+                      Documentation
+                    </a>
+                  </li>
+                  <li>
+                    <a
+                      href="#"
+                      className="hover:text-foreground transition-colors"
+                    >
+                      GitHub
+                    </a>
+                  </li>
+                </ul>
+              </div>
             </div>
           </div>
 

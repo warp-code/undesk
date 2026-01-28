@@ -1,6 +1,10 @@
 import type { Offer } from "../_lib/types";
 import { getTokenSymbol } from "../_lib/tokens";
-import { toHumanAmount, formatNumber, formatTimeRemaining } from "../_lib/format";
+import {
+  toHumanAmount,
+  formatNumber,
+  formatTimeRemaining,
+} from "../_lib/format";
 
 interface OffersTableProps {
   offers: Offer[];
