@@ -165,322 +165,6 @@ function BackgroundPattern({ activeLines }: { activeLines: Set<string> }) {
   );
 }
 
-function MPCFlowDiagram() {
-  const [activeStep, setActiveStep] = useState(0);
-
-  // Cycle through animation steps: 0=deals flow down, 1=offers flow down, 2=MPC processing
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setActiveStep((prev) => (prev + 1) % 3);
-    }, 2500);
-    return () => clearInterval(interval);
-  }, []);
-
-  return (
-    <div className="relative w-full h-full min-h-[400px] flex items-center justify-center">
-      <svg
-        viewBox="0 0 340 300"
-        className="w-full h-full max-w-[400px] mx-auto"
-        style={{ overflow: "visible" }}
-      >
-        <defs>
-          {/* Glow filter */}
-          <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
-            <feGaussianBlur stdDeviation="3" result="coloredBlur" />
-            <feMerge>
-              <feMergeNode in="coloredBlur" />
-              <feMergeNode in="SourceGraphic" />
-            </feMerge>
-          </filter>
-
-          {/* Prettier glow for active elements */}
-          <filter
-            id="strongGlow"
-            x="-100%"
-            y="-100%"
-            width="300%"
-            height="300%"
-          >
-            <feGaussianBlur
-              in="SourceGraphic"
-              stdDeviation="10"
-              result="blur1"
-            />
-            <feColorMatrix
-              in="blur1"
-              type="matrix"
-              values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 0.5 0"
-              result="glow1"
-            />
-            <feGaussianBlur
-              in="SourceGraphic"
-              stdDeviation="3"
-              result="blur2"
-            />
-            <feColorMatrix
-              in="blur2"
-              type="matrix"
-              values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 0.7 0"
-              result="glow2"
-            />
-            <feMerge>
-              <feMergeNode in="glow1" />
-              <feMergeNode in="glow2" />
-              <feMergeNode in="SourceGraphic" />
-            </feMerge>
-          </filter>
-        </defs>
-
-        {/* Labels */}
-        <text
-          x="85"
-          y="24"
-          className="fill-muted-foreground text-[11px] font-medium"
-          textAnchor="middle"
-        >
-          Deals
-        </text>
-        <text
-          x="255"
-          y="24"
-          className="fill-muted-foreground text-[11px] font-medium"
-          textAnchor="middle"
-        >
-          Offers
-        </text>
-
-        {/* Connection: Deals to MPC (curves down-right) */}
-        <path
-          d="M 85 84 L 85 110 Q 85 130 105 130 L 140 130"
-          fill="none"
-          stroke={activeStep === 0 ? "#f97316" : "#404040"}
-          strokeWidth="1"
-          strokeDasharray="4 3"
-          strokeLinecap="round"
-          style={{
-            filter: activeStep === 0 ? "url(#glow)" : "none",
-            transition: "stroke 0.5s ease",
-          }}
-        >
-          {activeStep === 0 && (
-            <animate
-              attributeName="stroke-dashoffset"
-              from="30"
-              to="0"
-              dur="1.2s"
-              repeatCount="indefinite"
-            />
-          )}
-        </path>
-
-        {/* Connection: Offers to MPC (curves down-left) */}
-        <path
-          d="M 255 84 L 255 110 Q 255 130 235 130 L 200 130"
-          fill="none"
-          stroke={activeStep === 1 ? "#f97316" : "#404040"}
-          strokeWidth="1"
-          strokeDasharray="4 3"
-          strokeLinecap="round"
-          style={{
-            filter: activeStep === 1 ? "url(#glow)" : "none",
-            transition: "stroke 0.5s ease",
-          }}
-        >
-          {activeStep === 1 && (
-            <animate
-              attributeName="stroke-dashoffset"
-              from="30"
-              to="0"
-              dur="1.2s"
-              repeatCount="indefinite"
-            />
-          )}
-        </path>
-
-        {/* Deals box (top left) */}
-        <g
-          style={{
-            filter: activeStep === 0 ? "url(#strongGlow)" : "none",
-            transition: "filter 0.5s ease",
-          }}
-        >
-          <rect
-            x="60"
-            y="34"
-            width="50"
-            height="50"
-            rx="8"
-            fill={activeStep === 0 ? "#1a1a1a" : "#141414"}
-            stroke={activeStep === 0 ? "#f97316" : "#333"}
-            strokeWidth={activeStep === 0 ? "2" : "1"}
-            style={{ transition: "all 0.5s ease" }}
-          />
-          {/* Dollar sign */}
-          <text
-            x="85"
-            y="67"
-            textAnchor="middle"
-            fontSize="22"
-            fontWeight="300"
-            fill={activeStep === 0 ? "#f97316" : "#666"}
-            style={{
-              transition: "fill 0.5s ease",
-              fontFamily: "Inter, sans-serif",
-            }}
-          >
-            $
-          </text>
-        </g>
-
-        {/* Offers box (top right) */}
-        <g
-          style={{
-            filter: activeStep === 1 ? "url(#strongGlow)" : "none",
-            transition: "filter 0.5s ease",
-          }}
-        >
-          <rect
-            x="230"
-            y="34"
-            width="50"
-            height="50"
-            rx="8"
-            fill={activeStep === 1 ? "#1a1a1a" : "#141414"}
-            stroke={activeStep === 1 ? "#f97316" : "#333"}
-            strokeWidth={activeStep === 1 ? "2" : "1"}
-            style={{ transition: "all 0.5s ease" }}
-          />
-          {/* Dollar sign */}
-          <text
-            x="255"
-            y="67"
-            textAnchor="middle"
-            fontSize="22"
-            fontWeight="300"
-            fill={activeStep === 1 ? "#f97316" : "#666"}
-            style={{
-              transition: "fill 0.5s ease",
-              fontFamily: "Inter, sans-serif",
-            }}
-          >
-            $
-          </text>
-        </g>
-
-        {/* Large MPC Network box (bottom) */}
-        <g
-          style={{
-            filter: activeStep === 2 ? "url(#strongGlow)" : "none",
-            transition: "filter 0.5s ease",
-          }}
-        >
-          {/* Main container */}
-          <rect
-            x="20"
-            y="100"
-            width="300"
-            height="180"
-            rx="12"
-            fill={activeStep === 2 ? "#0f0f0f" : "#0a0a0a"}
-            stroke={activeStep === 2 ? "#f97316" : "#333"}
-            strokeWidth={activeStep === 2 ? "2" : "1"}
-            style={{ transition: "all 0.5s ease" }}
-          />
-
-          {/* MPC Node Row - 4 nodes */}
-          {[0, 1, 2, 3].map((i) => (
-            <g key={i} transform={`translate(${40 + i * 70}, 165)`}>
-              <rect
-                x="0"
-                y="0"
-                width="50"
-                height="50"
-                rx="8"
-                fill={activeStep === 2 ? "#1a1a1a" : "#141414"}
-                stroke={activeStep === 2 ? "#f97316" : "#404040"}
-                strokeWidth="1.5"
-                style={{ transition: "all 0.5s ease" }}
-              />
-              {/* Node icon - concentric circles */}
-              <circle
-                cx="25"
-                cy="25"
-                r="14"
-                fill="none"
-                stroke={activeStep === 2 ? "#f97316" : "#555"}
-                strokeWidth="1.5"
-                opacity={activeStep === 2 ? 1 : 0.7}
-                style={{ transition: "all 0.5s ease" }}
-              />
-              <circle
-                cx="25"
-                cy="25"
-                r="8"
-                fill="none"
-                stroke={activeStep === 2 ? "#f97316" : "#555"}
-                strokeWidth="1.5"
-                opacity={activeStep === 2 ? 0.8 : 0.5}
-                style={{ transition: "all 0.5s ease" }}
-              />
-              <circle
-                cx="25"
-                cy="25"
-                r="3"
-                fill={activeStep === 2 ? "#f97316" : "#555"}
-                style={{ transition: "fill 0.5s ease" }}
-              >
-                {activeStep === 2 && (
-                  <animate
-                    attributeName="r"
-                    values="3;4;3"
-                    dur="1s"
-                    repeatCount="indefinite"
-                  />
-                )}
-              </circle>
-            </g>
-          ))}
-
-          {/* Connection lines between nodes */}
-          {[0, 1, 2].map((i) => (
-            <line
-              key={`conn-${i}`}
-              x1={90 + i * 70}
-              y1="190"
-              x2={110 + i * 70}
-              y2="190"
-              stroke={activeStep === 2 ? "#f97316" : "#404040"}
-              strokeWidth="1"
-              strokeDasharray="4 3"
-              style={{ transition: "all 0.5s ease" }}
-            >
-              {activeStep === 2 && (
-                <animate
-                  attributeName="stroke-dashoffset"
-                  from={i % 2 === 0 ? "14" : "0"}
-                  to={i % 2 === 0 ? "0" : "14"}
-                  dur="0.8s"
-                  repeatCount="indefinite"
-                />
-              )}
-            </line>
-          ))}
-        </g>
-
-        {/* "Encrypted Matching" label below box */}
-        <text
-          x="170"
-          y="305"
-          className="fill-muted-foreground text-[11px] font-medium"
-          textAnchor="middle"
-        >
-          Encrypted Matching
-        </text>
-      </svg>
-    </div>
-  );
-}
-
 function FAQItem({ question, answer }: { question: string; answer: string }) {
   const [isOpen, setIsOpen] = useState(false);
   const contentRef = useRef<HTMLDivElement>(null);
@@ -588,12 +272,7 @@ export default function HomePage() {
       <nav className="relative z-50 bg-background py-4 shrink-0 border-b border-border">
         <div className="max-w-6xl mx-auto px-6 flex items-center justify-between">
           {/* Logo */}
-          <div className="flex items-center gap-2">
-            <span className="text-primary text-xl">⬡</span>
-            <span className="text-foreground font-semibold text-lg">
-              Undesk
-            </span>
-          </div>
+          <span className="text-foreground font-semibold text-lg">Undesk</span>
 
           {/* Center Nav Links */}
           <div className="flex gap-8 text-sm">
@@ -1026,13 +705,13 @@ export default function HomePage() {
       {/* Security Section */}
       <section id="security" className="py-32">
         <div className="max-w-6xl mx-auto px-6">
-          <div className="grid md:grid-cols-2 gap-24 items-center">
-            {/* Left column - text content */}
-            <div>
+          <div className="grid md:grid-cols-2 gap-24 items-start">
+            {/* Left column - header and text */}
+            <div className="pt-6">
               <h2 className="text-3xl font-bold text-foreground mb-6">
                 End-to-end privacy and security
               </h2>
-              <p className="text-muted-foreground mb-12">
+              <p className="text-muted-foreground">
                 Powered by Arcium&apos;s confidential computing network. Your
                 trades are encrypted and processed using multi-party
                 computation.{" "}
@@ -1041,107 +720,10 @@ export default function HomePage() {
                 </span>
               </p>
 
-              {/* Feature list */}
-              <div className="border-t border-border">
-                {/* Feature 1 */}
-                <div className="flex items-start gap-4 border-b border-border py-6">
-                  <div className="w-6 h-6 shrink-0 mt-0.5">
-                    <svg
-                      className="w-6 h-6 text-primary"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                      strokeWidth={1.5}
-                      style={{
-                        filter:
-                          "drop-shadow(0 0 8px #f97316) drop-shadow(0 0 16px #f97316)",
-                      }}
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z"
-                      />
-                    </svg>
-                  </div>
-                  <div>
-                    <p className="font-medium text-foreground">
-                      Private by design.
-                    </p>
-                    <p className="text-muted-foreground text-base mt-1">
-                      Fully on-chain, non-custodial trading that never ties back
-                      to your wallet.
-                    </p>
-                  </div>
-                </div>
-
-                {/* Feature 2 */}
-                <div className="flex items-start gap-4 border-b border-border py-6">
-                  <div className="w-6 h-6 shrink-0 mt-0.5">
-                    <svg
-                      className="w-6 h-6 text-primary"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                      strokeWidth={1.5}
-                      style={{
-                        filter:
-                          "drop-shadow(0 0 8px #f97316) drop-shadow(0 0 16px #f97316)",
-                      }}
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z"
-                      />
-                    </svg>
-                  </div>
-                  <div>
-                    <p className="font-medium text-foreground">
-                      Everything is encrypted.
-                    </p>
-                    <p className="text-muted-foreground text-base mt-1">
-                      Deals, offers, balances: all data and execution is
-                      end-to-end encrypted by Arcium&apos;s MPC network.
-                    </p>
-                  </div>
-                </div>
-
-                {/* Feature 3 */}
-                <div className="flex items-start gap-4 border-b border-border py-6">
-                  <div className="w-6 h-6 shrink-0 mt-0.5">
-                    <svg
-                      className="w-6 h-6 text-primary"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                      strokeWidth={1.5}
-                      style={{
-                        filter:
-                          "drop-shadow(0 0 8px #f97316) drop-shadow(0 0 16px #f97316)",
-                      }}
-                    >
-                      <circle cx="12" cy="12" r="9" />
-                      <ellipse cx="12" cy="12" rx="4" ry="9" />
-                      <path d="M3 12h18" />
-                    </svg>
-                  </div>
-                  <div>
-                    <p className="font-medium text-foreground">
-                      Full self-custody.
-                    </p>
-                    <p className="text-muted-foreground text-base mt-1">
-                      All funds are escrowed on-chain through private shared
-                      pools, always retrievable.
-                    </p>
-                  </div>
-                </div>
-              </div>
-
               {/* Link */}
               <a
                 href="#"
-                className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors mt-8 group text-sm"
+                className="inline-flex items-center gap-2 text-primary hover:text-primary/80 transition-colors mt-8 group text-sm"
               >
                 <span>Protocol details</span>
                 <span className="transition-transform duration-200 group-hover:translate-x-1">
@@ -1150,9 +732,101 @@ export default function HomePage() {
               </a>
             </div>
 
-            {/* Right column - MPC flow diagram */}
-            <div className="flex items-center justify-center">
-              <MPCFlowDiagram />
+            {/* Right column - feature list */}
+            <div>
+              {/* Feature 1 */}
+              <div className="flex items-start gap-4 border-b border-border py-6">
+                <div className="w-6 h-6 shrink-0 mt-0.5">
+                  <svg
+                    className="w-6 h-6 text-primary"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={1.5}
+                    style={{
+                      filter:
+                        "drop-shadow(0 0 8px #f97316) drop-shadow(0 0 16px #f97316)",
+                    }}
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z"
+                    />
+                  </svg>
+                </div>
+                <div>
+                  <p className="font-medium text-foreground">
+                    Private by design.
+                  </p>
+                  <p className="text-muted-foreground text-base mt-1">
+                    Fully on-chain, non-custodial trading that never ties back
+                    to your wallet.
+                  </p>
+                </div>
+              </div>
+
+              {/* Feature 2 */}
+              <div className="flex items-start gap-4 border-b border-border py-6">
+                <div className="w-6 h-6 shrink-0 mt-0.5">
+                  <svg
+                    className="w-6 h-6 text-primary"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={1.5}
+                    style={{
+                      filter:
+                        "drop-shadow(0 0 8px #f97316) drop-shadow(0 0 16px #f97316)",
+                    }}
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z"
+                    />
+                  </svg>
+                </div>
+                <div>
+                  <p className="font-medium text-foreground">
+                    Everything is encrypted.
+                  </p>
+                  <p className="text-muted-foreground text-base mt-1">
+                    Deals, offers, balances: all data and execution is
+                    end-to-end encrypted by Arcium&apos;s MPC network.
+                  </p>
+                </div>
+              </div>
+
+              {/* Feature 3 */}
+              <div className="flex items-start gap-4 py-6">
+                <div className="w-6 h-6 shrink-0 mt-0.5">
+                  <svg
+                    className="w-6 h-6 text-primary"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={1.5}
+                    style={{
+                      filter:
+                        "drop-shadow(0 0 8px #f97316) drop-shadow(0 0 16px #f97316)",
+                    }}
+                  >
+                    <circle cx="12" cy="12" r="9" />
+                    <ellipse cx="12" cy="12" rx="4" ry="9" />
+                    <path d="M3 12h18" />
+                  </svg>
+                </div>
+                <div>
+                  <p className="font-medium text-foreground">
+                    Full self-custody.
+                  </p>
+                  <p className="text-muted-foreground text-base mt-1">
+                    All funds are escrowed on-chain through private shared
+                    pools, always retrievable.
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -1197,12 +871,9 @@ export default function HomePage() {
           <div className="flex justify-between mb-12 items-start">
             {/* Brand */}
             <div>
-              <div className="flex items-center gap-2 mb-4">
-                <span className="text-primary text-xl">⬡</span>
-                <span className="text-foreground font-semibold text-lg">
-                  Undesk
-                </span>
-              </div>
+              <span className="text-foreground font-semibold text-lg block mb-4">
+                Undesk
+              </span>
               <p className="text-base text-muted-foreground">
                 Private OTC trading on Solana
               </p>
