@@ -13,7 +13,7 @@ interface CreateDealFormProps {
 }
 
 export const CreateDealForm = ({ onDealCreated }: CreateDealFormProps) => {
-  const [sellMint, setSellMint] = useState<string>(MINTS.META);
+  const [sellMint, setSellMint] = useState<string>(MINTS.SOL);
   const [quoteMint, setQuoteMint] = useState<string>(MINTS.USDC);
   const [sellAmount, setSellAmount] = useState("");
   const [pricePerUnit, setPricePerUnit] = useState("");

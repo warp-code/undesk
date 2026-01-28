@@ -193,19 +193,19 @@ export const MOCK_OFFERS: Offer[] = [
 // FAQ data for negotiation panel
 export const FAQ_ITEMS = [
   {
-    q: "What is an OTC RFQ?",
-    a: "OTC RFQ (Request for Quote) lets you request private quotes from market makers for large trades without exposing your order to public markets.",
+    q: "How does the privacy work?",
+    a: "Your trade data is encrypted end-to-end using Arcium's multi-party computation (MPC). No single party, not even the network operators, can see your order details.",
   },
   {
-    q: "How does private price discovery work?",
-    a: "Your order details are encrypted. Market makers submit sealed bids that only you can see, preventing front-running and information leakage.",
+    q: "What tokens can I trade?",
+    a: "You can trade any SPL token on Solana. If you can't find your token in the list, you can specify its mint address when creating a deal.",
   },
   {
-    q: "How is confidentiality preserved?",
-    a: "All trade parameters are encrypted using Arcium's MPC network. Neither party sees the other's limits until a match is confirmed.",
+    q: "How are trades settled?",
+    a: "Trades settle through encrypted execution inside the MPC network. Shared pool user balances are updated, and users may withdraw their funds at any time.",
   },
   {
-    q: "What happens after both sides agree?",
-    a: "Once prices match, the trade executes atomically on-chain. Funds are swapped directly between wallets with no counterparty risk.",
+    q: "How are my accounts created privately?",
+    a: "All deal, deposit, and balance accounts are created using deterministically derived private addresses paired with random keypairs for frontrunning protection.",
   },
 ];
