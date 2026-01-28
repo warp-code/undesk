@@ -25,6 +25,8 @@ export interface SubmitOfferInput {
   amount: number;
   /** Price per unit in quote token */
   price: number;
+  /** Optional derived keys override (useful when keys were just derived in same call) */
+  derivedKeysOverride?: import("../_lib/encryption").DerivedKeys;
 }
 
 export interface UseSubmitOfferReturn {
@@ -85,7 +87,9 @@ export function useSubmitOffer(): UseSubmitOfferReturn {
       if (!program || !provider) {
         throw new Error("Wallet not connected");
       }
-      if (!derivedKeys) {
+      // Use override if provided (for when keys were just derived in same call)
+      const keys = input.derivedKeysOverride ?? derivedKeys;
+      if (!keys) {
         throw new Error("Please sign to derive encryption keys");
       }
       if (!mxePublicKey) {
@@ -97,7 +101,7 @@ export function useSubmitOffer(): UseSubmitOfferReturn {
       try {
         // 1. Create cipher from derived encryption key and MXE public key
         const cipher = createCipher(
-          derivedKeys.encryption.privateKey,
+          keys.encryption.privateKey,
           mxePublicKey
         );
 
@@ -143,8 +147,8 @@ export function useSubmitOffer(): UseSubmitOfferReturn {
         const queueSig = await program.methods
           .submitOffer(
             computationOffset,
-            derivedKeys.controller.publicKey, // controller
-            Array.from(derivedKeys.encryption.publicKey), // encryption_pubkey
+            keys.controller.publicKey, // controller
+            Array.from(keys.encryption.publicKey), // encryption_pubkey
             nonceToU128(nonce), // nonce as u128
             Array.from(ciphertext[0]), // encrypted_price
             Array.from(ciphertext[1]) // encrypted_amount

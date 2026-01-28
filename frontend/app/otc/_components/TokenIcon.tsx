@@ -3,7 +3,7 @@ import { getTokenSymbol } from "../_lib/tokens";
 
 export const TokenIcon = ({
   mint,
-  className = "w-6 h-6",
+  className = "w-5 h-5",
 }: {
   mint: string;
   className?: string;

@@ -15,24 +15,6 @@ export const Navbar = () => {
             <a href="/otc" className="text-foreground font-medium">
               Trade
             </a>
-            <a
-              href="#"
-              className="text-muted-foreground hover:text-foreground transition-colors"
-            >
-              History
-            </a>
-            <a
-              href="#"
-              className="text-muted-foreground hover:text-foreground transition-colors"
-            >
-              FAQ
-            </a>
-            <a
-              href="#"
-              className="text-muted-foreground hover:text-foreground transition-colors"
-            >
-              Settings
-            </a>
           </div>
         </div>
         <WalletButton />

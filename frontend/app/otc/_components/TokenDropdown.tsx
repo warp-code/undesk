@@ -70,7 +70,7 @@ export const TokenDropdown = ({
                 onSelect(mint);
                 setIsOpen(false);
               }}
-              className={`w-full px-3 py-2 text-left text-sm hover:bg-secondary transition-colors flex items-center gap-2 ${
+              className={`w-full px-3 py-2 text-left hover:bg-secondary transition-colors flex items-center gap-1.5 ${
                 mint === selected ? "text-primary" : "text-foreground"
               }`}
             >

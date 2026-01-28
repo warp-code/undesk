@@ -9,8 +9,8 @@ export interface UseDerivedKeysReturn {
   derivedKeys: DerivedKeys | null;
   /** Whether key derivation is in progress */
   isDerivingKeys: boolean;
-  /** Function to trigger key derivation (prompts two wallet signatures) */
-  deriveKeysFromWallet: () => Promise<void>;
+  /** Function to trigger key derivation (prompts two wallet signatures). Returns the derived keys. */
+  deriveKeysFromWallet: () => Promise<DerivedKeys>;
   /** Function to clear derived keys from memory */
   clearKeys: () => void;
   /** Convenience boolean: true if derivedKeys is not null */
@@ -53,7 +53,7 @@ export function useDerivedKeys(): UseDerivedKeysReturn {
     }
   }, [connected]);
 
-  const deriveKeysFromWallet = useCallback(async () => {
+  const deriveKeysFromWallet = useCallback(async (): Promise<DerivedKeys> => {
     if (!publicKey || !signMessage) {
       throw new Error("Wallet not connected or does not support signing");
     }
@@ -62,6 +62,7 @@ export function useDerivedKeys(): UseDerivedKeysReturn {
     try {
       const keys = await deriveKeys(signMessage, publicKey);
       setDerivedKeys(keys);
+      return keys;
     } finally {
       setIsDerivingKeys(false);
     }

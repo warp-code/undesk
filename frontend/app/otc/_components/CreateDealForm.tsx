@@ -48,15 +48,14 @@ export const CreateDealForm = ({ onDealCreated }: CreateDealFormProps) => {
     if (!canSubmit || isLocked) return;
 
     // Prompt key derivation if not yet derived
+    let keysToUse;
     if (!hasDerivedKeys) {
       try {
-        await deriveKeysFromWallet();
+        keysToUse = await deriveKeysFromWallet();
       } catch (e) {
         console.error("Key derivation failed:", e);
         return;
       }
-      // Let user click again after signing to confirm intent
-      return;
     }
 
     setIsLocked(true);
@@ -74,6 +73,7 @@ export const CreateDealForm = ({ onDealCreated }: CreateDealFormProps) => {
         price: parseFloat(pricePerUnit),
         expiresInSeconds,
         allowPartial,
+        derivedKeysOverride: keysToUse,
       });
 
       const newDeal: Deal = {
@@ -304,8 +304,6 @@ export const CreateDealForm = ({ onDealCreated }: CreateDealFormProps) => {
             ? "Signing..."
             : isLoading
             ? "Creating..."
-            : !hasDerivedKeys
-            ? "Sign & Create"
             : "Create Deal"}
         </button>
       </div>

@@ -237,3 +237,4 @@ Tests expect a Solana keypair at `~/.config/solana/id.json`.
 ## User Preferences
 
 - **Never run the dev server** - The user will run `yarn dev` themselves. Do not start the development server.
+- **Use tsc for type checking** - Use `npx tsc --noEmit` (with appropriate parameters) instead of `yarn workspace frontend build` to verify TypeScript compiles.

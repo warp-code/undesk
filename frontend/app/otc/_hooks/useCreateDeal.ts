@@ -29,6 +29,8 @@ export interface CreateDealInput {
   expiresInSeconds: number;
   /** Whether to allow partial fills */
   allowPartial: boolean;
+  /** Optional derived keys override (useful when keys were just derived in same call) */
+  derivedKeysOverride?: import("../_lib/encryption").DerivedKeys;
 }
 
 export interface UseCreateDealReturn {
@@ -74,7 +76,9 @@ export function useCreateDeal(): UseCreateDealReturn {
       if (!program || !provider) {
         throw new Error("Wallet not connected");
       }
-      if (!derivedKeys) {
+      // Use override if provided (for when keys were just derived in same call)
+      const keys = input.derivedKeysOverride ?? derivedKeys;
+      if (!keys) {
         throw new Error("Please sign to derive encryption keys");
       }
       if (!mxePublicKey) {
@@ -86,7 +90,7 @@ export function useCreateDeal(): UseCreateDealReturn {
       try {
         // 1. Create cipher from derived encryption key and MXE public key
         const cipher = createCipher(
-          derivedKeys.encryption.privateKey,
+          keys.encryption.privateKey,
           mxePublicKey
         );
 
@@ -128,8 +132,8 @@ export function useCreateDeal(): UseCreateDealReturn {
         const queueSig = await program.methods
           .createDeal(
             computationOffset,
-            derivedKeys.controller.publicKey,
-            Array.from(derivedKeys.encryption.publicKey),
+            keys.controller.publicKey,
+            Array.from(keys.encryption.publicKey),
             nonceToU128(nonce),
             expiresAt,
             input.allowPartial,

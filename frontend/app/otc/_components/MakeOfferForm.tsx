@@ -41,14 +41,14 @@ export const MakeOfferForm = ({
   const handlePlaceOffer = async () => {
     if (!canPlaceOffer) return;
 
+    let keysToUse;
     if (!hasDerivedKeys) {
       try {
-        await deriveKeysFromWallet();
+        keysToUse = await deriveKeysFromWallet();
       } catch (e) {
         console.error("Key derivation failed:", e);
         return;
       }
-      return; // Let user click again after signing
     }
 
     setIsOfferLoading(true);
@@ -59,6 +59,7 @@ export const MakeOfferForm = ({
         baseMint: deal.baseMint,
         amount: parseFloat(offerAmount),
         price: parseFloat(offerPrice),
+        derivedKeysOverride: keysToUse,
       });
 
       console.log("Offer submitted:", offerAddress);
@@ -209,8 +210,6 @@ export const MakeOfferForm = ({
             ? "Signing..."
             : isOfferLoading
             ? "Submitting..."
-            : !hasDerivedKeys
-            ? "Sign & Submit"
             : "Place Offer"}
         </button>
       </div>
