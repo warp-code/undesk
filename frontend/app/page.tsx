@@ -345,7 +345,12 @@ export default function HomePage() {
         {/* Hero Content - aligned with navbar container */}
         <div className="relative z-10 max-w-6xl mx-auto px-6 w-full mt-16 pointer-events-none">
           <div className="max-w-2xl space-y-6 pointer-events-auto">
-            <p className="text-sm text-muted-foreground">Powered by Arcium</p>
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <span>Powered by</span>
+              <img src="/solanaLogoMark (2).svg" alt="Solana" className="h-4" />
+              <span className="w-px h-4 bg-muted-foreground/50" />
+              <img src="/Logomark 01.svg" alt="Arcium" className="h-4" />
+            </div>
             <h1 className="text-5xl font-bold text-foreground">
               Private peer-to-peer OTC trading
             </h1>
