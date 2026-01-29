@@ -119,10 +119,6 @@
 ### [Screen: Hero section or logo]
 
 **Voiceover:**
-> "That's Undesk. Private OTC trading where your strategy stays yours. Connect a wallet and try it—or reach out if you're moving serious size."
-
-### [Screen: Fade to logo]
-
-> "Undesk. Trade without revealing."
+> "That's Undesk. Private OTC trading where your strategy stays yours. Connect a wallet and try it—or reach out if you're moving serious size. Thanks for watching, bye!"
 
 ---
