@@ -3,8 +3,10 @@ use arcium_anchor::prelude::*;
 use arcium_client::idl::arcium::types::CallbackAccount;
 
 use crate::error::ErrorCode;
-use crate::events::OfferSettled;
-use crate::state::{DealAccount, DealStatus, OfferAccount, OfferStatus};
+use crate::events::{BalanceUpdated, OfferSettled};
+use crate::state::{BalanceAccount, DealAccount, DealStatus, OfferAccount, OfferStatus};
+use crate::state::{BALANCE_CIPHERTEXT_LENGTH, BALANCE_CIPHERTEXT_OFFSET};
+use crate::state::{DEAL_CIPHERTEXT_LENGTH, DEAL_CIPHERTEXT_OFFSET};
 use crate::state::{OFFER_CIPHERTEXT_LENGTH, OFFER_CIPHERTEXT_OFFSET};
 
 const COMP_DEF_OFFSET: u32 = comp_def_offset("crank_offer");
@@ -13,10 +15,16 @@ use crate::{SignerAccount, ID, ID_CONST};
 pub fn handler(
     ctx: Context<CrankOffer>,
     computation_offset: u64,
-    offeror_nonce: u128,
+    offeror_offer_blob_nonce: u128,
+    offeror_balance_blob_nonce: u128,
 ) -> Result<()> {
+    // Capture keys and nonces before mutable borrows
+    let deal_key = ctx.accounts.deal.key();
     let offer_key = ctx.accounts.offer.key();
+    let offeror_balance_key = ctx.accounts.offeror_balance.key();
+    let deal_nonce = u128::from_le_bytes(ctx.accounts.deal.nonce);
     let offer_nonce = u128::from_le_bytes(ctx.accounts.offer.nonce);
+    let offeror_balance_nonce = u128::from_le_bytes(ctx.accounts.offeror_balance.nonce);
 
     // Constraints
     require!(
@@ -32,14 +40,32 @@ pub fn handler(
     let deal_success = ctx.accounts.deal.status == DealStatus::EXECUTED;
 
     // ArgBuilder pattern for crank_offer:
-    // - Enc<Mxe, &OfferState>: nonce + account reference
-    // - Shared marker: x25519_pubkey + nonce
-    // - Plaintext bool: deal_success
+    // crank_offer(deal_state: Enc<Mxe, &DealState>, offer_state: Enc<Mxe, &OfferState>,
+    //             offeror_balance: Enc<Mxe, &BalanceState>, offeror_offer_blob: Shared,
+    //             offeror_balance_blob: Shared, deal_success: bool)
+    //
+    // CRITICAL: Now includes deal state for price calculation (fixing quote units bug)
     let args = ArgBuilder::new()
+        // Enc<Mxe, &DealState> - needed for price to calculate quote amounts
+        .plaintext_u128(deal_nonce)
+        .account(deal_key, DEAL_CIPHERTEXT_OFFSET, DEAL_CIPHERTEXT_LENGTH)
+        // Enc<Mxe, &OfferState>
         .plaintext_u128(offer_nonce)
         .account(offer_key, OFFER_CIPHERTEXT_OFFSET, OFFER_CIPHERTEXT_LENGTH)
+        // Enc<Mxe, &BalanceState>
+        .plaintext_u128(offeror_balance_nonce)
+        .account(
+            offeror_balance_key,
+            BALANCE_CIPHERTEXT_OFFSET,
+            BALANCE_CIPHERTEXT_LENGTH,
+        )
+        // Shared marker for offer blob
         .x25519_pubkey(ctx.accounts.offer.encryption_pubkey)
-        .plaintext_u128(offeror_nonce)
+        .plaintext_u128(offeror_offer_blob_nonce)
+        // Shared marker for balance blob
+        .x25519_pubkey(ctx.accounts.offer.encryption_pubkey)
+        .plaintext_u128(offeror_balance_blob_nonce)
+        // Plaintext bool: deal_success
         .plaintext_bool(deal_success)
         .build();
 
@@ -53,10 +79,16 @@ pub fn handler(
         vec![CrankOfferCallback::callback_ix(
             computation_offset,
             &ctx.accounts.mxe_account,
-            &[CallbackAccount {
-                pubkey: offer_key,
-                is_writable: true,
-            }],
+            &[
+                CallbackAccount {
+                    pubkey: offer_key,
+                    is_writable: true,
+                },
+                CallbackAccount {
+                    pubkey: offeror_balance_key,
+                    is_writable: true,
+                },
+            ],
         )?],
         1,
         0,
@@ -69,7 +101,9 @@ pub fn callback_handler(
     ctx: Context<CrankOfferCallback>,
     output: SignedComputationOutputs<CrankOfferOutput>,
 ) -> Result<()> {
-    let shared_blob = match output.verify_output(
+    // Verify and extract output
+    // The return type is (Enc<Mxe, BalanceState>, Enc<Shared, OfferSettledBlob>, Enc<Shared, BalanceUpdatedBlob>)
+    let tuple_output = match output.verify_output(
         &ctx.accounts.cluster_account,
         &ctx.accounts.computation_account,
     ) {
@@ -77,17 +111,37 @@ pub fn callback_handler(
         Err(_) => return Err(ErrorCode::AbortedComputation.into()),
     };
 
+    // Access tuple elements via generated struct fields
+    let balance_state = &tuple_output.field_0;
+    let offer_blob = &tuple_output.field_1;
+    let balance_blob = &tuple_output.field_2;
+
     let offer = &mut ctx.accounts.offer;
     offer.status = OfferStatus::SETTLED;
+
+    // Update offeror's balance MXE state
+    let balance = &mut ctx.accounts.offeror_balance;
+    balance.nonce = balance_state.nonce.to_le_bytes();
+    balance.ciphertexts = balance_state.ciphertexts;
 
     emit!(OfferSettled {
         deal: offer.deal,
         offer: offer.key(),
         offer_index: offer.offer_index,
         settled_at: Clock::get()?.unix_timestamp,
-        encryption_key: shared_blob.encryption_key,
-        nonce: shared_blob.nonce.to_le_bytes(),
-        ciphertexts: shared_blob.ciphertexts,
+        encryption_key: offer_blob.encryption_key,
+        nonce: offer_blob.nonce.to_le_bytes(),
+        ciphertexts: offer_blob.ciphertexts,
+    });
+
+    // Emit BalanceUpdated event for offeror
+    emit!(BalanceUpdated {
+        balance: balance.key(),
+        controller: balance.controller,
+        mint: balance.mint,
+        encryption_key: balance_blob.encryption_key,
+        nonce: balance_blob.nonce.to_le_bytes(),
+        ciphertexts: balance_blob.ciphertexts,
     });
 
     Ok(())
@@ -119,7 +173,7 @@ pub struct CrankOffer<'info> {
     #[account(mut)]
     pub payer: Signer<'info>,
 
-    /// Deal account (read-only, for status check)
+    /// Deal account (for encrypted state reference - needed for price)
     pub deal: Box<Account<'info, DealAccount>>,
 
     /// Offer account (for encrypted state reference)
@@ -128,6 +182,14 @@ pub struct CrankOffer<'info> {
         constraint = offer.deal == deal.key() @ ErrorCode::DealMismatch,
     )]
     pub offer: Box<Account<'info, OfferAccount>>,
+
+    /// Offeror's QUOTE token balance (for releasing commitment and refund)
+    #[account(
+        mut,
+        seeds = [b"balance", offer.controller.as_ref(), deal.quote_mint.as_ref()],
+        bump,
+    )]
+    pub offeror_balance: Box<Account<'info, BalanceAccount>>,
 
     // --- Arcium accounts ---
     #[account(
@@ -179,4 +241,6 @@ pub struct CrankOfferCallback<'info> {
     pub instructions_sysvar: AccountInfo<'info>,
     #[account(mut)]
     pub offer: Box<Account<'info, OfferAccount>>,
+    #[account(mut)]
+    pub offeror_balance: Box<Account<'info, BalanceAccount>>,
 }

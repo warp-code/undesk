@@ -1,4 +1,5 @@
 pub mod add_together;
+pub mod announce_balance;
 pub mod crank_deal;
 pub mod crank_offer;
 pub mod create_deal;
@@ -11,6 +12,9 @@ pub mod top_up;
 // Re-export account structs and events (not handlers to avoid name conflicts)
 pub use add_together::{
     AddTogether, AddTogetherCallback, AddTogetherOutput, InitAddTogetherCompDef, SumEvent,
+};
+pub use announce_balance::{
+    AnnounceBalance, AnnounceBalanceCallback, AnnounceBalanceOutput, InitAnnounceBalanceCompDef,
 };
 pub use crank_deal::{
     CrankDeal, CrankDealCallback, CrankDealOutput, InitCrankDealCompDef,
@@ -45,6 +49,12 @@ pub(crate) use add_together::__client_accounts_add_together;
 pub(crate) use add_together::__client_accounts_add_together_callback;
 #[doc(hidden)]
 pub(crate) use add_together::__client_accounts_init_add_together_comp_def;
+#[doc(hidden)]
+pub(crate) use announce_balance::__client_accounts_announce_balance;
+#[doc(hidden)]
+pub(crate) use announce_balance::__client_accounts_announce_balance_callback;
+#[doc(hidden)]
+pub(crate) use announce_balance::__client_accounts_init_announce_balance_comp_def;
 #[doc(hidden)]
 pub(crate) use crank_deal::__client_accounts_crank_deal;
 #[doc(hidden)]

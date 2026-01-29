@@ -3,7 +3,7 @@
 import { useWallet } from "@solana/wallet-adapter-react";
 import { useDerivedKeysContext } from "../_providers/DerivedKeysProvider";
 import { useMxePublicKey } from "../_providers/OtcProvider";
-import { useMyBalances } from "../_hooks/useMyBalances";
+import { useMyBalances } from "../_providers/MyBalancesProvider";
 import { useTopUp } from "../_hooks/useTopUp";
 import { SUPPORTED_MINTS, getTokenInfo } from "../_lib/tokens";
 import { TokenIcon } from "./TokenIcon";

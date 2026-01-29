@@ -6,7 +6,7 @@ import { BN } from "@coral-xyz/anchor";
 import { awaitComputationFinalization } from "@arcium-hq/client";
 import { useOtc } from "../_providers/OtcProvider";
 import { useDerivedKeysContext } from "../_providers/DerivedKeysProvider";
-import { getOfferAddress } from "../_lib/accounts";
+import { getOfferAddress, getBalanceAddress } from "../_lib/accounts";
 import { getTokenInfo } from "../_lib/tokens";
 import {
   createCipher,
@@ -21,6 +21,8 @@ export interface SubmitOfferInput {
   dealAddress: string;
   /** Base mint for decimal lookup (from MarketDeal) */
   baseMint: string;
+  /** Quote mint for deriving offeror's balance address */
+  quoteMint: string;
   /** Human-readable amount of base token to buy */
   amount: number;
   /** Price per unit in quote token */
@@ -65,6 +67,7 @@ function toBaseUnits(amount: number, decimals: number): bigint {
  *   const offerAddress = await submitOffer({
  *     dealAddress: "4KnQY...",
  *     baseMint: "META111...",
+ *     quoteMint: "USDC111...",
  *     amount: 50,
  *     price: 5.5,
  *   });
@@ -131,19 +134,35 @@ export function useSubmitOffer(): UseSubmitOfferReturn {
           createKey.publicKey
         );
 
-        // 8. Generate random computation offset
-        const offsetBytes = new Uint8Array(8);
-        crypto.getRandomValues(offsetBytes);
-        const computationOffset = new BN(offsetBytes, "le");
+        // 8. Generate random computation offsets for both instructions
+        const submitOfferOffsetBytes = new Uint8Array(8);
+        crypto.getRandomValues(submitOfferOffsetBytes);
+        const submitOfferOffset = new BN(submitOfferOffsetBytes, "le");
 
-        // 9. Submit submit_offer transaction
+        const announceBalanceOffsetBytes = new Uint8Array(8);
+        crypto.getRandomValues(announceBalanceOffsetBytes);
+        const announceBalanceOffset = new BN(announceBalanceOffsetBytes, "le");
+
+        // 9. Generate nonce for announceBalance
+        const announceNonce = generateNonce();
+
+        // 10. Derive offeror's balance address (quote mint)
+        const quoteMintPubkey = new PublicKey(input.quoteMint);
+        const offerorBalance = getBalanceAddress(
+          programId,
+          keys.controller.publicKey,
+          quoteMintPubkey
+        );
+
         console.log("Submitting submit_offer transaction...");
         console.log("  Deal address:", input.dealAddress);
         console.log("  Offer address:", offerAddress.toBase58());
+        console.log("  Offeror balance:", offerorBalance.toBase58());
 
-        const queueSig = await program.methods
+        // 11. Send submitOffer transaction FIRST
+        const submitOfferSig = await program.methods
           .submitOffer(
-            computationOffset,
+            submitOfferOffset,
             keys.controller.publicKey, // controller
             Array.from(keys.encryption.publicKey), // encryption_pubkey
             nonceToU128(nonce), // nonce as u128
@@ -155,7 +174,7 @@ export function useSubmitOffer(): UseSubmitOfferReturn {
             deal: dealPubkey,
             offer: offerAddress,
             computationAccount:
-              arciumAccounts.getComputationAccAddress(computationOffset),
+              arciumAccounts.getComputationAccAddress(submitOfferOffset),
             clusterAccount: arciumAccounts.getClusterAccAddress(),
             mxeAccount: arciumAccounts.getMXEAccAddress(),
             mempoolAccount: arciumAccounts.getMempoolAccAddress(),
@@ -164,18 +183,53 @@ export function useSubmitOffer(): UseSubmitOfferReturn {
           })
           .signers([createKey])
           .rpc({ skipPreflight: true, commitment: "confirmed" });
+        console.log("Submit offer queue sig:", submitOfferSig);
 
-        console.log("Queue submit_offer sig:", queueSig);
-
-        // 10. Await computation finalization
-        console.log("Awaiting computation finalization...");
-        const finalizeSig = await awaitComputationFinalization(
+        // 12. Wait for submitOffer computation to finalize BEFORE queuing announceBalance
+        // This ensures the balance account has the updated MXE state
+        console.log("Awaiting submit_offer finalization...");
+        const submitOfferFinalizeSig = await awaitComputationFinalization(
           provider,
-          computationOffset,
+          submitOfferOffset,
           programId,
           "confirmed"
         );
-        console.log("Finalize sig:", finalizeSig);
+        console.log("Submit offer finalize sig:", submitOfferFinalizeSig);
+
+        // 13. NOW send announceBalance (balance account has correct state)
+        console.log("Submitting announceBalance transaction...");
+        const announceBalanceSig = await program.methods
+          .announceBalance(
+            announceBalanceOffset,
+            keys.controller.publicKey, // controller
+            Array.from(keys.encryption.publicKey), // encryption_pubkey
+            nonceToU128(announceNonce) // owner_nonce as u128
+          )
+          .accountsPartial({
+            controllerSigner: keys.controller.publicKey,
+            balance: offerorBalance,
+            computationAccount:
+              arciumAccounts.getComputationAccAddress(announceBalanceOffset),
+            clusterAccount: arciumAccounts.getClusterAccAddress(),
+            mxeAccount: arciumAccounts.getMXEAccAddress(),
+            mempoolAccount: arciumAccounts.getMempoolAccAddress(),
+            executingPool: arciumAccounts.getExecutingPoolAccAddress(),
+            compDefAccount:
+              arciumAccounts.getCompDefAccAddress("ANNOUNCE_BALANCE"),
+          })
+          .signers([keys.controller])
+          .rpc({ skipPreflight: true, commitment: "confirmed" });
+        console.log("Announce balance queue sig:", announceBalanceSig);
+
+        // 14. Await announceBalance finalization
+        console.log("Awaiting announceBalance finalization...");
+        const announceBalanceFinalizeSig = await awaitComputationFinalization(
+          provider,
+          announceBalanceOffset,
+          programId,
+          "confirmed"
+        );
+        console.log("Announce balance finalize sig:", announceBalanceFinalizeSig);
 
         console.log("Offer submitted successfully:", offerAddress.toBase58());
         return offerAddress.toBase58();

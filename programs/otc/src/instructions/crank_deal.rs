@@ -3,9 +3,10 @@ use arcium_anchor::prelude::*;
 use arcium_client::idl::arcium::types::CallbackAccount;
 
 use crate::error::ErrorCode;
-use crate::state::{DealAccount, DealStatus};
+use crate::state::{BalanceAccount, DealAccount, DealStatus};
+use crate::state::{BALANCE_CIPHERTEXT_LENGTH, BALANCE_CIPHERTEXT_OFFSET};
 use crate::state::{DEAL_CIPHERTEXT_LENGTH, DEAL_CIPHERTEXT_OFFSET};
-use crate::DealSettled;
+use crate::{BalanceUpdated, DealSettled};
 
 const COMP_DEF_OFFSET: u32 = comp_def_offset("crank_deal");
 use crate::{SignerAccount, ID, ID_CONST};
@@ -13,11 +14,14 @@ use crate::{SignerAccount, ID, ID_CONST};
 pub fn handler(
     ctx: Context<CrankDeal>,
     computation_offset: u64,
-    creator_nonce: u128,
+    creator_deal_blob_nonce: u128,
+    creator_balance_blob_nonce: u128,
 ) -> Result<()> {
     // Capture keys and nonce before mutable borrows
     let deal_key = ctx.accounts.deal.key();
+    let creator_balance_key = ctx.accounts.creator_balance.key();
     let deal_nonce = u128::from_le_bytes(ctx.accounts.deal.nonce);
+    let creator_balance_nonce = u128::from_le_bytes(ctx.accounts.creator_balance.nonce);
 
     // Validate deal is open
     require!(
@@ -39,17 +43,26 @@ pub fn handler(
 
     let allow_partial = ctx.accounts.deal.allow_partial;
 
-    // Build ArgBuilder:
-    // - Enc<Mxe, &DealState> - nonce as plaintext, then account reference to ciphertext
-    // - Shared marker for creator - x25519_pubkey and nonce
-    // - Plaintext booleans (as u8)
+    // Build ArgBuilder for crank_deal instruction:
+    // crank_deal(deal_state: Enc<Mxe, &DealState>, creator_balance: Enc<Mxe, &BalanceState>,
+    //            creator_deal_blob: Shared, creator_balance_blob: Shared, is_expired: bool, allow_partial: bool)
     let args = ArgBuilder::new()
         // Enc<Mxe, &DealState>
         .plaintext_u128(deal_nonce)
         .account(deal_key, DEAL_CIPHERTEXT_OFFSET, DEAL_CIPHERTEXT_LENGTH)
-        // Shared marker for creator
+        // Enc<Mxe, &BalanceState>
+        .plaintext_u128(creator_balance_nonce)
+        .account(
+            creator_balance_key,
+            BALANCE_CIPHERTEXT_OFFSET,
+            BALANCE_CIPHERTEXT_LENGTH,
+        )
+        // Shared marker for deal blob
         .x25519_pubkey(ctx.accounts.deal.encryption_pubkey)
-        .plaintext_u128(creator_nonce)
+        .plaintext_u128(creator_deal_blob_nonce)
+        // Shared marker for balance blob
+        .x25519_pubkey(ctx.accounts.deal.encryption_pubkey)
+        .plaintext_u128(creator_balance_blob_nonce)
         // Plaintext booleans
         .plaintext_bool(is_expired)
         .plaintext_bool(allow_partial)
@@ -65,10 +78,16 @@ pub fn handler(
         vec![CrankDealCallback::callback_ix(
             computation_offset,
             &ctx.accounts.mxe_account,
-            &[CallbackAccount {
-                pubkey: deal_key,
-                is_writable: true,
-            }],
+            &[
+                CallbackAccount {
+                    pubkey: deal_key,
+                    is_writable: true,
+                },
+                CallbackAccount {
+                    pubkey: creator_balance_key,
+                    is_writable: true,
+                },
+            ],
         )?],
         1,
         0,
@@ -82,7 +101,7 @@ pub fn callback_handler(
     output: SignedComputationOutputs<CrankDealOutput>,
 ) -> Result<()> {
     // Verify and extract output
-    // The return type is (Enc<Shared, DealSettledBlob>, u8)
+    // The return type is (Enc<Mxe, BalanceState>, Enc<Shared, DealSettledBlob>, Enc<Shared, BalanceUpdatedBlob>, u8)
     let tuple_output = match output.verify_output(
         &ctx.accounts.cluster_account,
         &ctx.accounts.computation_account,
@@ -92,22 +111,39 @@ pub fn callback_handler(
     };
 
     // Access tuple elements via generated struct fields
-    let shared_blob = &tuple_output.field_0;
-    let status = tuple_output.field_1;
+    let balance_state = &tuple_output.field_0;
+    let deal_blob = &tuple_output.field_1;
+    let balance_blob = &tuple_output.field_2;
+    let status = tuple_output.field_3;
 
     // Only update if status changed (status != 0 means EXECUTED or EXPIRED)
     if status != 0 {
         let deal = &mut ctx.accounts.deal;
         deal.status = status;
 
+        // Update creator's balance MXE state
+        let balance = &mut ctx.accounts.creator_balance;
+        balance.nonce = balance_state.nonce.to_le_bytes();
+        balance.ciphertexts = balance_state.ciphertexts;
+
         // Emit DealSettled event with shared blob for creator
         emit!(DealSettled {
             deal: deal.key(),
             status,
             settled_at: Clock::get()?.unix_timestamp,
-            encryption_key: shared_blob.encryption_key,
-            nonce: shared_blob.nonce.to_le_bytes(),
-            ciphertexts: shared_blob.ciphertexts,
+            encryption_key: deal_blob.encryption_key,
+            nonce: deal_blob.nonce.to_le_bytes(),
+            ciphertexts: deal_blob.ciphertexts,
+        });
+
+        // Emit BalanceUpdated event for creator
+        emit!(BalanceUpdated {
+            balance: balance.key(),
+            controller: balance.controller,
+            mint: balance.mint,
+            encryption_key: balance_blob.encryption_key,
+            nonce: balance_blob.nonce.to_le_bytes(),
+            ciphertexts: balance_blob.ciphertexts,
         });
     }
 
@@ -146,6 +182,14 @@ pub struct CrankDeal<'info> {
 
     #[account(mut)]
     pub deal: Box<Account<'info, DealAccount>>,
+
+    /// Creator's BASE token balance (for releasing commitment and refund)
+    #[account(
+        mut,
+        seeds = [b"balance", deal.controller.as_ref(), deal.base_mint.as_ref()],
+        bump,
+    )]
+    pub creator_balance: Box<Account<'info, BalanceAccount>>,
 
     // --- Arcium accounts (auto-generated pattern) ---
     #[account(
@@ -224,4 +268,6 @@ pub struct CrankDealCallback<'info> {
     pub instructions_sysvar: AccountInfo<'info>,
     #[account(mut)]
     pub deal: Box<Account<'info, DealAccount>>,
+    #[account(mut)]
+    pub creator_balance: Box<Account<'info, BalanceAccount>>,
 }

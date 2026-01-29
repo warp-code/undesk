@@ -125,13 +125,17 @@ export function useCreateDeal(): UseCreateDealReturn {
           Math.floor(Date.now() / 1000) + input.expiresInSeconds
         );
 
-        // 10. Submit create_deal transaction
+        // 10. Generate nonce for balance blob callback
+        const balanceBlobNonce = generateNonce();
+
+        // 11. Submit create_deal transaction
         const queueSig = await program.methods
           .createDeal(
             computationOffset,
             keys.controller.publicKey,
             Array.from(keys.encryption.publicKey),
             nonceToU128(nonce),
+            nonceToU128(balanceBlobNonce),
             expiresAt,
             input.allowPartial,
             Array.from(ciphertext[0]),
@@ -155,7 +159,7 @@ export function useCreateDeal(): UseCreateDealReturn {
 
         console.log("Queue create_deal sig:", queueSig);
 
-        // 11. Await computation finalization
+        // 12. Await computation finalization
         const finalizeSig = await awaitComputationFinalization(
           provider,
           computationOffset,

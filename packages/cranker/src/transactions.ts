@@ -21,12 +21,21 @@ export function buildCrankDealAccounts(
   programId: PublicKey,
   payer: PublicKey,
   deal: PublicKey,
+  dealController: PublicKey,
+  baseMint: PublicKey,
   computationOffset: anchor.BN,
   clusterOffset: number
 ): Record<string, PublicKey> {
+  // Derive creator's BASE token balance PDA
+  const [creatorBalance] = PublicKey.findProgramAddressSync(
+    [Buffer.from("balance"), dealController.toBuffer(), baseMint.toBuffer()],
+    programId
+  );
+
   return {
     payer,
     deal,
+    creatorBalance,
     computationAccount: getComputationAccAddress(
       clusterOffset,
       computationOffset
@@ -50,13 +59,22 @@ export function buildCrankOfferAccounts(
   payer: PublicKey,
   deal: PublicKey,
   offer: PublicKey,
+  offerController: PublicKey,
+  quoteMint: PublicKey,
   computationOffset: anchor.BN,
   clusterOffset: number
 ): Record<string, PublicKey> {
+  // Derive offeror's QUOTE token balance PDA
+  const [offerorBalance] = PublicKey.findProgramAddressSync(
+    [Buffer.from("balance"), offerController.toBuffer(), quoteMint.toBuffer()],
+    programId
+  );
+
   return {
     payer,
     deal,
     offer,
+    offerorBalance,
     computationAccount: getComputationAccAddress(
       clusterOffset,
       computationOffset

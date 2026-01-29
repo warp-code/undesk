@@ -126,17 +126,24 @@ export function encryptOfferInput(
  * toX64Price(2.5)  // Returns (2n << 64n) + (1n << 63n)
  */
 export function toX64Price(price: number): bigint {
-  const scale = BigInt(2) ** BigInt(64);
+  // Use string manipulation to avoid JS Number precision limits (max safe int is 2^53)
+  // Convert to fixed-point string with enough decimal places
+  const DECIMAL_PRECISION = 18; // More than enough for most prices
+  const priceStr = price.toFixed(DECIMAL_PRECISION);
+  const [wholeStr, fracStr = ""] = priceStr.split(".");
 
-  // Handle the integer part
-  const wholePart = BigInt(Math.floor(price));
+  const wholePart = BigInt(wholeStr);
 
-  // Handle the fractional part with high precision
-  const fractionalDecimal = price - Math.floor(price);
-  // Multiply by 2^64 and floor to get the fractional bits
-  const fractionalPart = BigInt(Math.floor(fractionalDecimal * Number(scale)));
+  // Convert fractional part: frac * 2^64 / 10^DECIMAL_PRECISION
+  // Use bigint arithmetic to maintain precision
+  const fracNumerator = BigInt(fracStr.padEnd(DECIMAL_PRECISION, "0"));
+  const fracDenominator = BigInt(10) ** BigInt(DECIMAL_PRECISION);
+  const scale = BigInt(1) << BigInt(64); // 2^64
 
-  return wholePart * scale + fractionalPart;
+  // fractionalPart = (fracNumerator * 2^64) / 10^DECIMAL_PRECISION
+  const fractionalPart = (fracNumerator * scale) / fracDenominator;
+
+  return (wholePart << BigInt(64)) + fractionalPart;
 }
 
 /**

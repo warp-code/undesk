@@ -74,8 +74,8 @@ pub struct OfferSettled {
     pub encryption_key: [u8; 32],
     /// Nonce used for encryption
     pub nonce: [u8; 16],
-    /// Encrypted OfferSettledBlob: outcome (u8), executed_amt (u64), refund_amt (u64)
-    pub ciphertexts: [[u8; 32]; 3],
+    /// Encrypted OfferSettledBlob: outcome (u8), executed_amt (u64), quote_paid (u64), quote_refund (u64)
+    pub ciphertexts: [[u8; 32]; 4],
 }
 
 /// Emitted when a balance is updated (created or topped up).

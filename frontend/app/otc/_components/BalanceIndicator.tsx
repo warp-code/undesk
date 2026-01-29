@@ -1,6 +1,6 @@
 "use client";
 
-import { useMyBalances } from "../_hooks/useMyBalances";
+import { useMyBalances } from "../_providers/MyBalancesProvider";
 import { useDerivedKeysContext } from "../_providers/DerivedKeysProvider";
 import { getTokenInfo } from "../_lib/tokens";
 

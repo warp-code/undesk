@@ -100,8 +100,10 @@ mod circuits {
         outcome: u8,
         /// Amount of base asset bought
         executed_amt: u64,
-        /// Quote tokens refunded to offeror
-        refund_amt: u64,
+        /// Quote tokens paid by offeror
+        quote_paid: u64,
+        /// Quote tokens refunded to offeror (in QUOTE units, not BASE)
+        quote_refund: u64,
     }
 
     // ============================================
@@ -138,12 +140,27 @@ mod circuits {
     }
 
     /// Create a new deal with encrypted parameters.
-    /// Returns MXE-encrypted state for on-chain storage and Shared-encrypted blob for creator.
+    /// Locks creator's BASE tokens in committed_amount.
+    /// Returns MXE-encrypted state for on-chain storage, updated balance, and encrypted blobs.
     #[instruction]
     pub fn create_deal(
         deal_data: Enc<Shared, DealInput>,
-    ) -> (Enc<Mxe, DealState>, Enc<Shared, DealCreatedBlob>) {
+        creator_balance: Enc<Mxe, &BalanceState>,
+        creator: Shared,
+    ) -> (
+        Enc<Mxe, DealState>,
+        Enc<Mxe, BalanceState>,
+        Enc<Shared, DealCreatedBlob>,
+        Enc<Shared, BalanceUpdatedBlob>,
+    ) {
         let input = deal_data.to_arcis();
+        let balance = *(creator_balance.to_arcis());
+
+        // Lock commitment (creator's BASE tokens)
+        let new_balance = BalanceState {
+            amount: balance.amount,
+            committed_amount: balance.committed_amount + input.amount,
+        };
 
         let state = DealState {
             amount: input.amount,
@@ -151,26 +168,43 @@ mod circuits {
             fill_amount: 0,
         };
 
-        let blob = DealCreatedBlob {
+        let deal_blob = DealCreatedBlob {
             amount: input.amount,
             price: input.price,
         };
 
-        // Use deal_data.owner to re-encrypt the blob back to the creator
-        (Mxe::get().from_arcis(state), deal_data.owner.from_arcis(blob))
+        let balance_blob = BalanceUpdatedBlob {
+            amount: new_balance.amount,
+            committed_amount: new_balance.committed_amount,
+        };
+
+        (
+            Mxe::get().from_arcis(state),
+            creator_balance.owner.from_arcis(new_balance),
+            deal_data.owner.from_arcis(deal_blob),
+            creator.from_arcis(balance_blob),
+        )
     }
 
     /// Submit an offer to an existing deal.
-    /// Takes MXE-encrypted deal state by reference and Shared-encrypted offer input.
+    /// Takes MXE-encrypted deal state by reference, Shared-encrypted offer input,
+    /// and offeror's balance to lock QUOTE commitment.
     /// Computes amt_to_execute based on price comparison and deal availability.
-    /// Returns updated deal state, new offer state, and encrypted blob for offeror.
+    /// Returns updated deal state, new offer state, updated balance, and offer blob.
     #[instruction]
     pub fn submit_offer(
         deal_state: Enc<Mxe, &DealState>,
         offer_data: Enc<Shared, OfferInput>,
-    ) -> (Enc<Mxe, DealState>, Enc<Mxe, OfferState>, Enc<Shared, OfferCreatedBlob>) {
+        offeror_balance: Enc<Mxe, &BalanceState>,
+    ) -> (
+        Enc<Mxe, DealState>,
+        Enc<Mxe, OfferState>,
+        Enc<Mxe, BalanceState>,
+        Enc<Shared, OfferCreatedBlob>,
+    ) {
         let deal = *(deal_state.to_arcis());
         let offer = offer_data.to_arcis();
+        let balance = *(offeror_balance.to_arcis());
 
         // Price comparison: offeror must be willing to pay at least deal price
         let remaining = deal.amount - deal.fill_amount;
@@ -178,6 +212,14 @@ mod circuits {
             if offer.amount < remaining { offer.amount } else { remaining }
         } else {
             0
+        };
+
+        // Lock MAX quote commitment (full offer amount at offeror's price, not amt_to_execute - privacy)
+        // quote_to_commit = offer.amount * offer.price (X64.64 fixed-point)
+        let quote_to_commit = ((offer.amount as u128 * offer.price) >> 64) as u64;
+        let new_balance = BalanceState {
+            amount: balance.amount,
+            committed_amount: balance.committed_amount + quote_to_commit,
         };
 
         let updated_deal = DealState {
@@ -192,7 +234,7 @@ mod circuits {
             amt_to_execute,
         };
 
-        let blob = OfferCreatedBlob {
+        let offer_blob = OfferCreatedBlob {
             price: offer.price,
             amount: offer.amount,
         };
@@ -200,20 +242,45 @@ mod circuits {
         (
             Mxe::get().from_arcis(updated_deal),
             Mxe::get().from_arcis(offer_state),
-            offer_data.owner.from_arcis(blob),
+            offeror_balance.owner.from_arcis(new_balance),
+            offer_data.owner.from_arcis(offer_blob),
         )
     }
 
+    /// Announce balance - read balance state and return encrypted blob for owner.
+    /// This is a separate instruction to avoid 5-tuple output issues.
+    #[instruction]
+    pub fn announce_balance(
+        balance_state: Enc<Mxe, &BalanceState>,
+        owner: Shared,
+    ) -> Enc<Shared, BalanceUpdatedBlob> {
+        let balance = *(balance_state.to_arcis());
+        let blob = BalanceUpdatedBlob {
+            amount: balance.amount,
+            committed_amount: balance.committed_amount,
+        };
+        owner.from_arcis(blob)
+    }
+
     /// Crank (settle) a deal after expiry or when fully filled.
-    /// Returns the settlement blob encrypted for the creator and the new status.
+    /// Updates creator's balance (release commitment, refund unfilled).
+    /// Returns updated balance, settlement blob encrypted for the creator, balance blob, and the new status.
     #[instruction]
     pub fn crank_deal(
         deal_state: Enc<Mxe, &DealState>,
-        creator: Shared,
+        creator_balance: Enc<Mxe, &BalanceState>,
+        creator_deal_blob: Shared,
+        creator_balance_blob: Shared,
         is_expired: bool,
         allow_partial: bool,
-    ) -> (Enc<Shared, DealSettledBlob>, u8) {
+    ) -> (
+        Enc<Mxe, BalanceState>,
+        Enc<Shared, DealSettledBlob>,
+        Enc<Shared, BalanceUpdatedBlob>,
+        u8,
+    ) {
         let deal = *(deal_state.to_arcis());
+        let balance = *(creator_balance.to_arcis());
         let fully_filled = deal.fill_amount >= deal.amount;
 
         // can_settle: expired OR fully filled
@@ -235,10 +302,25 @@ mod circuits {
         let creator_receives = ((total_filled as u128 * deal.price) >> 64) as u64;
         let creator_refund = if can_settle { unfilled } else { 0 };
 
-        let blob = DealSettledBlob {
+        // Update creator's balance: release commitment and refund unfilled BASE tokens
+        let new_balance = if can_settle {
+            BalanceState {
+                amount: balance.amount + creator_refund,  // Refund unfilled BASE tokens
+                committed_amount: balance.committed_amount - deal.amount,  // Release full commitment
+            }
+        } else {
+            balance
+        };
+
+        let deal_blob = DealSettledBlob {
             total_filled,
             creator_receives,
             creator_refund,
+        };
+
+        let balance_blob = BalanceUpdatedBlob {
+            amount: new_balance.amount,
+            committed_amount: new_balance.committed_amount,
         };
 
         // status: 0 = OPEN (no change), 1 = EXECUTED, 2 = EXPIRED
@@ -250,18 +332,34 @@ mod circuits {
             2 // EXPIRED
         };
 
-        (creator.from_arcis(blob), status.reveal())
+        (
+            creator_balance.owner.from_arcis(new_balance),
+            creator_deal_blob.from_arcis(deal_blob),
+            creator_balance_blob.from_arcis(balance_blob),
+            status.reveal(),
+        )
     }
 
     /// Crank (settle) a single offer after the deal has been settled.
-    /// Returns the settlement blob encrypted for the offeror.
+    /// CRITICAL: Uses deal state to calculate quote amounts correctly.
+    /// Updates offeror's balance: release commitment and refund unused QUOTE tokens.
+    /// Returns updated balance, settlement blob encrypted for the offeror, and balance blob.
     #[instruction]
     pub fn crank_offer(
+        deal_state: Enc<Mxe, &DealState>,
         offer_state: Enc<Mxe, &OfferState>,
-        offeror: Shared,
+        offeror_balance: Enc<Mxe, &BalanceState>,
+        offeror_offer_blob: Shared,
+        offeror_balance_blob: Shared,
         deal_success: bool,
-    ) -> Enc<Shared, OfferSettledBlob> {
+    ) -> (
+        Enc<Mxe, BalanceState>,
+        Enc<Shared, OfferSettledBlob>,
+        Enc<Shared, BalanceUpdatedBlob>,
+    ) {
+        let deal = *(deal_state.to_arcis());
         let offer = *(offer_state.to_arcis());
+        let balance = *(offeror_balance.to_arcis());
 
         // If deal failed, nothing executes
         let executed_amt = if deal_success {
@@ -270,7 +368,19 @@ mod circuits {
             0
         };
 
-        let refund_amt = offer.amount - executed_amt;
+        // Calculate quote amounts (X64.64 fixed-point)
+        // quote_committed = offer.amount * offer.price (what was locked at submit_offer)
+        // quote_executed = executed_amt * deal.price (actual payment at deal's price)
+        // quote_refund = quote_committed - quote_executed (includes price spread savings)
+        let quote_committed = ((offer.amount as u128 * offer.price) >> 64) as u64;
+        let quote_executed = ((executed_amt as u128 * deal.price) >> 64) as u64;
+        let quote_refund = quote_committed - quote_executed;
+
+        // Update offeror's balance: release commitment and refund unused QUOTE tokens
+        let new_balance = BalanceState {
+            amount: balance.amount + quote_refund,  // Refund unused QUOTE tokens
+            committed_amount: balance.committed_amount - quote_committed,  // Release full commitment
+        };
 
         let outcome: u8 = if executed_amt == 0 {
             2  // FAILED
@@ -280,13 +390,23 @@ mod circuits {
             0  // EXECUTED (full)
         };
 
-        let blob = OfferSettledBlob {
+        let offer_blob = OfferSettledBlob {
             outcome,
             executed_amt,
-            refund_amt,
+            quote_paid: quote_executed,
+            quote_refund,
         };
 
-        offeror.from_arcis(blob)
+        let balance_blob = BalanceUpdatedBlob {
+            amount: new_balance.amount,
+            committed_amount: new_balance.committed_amount,
+        };
+
+        (
+            offeror_balance.owner.from_arcis(new_balance),
+            offeror_offer_blob.from_arcis(offer_blob),
+            offeror_balance_blob.from_arcis(balance_blob),
+        )
     }
 
     /// Initialize a new counter with value 0, encrypted for the MXE only.

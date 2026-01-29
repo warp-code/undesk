@@ -1,9 +1,18 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
-import { useSupabase } from "../_providers/SupabaseProvider";
-import { useDerivedKeysContext } from "../_providers/DerivedKeysProvider";
-import { useMxePublicKey } from "../_providers/OtcProvider";
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useCallback,
+  useMemo,
+  useRef,
+  type ReactNode,
+} from "react";
+import { useSupabase } from "./SupabaseProvider";
+import { useDerivedKeysContext } from "./DerivedKeysProvider";
+import { useMxePublicKey } from "./OtcProvider";
 import {
   createDecryptionCipher,
   decryptBalanceData,
@@ -23,20 +32,17 @@ export interface Balance {
   committedAmount: bigint;
 }
 
-interface UseMyBalancesReturn {
+interface MyBalancesContextValue {
   balances: Balance[];
   isLoading: boolean;
   error: string | null;
   refetch: () => void;
-  /** Get balance for a specific mint, returns undefined if not found */
   getBalance: (mint: string) => Balance | undefined;
 }
 
-/**
- * Fetches balances where encryption_key matches user's public key, then decrypts.
- * Requires derived keys and MXE public key to be available.
- */
-export function useMyBalances(): UseMyBalancesReturn {
+const MyBalancesContext = createContext<MyBalancesContextValue | null>(null);
+
+export function MyBalancesProvider({ children }: { children: ReactNode }) {
   const supabase = useSupabase();
   const { derivedKeys, hasDerivedKeys } = useDerivedKeysContext();
   const mxePublicKey = useMxePublicKey();
@@ -62,7 +68,6 @@ export function useMyBalances(): UseMyBalancesReturn {
     setError(null);
 
     try {
-      // Fetch all balances where encryption_key matches user's pubkey
       const { data, error: queryError } = await supabase
         .from("balances")
         .select("*")
@@ -70,19 +75,29 @@ export function useMyBalances(): UseMyBalancesReturn {
 
       if (queryError) throw queryError;
 
-      // Create cipher for decryption
       const cipher = createDecryptionCipher(
         derivedKeys.encryption.privateKey,
         mxePublicKey
       );
 
-      // Decrypt each balance
       const decrypted: Balance[] = (data ?? []).map((row) => {
+        console.log("[MyBalancesProvider] Raw row:", {
+          address: row.address,
+          mint: row.mint,
+          ciphertexts: row.ciphertexts?.slice(0, 50) + "...",
+          nonce: row.nonce,
+        });
+
         const { amount, committedAmount } = decryptBalanceData(
           row.ciphertexts,
           row.nonce,
           cipher
         );
+
+        console.log("[MyBalancesProvider] Decrypted:", {
+          amount: amount.toString(),
+          committedAmount: committedAmount.toString(),
+        });
 
         return {
           address: row.address,
@@ -101,31 +116,43 @@ export function useMyBalances(): UseMyBalancesReturn {
     }
   }, [supabase, userPubKeyHex, mxePublicKey, derivedKeys]);
 
+  // Keep a ref to the latest fetchBalances
+  const fetchBalancesRef = useRef(fetchBalances);
+  useEffect(() => {
+    fetchBalancesRef.current = fetchBalances;
+  }, [fetchBalances]);
+
+  // Initial fetch
   useEffect(() => {
     fetchBalances();
   }, [fetchBalances]);
 
-  // Realtime subscription for balance changes
+  // Single realtime subscription for the entire app
   useEffect(() => {
     if (!userPubKeyHex) return;
 
+    console.log("[MyBalancesProvider] Setting up realtime subscription");
+
     const channel = supabase
-      .channel("my-balances-changes")
+      .channel("my-balances-realtime")
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "balances" },
-        () => {
-          fetchBalances();
+        (payload) => {
+          console.log("[MyBalancesProvider] Realtime event received:", payload);
+          fetchBalancesRef.current();
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log("[MyBalancesProvider] Subscription status:", status);
+      });
 
     return () => {
+      console.log("[MyBalancesProvider] Removing channel");
       supabase.removeChannel(channel);
     };
-  }, [supabase, fetchBalances, userPubKeyHex]);
+  }, [supabase, userPubKeyHex]);
 
-  // Helper to get balance for a specific mint
   const getBalance = useCallback(
     (mint: string): Balance | undefined => {
       return balances.find((b) => b.mint === mint);
@@ -133,5 +160,29 @@ export function useMyBalances(): UseMyBalancesReturn {
     [balances]
   );
 
-  return { balances, isLoading, error, refetch: fetchBalances, getBalance };
+  const value: MyBalancesContextValue = {
+    balances,
+    isLoading,
+    error,
+    refetch: fetchBalances,
+    getBalance,
+  };
+
+  return (
+    <MyBalancesContext.Provider value={value}>
+      {children}
+    </MyBalancesContext.Provider>
+  );
+}
+
+/**
+ * Hook to access balances from the provider.
+ * Must be used within a MyBalancesProvider.
+ */
+export function useMyBalances(): MyBalancesContextValue {
+  const context = useContext(MyBalancesContext);
+  if (!context) {
+    throw new Error("useMyBalances must be used within a MyBalancesProvider");
+  }
+  return context;
 }

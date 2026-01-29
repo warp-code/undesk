@@ -6,7 +6,7 @@ import { sanitizeNumberInput } from "../_lib/format";
 import { getTokenSymbol, getTokenInfo } from "../_lib/tokens";
 import { BalanceIndicator } from "./BalanceIndicator";
 import { useSubmitOffer } from "../_hooks/useSubmitOffer";
-import { useMyBalances } from "../_hooks/useMyBalances";
+import { useMyBalances } from "../_providers/MyBalancesProvider";
 import { useDerivedKeysContext } from "../_providers/DerivedKeysProvider";
 
 interface MakeOfferFormProps {
@@ -82,6 +82,7 @@ export const MakeOfferForm = ({
       const offerAddress = await submitOffer({
         dealAddress: deal.id,
         baseMint: deal.baseMint,
+        quoteMint: deal.quoteMint,
         amount: parseFloat(offerAmount),
         price: parseFloat(offerPrice),
         derivedKeysOverride: keysToUse,

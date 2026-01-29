@@ -3,7 +3,8 @@ use arcium_anchor::prelude::*;
 use arcium_client::idl::arcium::types::CallbackAccount;
 
 use crate::error::ErrorCode;
-use crate::state::{DealAccount, DealStatus, OfferAccount, OfferStatus};
+use crate::state::{BalanceAccount, DealAccount, DealStatus, OfferAccount, OfferStatus};
+use crate::state::{BALANCE_CIPHERTEXT_LENGTH, BALANCE_CIPHERTEXT_OFFSET};
 use crate::state::{DEAL_CIPHERTEXT_LENGTH, DEAL_CIPHERTEXT_OFFSET};
 use crate::OfferCreated;
 
@@ -22,7 +23,9 @@ pub fn handler(
     // Capture keys and nonce before mutable borrows to avoid borrow checker issues
     let deal_key = ctx.accounts.deal.key();
     let offer_key = ctx.accounts.offer.key();
+    let offeror_balance_key = ctx.accounts.offeror_balance.key();
     let deal_nonce = u128::from_le_bytes(ctx.accounts.deal.nonce);
+    let offeror_balance_nonce = u128::from_le_bytes(ctx.accounts.offeror_balance.nonce);
 
     // Validate deal is open
     require!(
@@ -33,6 +36,12 @@ pub fn handler(
     // Validate deal has not expired
     let now = Clock::get()?.unix_timestamp;
     require!(ctx.accounts.deal.expires_at > now, ErrorCode::DealExpired);
+
+    // Verify the balance controller matches
+    require!(
+        ctx.accounts.offeror_balance.controller == controller,
+        ErrorCode::ControllerMismatch
+    );
 
     // Initialize OfferAccount plaintext fields
     {
@@ -51,9 +60,9 @@ pub fn handler(
     // Increment offer counter
     ctx.accounts.deal.num_offers += 1;
 
-    // Build ArgBuilder:
-    // First: Enc<Mxe, &DealState> - nonce as plaintext, then account reference to ciphertext
-    // Second: Enc<Shared, OfferInput> - x25519_pubkey, plaintext nonce, encrypted fields
+    // Build ArgBuilder for submit_offer instruction:
+    // submit_offer(deal_state: Enc<Mxe, &DealState>, offer_data: Enc<Shared, OfferInput>,
+    //              offeror_balance: Enc<Mxe, &BalanceState>)
     let args = ArgBuilder::new()
         // Enc<Mxe, &DealState>
         .plaintext_u128(deal_nonce)
@@ -63,6 +72,13 @@ pub fn handler(
         .plaintext_u128(nonce)
         .encrypted_u128(encrypted_price)
         .encrypted_u64(encrypted_amount)
+        // Enc<Mxe, &BalanceState>
+        .plaintext_u128(offeror_balance_nonce)
+        .account(
+            offeror_balance_key,
+            BALANCE_CIPHERTEXT_OFFSET,
+            BALANCE_CIPHERTEXT_LENGTH,
+        )
         .build();
 
     ctx.accounts.sign_pda_account.bump = ctx.bumps.sign_pda_account;
@@ -84,6 +100,10 @@ pub fn handler(
                     pubkey: offer_key,
                     is_writable: true,
                 },
+                CallbackAccount {
+                    pubkey: offeror_balance_key,
+                    is_writable: true,
+                },
             ],
         )?],
         1,
@@ -98,7 +118,8 @@ pub fn callback_handler(
     output: SignedComputationOutputs<SubmitOfferOutput>,
 ) -> Result<()> {
     // Verify and extract output
-    // The return type is (Enc<Mxe, DealState>, Enc<Mxe, OfferState>, Enc<Shared, OfferCreatedBlob>)
+    // The return type is (Enc<Mxe, DealState>, Enc<Mxe, OfferState>, Enc<Mxe, BalanceState>,
+    //                     Enc<Shared, OfferCreatedBlob>)
     let tuple_output = match output.verify_output(
         &ctx.accounts.cluster_account,
         &ctx.accounts.computation_account,
@@ -110,7 +131,8 @@ pub fn callback_handler(
     // Access tuple elements via generated struct fields
     let updated_deal = &tuple_output.field_0;
     let offer_state = &tuple_output.field_1;
-    let shared_blob = &tuple_output.field_2;
+    let balance_state = &tuple_output.field_2;
+    let offer_blob = &tuple_output.field_3;
 
     // Update deal's MXE state
     let deal = &mut ctx.accounts.deal;
@@ -125,15 +147,20 @@ pub fn callback_handler(
     // Set submitted_at timestamp
     offer.submitted_at = Clock::get()?.unix_timestamp;
 
+    // Store offeror's balance MXE state
+    let balance = &mut ctx.accounts.offeror_balance;
+    balance.nonce = balance_state.nonce.to_le_bytes();
+    balance.ciphertexts = balance_state.ciphertexts;
+
     // Emit OfferCreated event with shared blob for offeror
     emit!(OfferCreated {
         deal: deal.key(),
         offer: offer.key(),
         offer_index: offer.offer_index,
         submitted_at: offer.submitted_at,
-        encryption_key: shared_blob.encryption_key,
-        nonce: shared_blob.nonce.to_le_bytes(),
-        ciphertexts: shared_blob.ciphertexts,
+        encryption_key: offer_blob.encryption_key,
+        nonce: offer_blob.nonce.to_le_bytes(),
+        ciphertexts: offer_blob.ciphertexts,
     });
 
     Ok(())
@@ -164,7 +191,7 @@ pub struct InitSubmitOfferCompDef<'info> {
 
 #[queue_computation_accounts("submit_offer", payer)]
 #[derive(Accounts)]
-#[instruction(computation_offset: u64)]
+#[instruction(computation_offset: u64, controller: Pubkey)]
 pub struct SubmitOffer<'info> {
     #[account(mut)]
     pub payer: Signer<'info>,
@@ -183,6 +210,14 @@ pub struct SubmitOffer<'info> {
         bump,
     )]
     pub offer: Box<Account<'info, OfferAccount>>,
+
+    /// Offeror's QUOTE token balance (must exist and have sufficient funds)
+    #[account(
+        mut,
+        seeds = [b"balance", controller.as_ref(), deal.quote_mint.as_ref()],
+        bump,
+    )]
+    pub offeror_balance: Box<Account<'info, BalanceAccount>>,
 
     // --- Arcium accounts (auto-generated pattern) ---
     #[account(
@@ -263,4 +298,6 @@ pub struct SubmitOfferCallback<'info> {
     pub deal: Box<Account<'info, DealAccount>>,
     #[account(mut)]
     pub offer: Box<Account<'info, OfferAccount>>,
+    #[account(mut)]
+    pub offeror_balance: Box<Account<'info, BalanceAccount>>,
 }

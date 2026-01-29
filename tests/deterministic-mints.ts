@@ -36,8 +36,8 @@ export function deriveMintAddresses(
  * Token decimals for each symbol.
  */
 export const TOKEN_DECIMALS: Record<string, number> = {
-  META: 9,
+  META: 6,
   USDC: 6,
-  JTO: 9,
-  SOL: 9,
+  JTO: 6,
+  SOL: 6,
 };

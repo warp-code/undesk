@@ -123,7 +123,7 @@ run_with_prefix "$BLUE"    "frontend" yarn dev &
 
 # Run tests, then start cranker after tests finish
 (
-    sleep 20
+    sleep 10
     echo -e "${DIM}[test    ]${NC} Running anchor test..."
     ARCIUM_CLUSTER_OFFSET=0 anchor test --skip-build --skip-deploy --skip-local-validator 2>&1 | while IFS= read -r line; do
         echo -e "${DIM}[test    ]${NC} $line"
