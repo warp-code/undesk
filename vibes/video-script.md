@@ -35,7 +35,10 @@
 ### [Screen: Focus on Create Deal form]
 
 **Voiceover:**
-> "I want to sell 500 META for USDC. I set my price at 6 USDC per token—this is my minimum. I'll keep it open for 24 hours and allow partial fills."
+> "I want to sell 100 META for USDC. I set my price at 6 USDC per token. This is my minimum. I'll keep it open for 15 minutes and allow partial fills."
+
+**ALT VOICEOVER:**
+> "I want to sell 150 META for USDC. I set my price at 6 USDC per token. This is my minimum. I'll keep it open for 15 minutes and allow partial fills."
 
 ### [Screen: Click "Create Deal" button, wait for loading]
 
@@ -75,6 +78,10 @@
 
 > "Submitted. Status: pending. I wait for the deal to close to find out."
 
+### [Screen: Show deal creator's view of their deal with 1 new offer]
+
+> "Back to the deal creator's view, I can see that I now have 1 offer on my deal."
+
 ---
 
 ## DEMO: DEAL RESOLUTION (45 seconds)
@@ -82,11 +89,11 @@
 ### [Screen: Show a deal that's about to expire or manually trigger expiry]
 
 **Voiceover:**
-> "Let's see what happens when a deal closes. This one just expired."
+> "Now let's see what happens when a deal closes. This one just expired."
 
 ### [Screen: Show the deal creator's view - Your Deals tab with updated status]
 
-> "From the creator's side: I see my deal settled and how much got filled—say, 80% of my size. But I don't see the individual offers that matched. I don't know their prices or how much they offered."
+> "From the creator's side: I see my deal settled and how much got filled. But I don't see the individual offers that matched. I don't know their prices or how much they offered."
 
 ### [Screen: Switch to the offeror's view - Your Offers tab with updated statuses]
 
@@ -103,7 +110,7 @@
 ### [Screen: Return to landing page, scroll to MPC security visualization]
 
 **Voiceover:**
-> "Under the hood, this runs on Arcium's MPC network. Deals and offers flow in encrypted. When the deal expires, a crank runs and the network compares them without decrypting. You only learn if your trade succeeded or failed while everything else stays private. I didn't have to deposit my money with a third party or make my intentions known - the protocol handled everything for me."
+> "All of Undesk's state and execution runs on Arcium's MPC network. Deals and offers flow in encrypted. When the deal expires, a crank runs and the network compares them without decrypting. You only learn if your trade succeeded or failed while everything else stays private. I didn't have to deposit my money with a third party or make my intentions known - the protocol handled everything for me."
 
 ---
 
