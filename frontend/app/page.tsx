@@ -764,9 +764,8 @@ export default function HomePage() {
         <div
           className="w-full h-24"
           style={{
-            backgroundImage:
-              "repeating-linear-gradient(90deg, rgba(255,255,255,0.2) 0px, rgba(255,255,255,0.2) 1px, transparent 1px, transparent 18px)",
-            backgroundSize: "18px 100%",
+            backgroundImage: 'linear-gradient(90deg, rgba(249, 115, 22, 0.15) 1px, transparent 1px)',
+            backgroundSize: '4rem 100%',
           }}
         />
       </div>
