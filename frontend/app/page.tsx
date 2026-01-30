@@ -1,7 +1,148 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
+
+const ROWS = 4;
+const COLS = 24;
+const ACTIVE_DURATION = 2000;
+
+const generateRandomData = () => {
+  return (Math.random() * 100).toFixed(2);
+};
+
+const StatusIndicator = () => {
+  return (
+    <div className="flex items-center gap-2 font-mono text-[10px] text-primary uppercase tracking-wider mb-6">
+      <div
+        className="w-1.5 h-1.5 bg-primary rounded-full animate-pulse"
+        style={{ boxShadow: '0 0 8px #f97316' }}
+      />
+      System Operational
+    </div>
+  );
+};
+
+const GridCol = ({
+  isActive,
+  dataValue
+}: {
+  isActive: boolean;
+  dataValue: string;
+}) => {
+  return (
+    <div
+      className="flex-1 relative transition-all duration-600"
+      style={{
+        borderRight: isActive ? '1px solid #f97316' : '1px solid rgba(255, 255, 255, 0.04)',
+        borderLeft: isActive ? '1px solid #f97316' : '1px solid rgba(255, 255, 255, 0.04)',
+        background: isActive
+          ? 'linear-gradient(180deg, rgba(249, 115, 22, 0) 0%, rgba(249, 115, 22, 0.08) 100%)'
+          : 'transparent',
+        boxShadow: isActive ? '0 0 15px rgba(249, 115, 22, 0.05)' : 'none',
+        zIndex: isActive ? 2 : 1
+      }}
+    >
+      <div
+        className="absolute inset-x-0 bottom-2.5 flex justify-center font-mono text-[9px] pointer-events-none transition-opacity duration-300"
+        style={{
+          color: isActive ? '#f97316' : '#888888',
+          opacity: isActive ? 1 : 0
+        }}
+      >
+        {dataValue}
+      </div>
+    </div>
+  );
+};
+
+const GridRow = ({
+  rowIndex,
+  activeCols,
+  dataValues
+}: {
+  rowIndex: number;
+  activeCols: string[];
+  dataValues: Record<string, string>;
+}) => {
+  return (
+    <div className="flex-1 flex relative" style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.04)' }}>
+      {Array.from({ length: COLS }).map((_, colIndex) => {
+        const colKey = `${rowIndex}-${colIndex}`;
+        return (
+          <GridCol
+            key={colKey}
+            isActive={activeCols.includes(colKey)}
+            dataValue={dataValues[colKey] || generateRandomData()}
+          />
+        );
+      })}
+    </div>
+  );
+};
+
+const GridPanel = () => {
+  const [activeCols, setActiveCols] = useState<string[]>([]);
+  const [dataValues, setDataValues] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    const animateGrid = () => {
+      const totalCols = ROWS * COLS;
+      const idx1 = Math.floor(Math.random() * totalCols);
+      let idx2 = Math.floor(Math.random() * totalCols);
+
+      while (idx1 === idx2) {
+        idx2 = Math.floor(Math.random() * totalCols);
+      }
+
+      const row1 = Math.floor(idx1 / COLS);
+      const col1 = idx1 % COLS;
+      const row2 = Math.floor(idx2 / COLS);
+      const col2 = idx2 % COLS;
+
+      const key1 = `${row1}-${col1}`;
+      const key2 = `${row2}-${col2}`;
+
+      setActiveCols([key1, key2]);
+      setDataValues({
+        [key1]: generateRandomData(),
+        [key2]: generateRandomData()
+      });
+    };
+
+    animateGrid();
+    const interval = setInterval(animateGrid, ACTIVE_DURATION);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <div
+      className="relative h-full flex flex-col"
+      style={{
+        maskImage: 'linear-gradient(to right, transparent 0%, black 15%)',
+        WebkitMaskImage: 'linear-gradient(to right, transparent 0%, black 15%)'
+      }}
+    >
+      {/* Ambient glow */}
+      <div
+        className="absolute -bottom-1/5 -right-1/10 w-[600px] h-[600px] pointer-events-none z-0"
+        style={{
+          background: 'radial-gradient(circle, rgba(249, 115, 22, 0.08) 0%, transparent 70%)',
+          filter: 'blur(80px)'
+        }}
+      />
+      {Array.from({ length: ROWS }).map((_, rowIndex) => (
+        <GridRow
+          key={rowIndex}
+          rowIndex={rowIndex}
+          activeCols={activeCols}
+          dataValues={dataValues}
+        />
+      ))}
+    </div>
+  );
+};
 
 const faqs = [
   {
@@ -46,16 +187,6 @@ const faqs = [
   },
 ];
 
-interface LineData {
-  x: number;
-  yStart: number;
-  yEnd: number;
-  weight: "thin" | "medium" | "thick";
-  opacity: number;
-  isAccent: boolean;
-  accentColor: string;
-}
-
 function StaticLineBackground() {
   // SVG pattern tile: 48px wide (3 lines per tier), 300px tall (3 tiers of 100px each)
   const svgPattern = `
@@ -82,115 +213,6 @@ function StaticLineBackground() {
         backgroundRepeat: "repeat",
       }}
     />
-  );
-}
-
-function BackgroundPattern({ activeLines }: { activeLines: Set<string> }) {
-  const tierLines = useMemo(() => {
-    const tiers: LineData[][] = [[], [], [], []];
-
-    const tierConfigs = [
-      { yStart: 0, yEnd: 25, spacing: 16, offset: 0 },
-      { yStart: 25, yEnd: 50, spacing: 16, offset: 5.33 },
-      { yStart: 50, yEnd: 75, spacing: 16, offset: 10.67 },
-      { yStart: 75, yEnd: 100, spacing: 16, offset: 0 },
-    ];
-
-    // Use a fixed width for calculations (will scale with viewBox)
-    const width = 600;
-
-    tierConfigs.forEach((config, tierIdx) => {
-      const lineCount = Math.floor(width / config.spacing);
-
-      for (let i = 0; i < lineCount; i++) {
-        const x = config.offset + i * config.spacing;
-        const xPercent = x / width;
-
-        // Calculate opacity for fade-in zone (first 20%)
-        let opacity = 1;
-        if (xPercent < 0.2) {
-          opacity = xPercent / 0.2;
-        }
-
-        // Random weight distribution: 60% thin, 30% medium, 10% thick
-        const rand = Math.random();
-        let weight: "thin" | "medium" | "thick" = "thin";
-        if (rand > 0.9) weight = "thick";
-        else if (rand > 0.6) weight = "medium";
-
-        // No fixed accent lines - all white by default, orange only when active
-        const isAccent = false;
-        const accentColor = "";
-
-        tiers[tierIdx].push({
-          x,
-          yStart: config.yStart,
-          yEnd: config.yEnd,
-          weight,
-          opacity,
-          isAccent,
-          accentColor,
-        });
-      }
-    });
-    return tiers;
-  }, []);
-
-  const getLineKey = (tierIdx: number, lineIdx: number) =>
-    `${tierIdx}-${lineIdx}`;
-
-  // 1.5x stroke widths from v12 spec
-  const getStrokeWidth = (
-    line: { weight: string; isAccent: boolean },
-    isActive: boolean
-  ) => {
-    if (isActive) return 2.5;
-    if (line.isAccent) return 1.2;
-    if (line.weight === "thick") return 1.0;
-    if (line.weight === "medium") return 0.7;
-    return 0.4;
-  };
-
-  return (
-    <svg
-      className="absolute top-0 right-0 bottom-0 w-1/2 h-full"
-      viewBox="0 0 600 600"
-      preserveAspectRatio="none"
-      style={{ pointerEvents: "none" }}
-    >
-      {tierLines.map((tier, tierIdx) =>
-        tier.map((line, lineIdx) => {
-          const key = getLineKey(tierIdx, lineIdx);
-          const isActive = activeLines.has(key);
-
-          let strokeColor = `rgba(255,255,255,${line.opacity * 0.7})`;
-          if (isActive) {
-            strokeColor = "#f97316";
-          } else if (line.isAccent) {
-            strokeColor = line.accentColor;
-          }
-
-          return (
-            <line
-              key={key}
-              x1={line.x}
-              y1={`${line.yStart}%`}
-              x2={line.x}
-              y2={`${line.yEnd}%`}
-              stroke={strokeColor}
-              strokeWidth={getStrokeWidth(line, isActive)}
-              strokeLinecap="round"
-              style={{
-                filter: isActive
-                  ? "drop-shadow(0 0 4px #f97316) drop-shadow(0 0 8px #f97316)"
-                  : "none",
-                transition: "stroke 0.3s ease, stroke-width 0.3s ease",
-              }}
-            />
-          );
-        })
-      )}
-    </svg>
   );
 }
 
@@ -242,61 +264,6 @@ function FAQItem({ question, answer }: { question: string; answer: string }) {
 }
 
 export default function HomePage() {
-  const [activeLines, setActiveLines] = useState<Set<string>>(new Set());
-
-  const getLineKey = (tierIdx: number, lineIdx: number) =>
-    `${tierIdx}-${lineIdx}`;
-
-  // Idle animation - "deal matching" sequence
-  useEffect(() => {
-    const runSequence = () => {
-      const t1 = Math.floor(Math.random() * 4);
-      const t2 = (t1 + 1 + Math.floor(Math.random() * 3)) % 4;
-      const l1 = Math.floor(Math.random() * 30) + 7;
-      const l2 = Math.floor(Math.random() * 30) + 7;
-      const key1 = getLineKey(t1, l1);
-      const key2 = getLineKey(t2, l2);
-
-      // Line 1 lights up (searching for deal)
-      setActiveLines((prev) => new Set([...prev, key1]));
-
-      // After delay, line 2 blinks twice (deal accepted)
-      setTimeout(() => {
-        // First blink on
-        setActiveLines((prev) => new Set([...prev, key2]));
-
-        // First blink off
-        setTimeout(() => {
-          setActiveLines((prev) => {
-            const next = new Set(prev);
-            next.delete(key2);
-            return next;
-          });
-
-          // Second blink on
-          setTimeout(() => {
-            setActiveLines((prev) => new Set([...prev, key2]));
-
-            // Both turn off together
-            setTimeout(() => {
-              setActiveLines((prev) => {
-                const next = new Set(prev);
-                next.delete(key1);
-                next.delete(key2);
-                return next;
-              });
-            }, 800);
-          }, 120);
-        }, 150);
-      }, 600);
-    };
-
-    const interval = setInterval(runSequence, 3500);
-    runSequence(); // Run immediately on mount
-
-    return () => clearInterval(interval);
-  }, []);
-
   return (
     <div className="min-h-screen flex flex-col bg-background">
       {/* Navbar */}
@@ -338,38 +305,45 @@ export default function HomePage() {
       </nav>
 
       {/* Hero Section */}
-      <section className="relative h-[500px] flex flex-col justify-center overflow-hidden">
-        {/* Background Pattern */}
-        <BackgroundPattern activeLines={activeLines} />
+      <section className="relative h-[70vh] overflow-hidden">
+        {/* Grid Panel - positioned absolutely on the right */}
+        <div className="absolute top-0 right-0 w-[60%] h-full">
+          <GridPanel />
+        </div>
 
-        {/* Hero Content - aligned with navbar container */}
-        <div className="relative z-10 max-w-6xl mx-auto px-6 w-full mt-16 pointer-events-none">
-          <div className="max-w-2xl space-y-6 pointer-events-auto">
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <span>Powered by</span>
-              <img src="/solanaLogoMark (2).svg" alt="Solana" className="h-4" />
-              <span className="w-px h-4 bg-muted-foreground/50" />
-              <img src="/Logomark 01.svg" alt="Arcium" className="h-4" />
-            </div>
-            <h1 className="text-5xl font-bold text-foreground">
-              Private peer-to-peer OTC trading
-            </h1>
-            <p className="text-lg text-muted-foreground leading-relaxed">
-              Execute large trades with complete privacy.
-              <br />
-              No slippage, no front-running, no information leakage.
-            </p>
-            <div className="pt-2">
-              <Link
-                href="/otc"
-                className="btn-primary-glow text-primary-foreground px-4 py-2 rounded-lg font-medium text-base inline-flex items-center gap-2 group"
-              >
-                Start Trading
-                <span className="text-base transition-transform duration-200 group-hover:translate-x-1">
-                  →
-                </span>
-              </Link>
-            </div>
+        {/* Content - aligned with page container */}
+        <div className="relative z-10 h-full max-w-6xl mx-auto px-6 flex flex-col justify-center">
+          <StatusIndicator />
+
+          <h1
+            className="text-[4rem] leading-[1.1] tracking-[-0.04em] font-semibold pb-6"
+            style={{
+              background: 'linear-gradient(180deg, #fff 0%, #aaa 100%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text'
+            }}
+          >
+            Private<br />peer-to-peer<br />OTC trading
+          </h1>
+
+          <p className="text-lg text-muted-foreground leading-relaxed max-w-[400px] mb-12">
+            Execute large trades with complete privacy. No slippage, no front-running, no information leakage.
+          </p>
+
+          <div className="flex items-center gap-5">
+            <Link
+              href="/otc"
+              className="btn-primary-glow text-primary-foreground px-4 py-2 rounded-lg font-medium text-base inline-flex items-center gap-3 group"
+            >
+              Start Trading
+              <span className="transition-transform duration-200 group-hover:translate-x-0.5">
+                →
+              </span>
+            </Link>
+            <span className="font-mono text-[10px] text-[#444444]">
+              V.0.1.0 DEVNET
+            </span>
           </div>
         </div>
       </section>
