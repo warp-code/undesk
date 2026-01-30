@@ -187,34 +187,45 @@ const faqs = [
   },
 ];
 
-function StaticLineBackground() {
-  // SVG pattern tile: 48px wide (3 lines per tier), 300px tall (3 tiers of 100px each)
-  const svgPattern = `
-    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="300">
-      <line x1="0" y1="0" x2="0" y2="100" stroke="rgba(255,255,255,0.025)" stroke-width="2"/>
-      <line x1="16" y1="0" x2="16" y2="100" stroke="rgba(255,255,255,0.025)" stroke-width="2"/>
-      <line x1="32" y1="0" x2="32" y2="100" stroke="rgba(255,255,255,0.025)" stroke-width="2"/>
-      <line x1="5.33" y1="100" x2="5.33" y2="200" stroke="rgba(255,255,255,0.025)" stroke-width="2"/>
-      <line x1="21.33" y1="100" x2="21.33" y2="200" stroke="rgba(255,255,255,0.025)" stroke-width="2"/>
-      <line x1="37.33" y1="100" x2="37.33" y2="200" stroke="rgba(255,255,255,0.025)" stroke-width="2"/>
-      <line x1="10.67" y1="200" x2="10.67" y2="300" stroke="rgba(255,255,255,0.025)" stroke-width="2"/>
-      <line x1="26.67" y1="200" x2="26.67" y2="300" stroke="rgba(255,255,255,0.025)" stroke-width="2"/>
-      <line x1="42.67" y1="200" x2="42.67" y2="300" stroke="rgba(255,255,255,0.025)" stroke-width="2"/>
-    </svg>
-  `;
-
-  const encodedSvg = `data:image/svg+xml,${encodeURIComponent(svgPattern.trim())}`;
-
+const SignalBar = ({ delay = 0 }: { delay?: number }) => {
   return (
     <div
-      className="absolute inset-0 pointer-events-none"
+      className="w-[3px] h-6 bg-primary transition-all duration-300 group-hover:h-8 group-hover:bg-orange-400"
       style={{
-        backgroundImage: `url("${encodedSvg}")`,
-        backgroundRepeat: "repeat",
+        boxShadow: '0 0 10px 1px rgba(249, 115, 22, 0.3)',
+        transitionDelay: delay > 0 ? `${delay}ms` : '0ms'
       }}
     />
   );
-}
+};
+
+const StepCard = ({
+  title,
+  description,
+  barCount = 1
+}: {
+  title: string;
+  description: string;
+  barCount?: number;
+}) => {
+  return (
+    <div className="flex gap-8 group">
+      <div className="flex justify-end gap-1.5 pt-2 h-full shrink-0 w-[21px]">
+        {[...Array(barCount)].map((_, index) => (
+          <SignalBar key={index} delay={index * 75} />
+        ))}
+      </div>
+      <div className="pt-0.5">
+        <h4 className="text-lg font-semibold text-foreground mb-3 group-hover:text-primary transition-colors duration-300">
+          {title}
+        </h4>
+        <p className="text-muted-foreground leading-relaxed text-[15px] max-w-lg">
+          {description}
+        </p>
+      </div>
+    </div>
+  );
+};
 
 function FAQItem({ question, answer }: { question: string; answer: string }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -354,7 +365,7 @@ export default function HomePage() {
         className="py-32 relative overflow-hidden"
       >
         <div className="max-w-6xl mx-auto px-6 relative z-10">
-          <h2 className="text-3xl font-bold text-foreground text-center mb-2">
+          <h2 className="text-4xl font-bold text-foreground text-center mb-2">
             The OTC desk without third parties
           </h2>
           <p className="text-muted-foreground text-center mb-24">
@@ -516,198 +527,82 @@ export default function HomePage() {
       </section>
 
       {/* How It Works Section */}
-      <section className="py-32 bg-card relative overflow-hidden">
-        <StaticLineBackground />
+      <section className="py-32 relative overflow-hidden">
+        {/* Architectural Grid Background */}
+        <div
+          className="absolute inset-0 pointer-events-none z-0"
+          style={{
+            backgroundImage: 'linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px)',
+            backgroundSize: '4rem 100%'
+          }}
+        />
+        {/* Ambient glow - bottom left */}
+        <div
+          className="absolute -bottom-[20%] -left-[10%] w-[600px] h-[600px] pointer-events-none z-0"
+          style={{
+            background: 'radial-gradient(circle, rgba(249, 115, 22, 0.08) 0%, transparent 70%)',
+            filter: 'blur(80px)'
+          }}
+        />
         <div className="max-w-6xl mx-auto px-6 relative z-10">
-          <h2 className="text-3xl font-bold text-foreground text-center mb-2">
-            How It Works
-          </h2>
-          <p className="text-muted-foreground text-center mb-12">
-            Posting, matching, and settlement - everything is encrypted.
-          </p>
+          <div className="mb-24 text-center">
+            <h2 className="text-4xl font-bold text-foreground mb-2">
+              How It Works
+            </h2>
+            <p className="text-muted-foreground">
+              Posting, matching, and settlement — everything is encrypted.
+            </p>
+          </div>
 
-          <div className="space-y-12">
-            {/* Headers Row */}
-            <div className="grid md:grid-cols-2 gap-24">
-              <div className="grid grid-cols-[24px_1fr] gap-4 items-start">
-                <div></div>
-                <h3 className="text-xl font-semibold text-foreground">
-                  For Deal Creators
-                </h3>
-              </div>
-              <div className="grid grid-cols-[24px_1fr] gap-4 items-start">
-                <div></div>
-                <h3 className="text-xl font-semibold text-foreground">
-                  For Offerors (Makers)
-                </h3>
-              </div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-32 gap-y-20">
+            {/* Deal Creators Column */}
+            <div className="space-y-16">
+              <h3 className="text-2xl font-bold text-foreground">
+                For Deal Creators
+              </h3>
+
+              <StepCard
+                title="Post your deal"
+                description="Define your trade: assets, size, and your price. Deposit funds. Everything is encrypted before it leaves your wallet."
+                barCount={1}
+              />
+
+              <StepCard
+                title="Receive blind offers"
+                description="Counterparties submit offers without seeing your price or size. Offers that don't meet your threshold are rejected without information leaks."
+                barCount={2}
+              />
+
+              <StepCard
+                title="Execute the deal"
+                description="Once enough valid offers arrive, the trade is executed. Settlement is on-chain and private. You always get your price or better."
+                barCount={3}
+              />
             </div>
 
-            {/* Step 1 Row */}
-            <div className="grid md:grid-cols-2 gap-24">
-              <div className="grid grid-cols-[24px_1fr] gap-4 items-start">
-                <div className="flex justify-end items-start gap-1">
-                  <div
-                    className="w-0.5 h-8 bg-primary rounded-full"
-                    style={{
-                      boxShadow: "0 0 8px #f97316, 0 0 16px #f97316",
-                    }}
-                  />
-                </div>
-                <div>
-                  <h4 className="font-medium text-foreground mb-2">
-                    Post your deal
-                  </h4>
-                  <p className="text-muted-foreground text-base leading-relaxed">
-                    Define your trade: assets, size, and your price. Deposit
-                    funds. Everything is encrypted before it leaves your wallet.
-                  </p>
-                </div>
-              </div>
-              <div className="grid grid-cols-[24px_1fr] gap-4 items-start">
-                <div className="flex justify-end items-start gap-1">
-                  <div
-                    className="w-0.5 h-8 bg-primary rounded-full"
-                    style={{
-                      boxShadow: "0 0 8px #f97316, 0 0 16px #f97316",
-                    }}
-                  />
-                </div>
-                <div>
-                  <h4 className="font-medium text-foreground mb-2">
-                    Browse open deals
-                  </h4>
-                  <p className="text-muted-foreground text-base leading-relaxed">
-                    See available deals and their assets. You won&apos;t see
-                    price or size, only what you need to decide if you&apos;re
-                    interested.
-                  </p>
-                </div>
-              </div>
-            </div>
+            {/* Offerors Column */}
+            <div className="space-y-16">
+              <h3 className="text-2xl font-bold text-foreground">
+                For Offerors (Makers)
+              </h3>
 
-            {/* Step 2 Row */}
-            <div className="grid md:grid-cols-2 gap-24">
-              <div className="grid grid-cols-[24px_1fr] gap-4 items-start">
-                <div className="flex justify-end items-start gap-1">
-                  <div
-                    className="w-0.5 h-8 bg-primary rounded-full"
-                    style={{
-                      boxShadow: "0 0 8px #f97316, 0 0 16px #f97316",
-                    }}
-                  />
-                  <div
-                    className="w-0.5 h-8 bg-primary rounded-full"
-                    style={{
-                      boxShadow: "0 0 8px #f97316, 0 0 16px #f97316",
-                    }}
-                  />
-                </div>
-                <div>
-                  <h4 className="font-medium text-foreground mb-2">
-                    Receive blind offers
-                  </h4>
-                  <p className="text-muted-foreground text-base leading-relaxed">
-                    Counterparties submit offers without seeing your price or
-                    size. Offers that don&apos;t meet your threshold are
-                    rejected without information leaks.
-                  </p>
-                </div>
-              </div>
-              <div className="grid grid-cols-[24px_1fr] gap-4 items-start">
-                <div className="flex justify-end items-start gap-1">
-                  <div
-                    className="w-0.5 h-8 bg-primary rounded-full"
-                    style={{
-                      boxShadow: "0 0 8px #f97316, 0 0 16px #f97316",
-                    }}
-                  />
-                  <div
-                    className="w-0.5 h-8 bg-primary rounded-full"
-                    style={{
-                      boxShadow: "0 0 8px #f97316, 0 0 16px #f97316",
-                    }}
-                  />
-                </div>
-                <div>
-                  <h4 className="font-medium text-foreground mb-2">
-                    Submit your offer
-                  </h4>
-                  <p className="text-muted-foreground text-base leading-relaxed">
-                    Make a blind offer with your desired price and size. If your
-                    offer passes the creator&apos;s threshold, it gets silently
-                    added to the deal.
-                  </p>
-                </div>
-              </div>
-            </div>
+              <StepCard
+                title="Browse open deals"
+                description="See available deals and their assets. You won't see price or size, only what you need to decide if you're interested."
+                barCount={1}
+              />
 
-            {/* Step 3 Row */}
-            <div className="grid md:grid-cols-2 gap-24">
-              <div className="grid grid-cols-[24px_1fr] gap-4 items-start">
-                <div className="flex justify-end items-start gap-1">
-                  <div
-                    className="w-0.5 h-8 bg-primary rounded-full"
-                    style={{
-                      boxShadow: "0 0 8px #f97316, 0 0 16px #f97316",
-                    }}
-                  />
-                  <div
-                    className="w-0.5 h-8 bg-primary rounded-full"
-                    style={{
-                      boxShadow: "0 0 8px #f97316, 0 0 16px #f97316",
-                    }}
-                  />
-                  <div
-                    className="w-0.5 h-8 bg-primary rounded-full"
-                    style={{
-                      boxShadow: "0 0 8px #f97316, 0 0 16px #f97316",
-                    }}
-                  />
-                </div>
-                <div>
-                  <h4 className="font-medium text-foreground mb-2">
-                    Execute the deal
-                  </h4>
-                  <p className="text-muted-foreground text-base leading-relaxed">
-                    Once enough valid offers arrive, the trade is executed.
-                    Settlement is on-chain and private. You always get your
-                    price or better.
-                  </p>
-                </div>
-              </div>
-              <div className="grid grid-cols-[24px_1fr] gap-4 items-start">
-                <div className="flex justify-end items-start gap-1">
-                  <div
-                    className="w-0.5 h-8 bg-primary rounded-full"
-                    style={{
-                      boxShadow: "0 0 8px #f97316, 0 0 16px #f97316",
-                    }}
-                  />
-                  <div
-                    className="w-0.5 h-8 bg-primary rounded-full"
-                    style={{
-                      boxShadow: "0 0 8px #f97316, 0 0 16px #f97316",
-                    }}
-                  />
-                  <div
-                    className="w-0.5 h-8 bg-primary rounded-full"
-                    style={{
-                      boxShadow: "0 0 8px #f97316, 0 0 16px #f97316",
-                    }}
-                  />
-                </div>
-                <div>
-                  <h4 className="font-medium text-foreground mb-2">
-                    Get matched
-                  </h4>
-                  <p className="text-muted-foreground text-base leading-relaxed">
-                    If the deal executes and your offer matches, you receive
-                    exactly your desired price or better. If it doesn&apos;t,
-                    your funds are returned.
-                  </p>
-                </div>
-              </div>
+              <StepCard
+                title="Submit your offer"
+                description="Make a blind offer with your desired price and size. If your offer passes the creator's threshold, it gets silently added to the deal."
+                barCount={2}
+              />
+
+              <StepCard
+                title="Get matched"
+                description="If the deal executes and your offer matches, you receive exactly your desired price or better. If it doesn't, your funds are returned."
+                barCount={3}
+              />
             </div>
           </div>
         </div>
@@ -719,7 +614,7 @@ export default function HomePage() {
           <div className="grid md:grid-cols-2 gap-24 items-start">
             {/* Left column - header and text */}
             <div className="pt-6">
-              <h2 className="text-3xl font-bold text-foreground mb-6">
+              <h2 className="text-4xl font-bold text-foreground mb-6">
                 End-to-end privacy and security
               </h2>
               <p className="text-muted-foreground">
@@ -846,7 +741,7 @@ export default function HomePage() {
       {/* FAQ Section */}
       <section id="faq" className="py-32">
         <div className="max-w-3xl mx-auto px-6">
-          <h2 className="text-3xl font-bold text-foreground text-center mb-6">
+          <h2 className="text-4xl font-bold text-foreground text-center mb-6">
             FAQ
           </h2>
           <p className="text-muted-foreground text-center mb-16">
