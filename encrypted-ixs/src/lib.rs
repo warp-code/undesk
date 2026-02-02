@@ -302,10 +302,10 @@ mod circuits {
         let creator_receives = ((total_filled as u128 * deal.price) >> 64) as u64;
         let creator_refund = if can_settle { unfilled } else { 0 };
 
-        // Update creator's balance: release commitment and refund unfilled BASE tokens
+        // Update creator's balance: release commitment and deduct sold BASE tokens
         let new_balance = if can_settle {
             BalanceState {
-                amount: balance.amount + creator_refund,  // Refund unfilled BASE tokens
+                amount: balance.amount - total_filled,  // Deduct sold BASE tokens
                 committed_amount: balance.committed_amount - deal.amount,  // Release full commitment
             }
         } else {
@@ -376,9 +376,9 @@ mod circuits {
         let quote_executed = ((executed_amt as u128 * deal.price) >> 64) as u64;
         let quote_refund = quote_committed - quote_executed;
 
-        // Update offeror's balance: release commitment and refund unused QUOTE tokens
+        // Update offeror's balance: release commitment and deduct paid QUOTE tokens
         let new_balance = BalanceState {
-            amount: balance.amount + quote_refund,  // Refund unused QUOTE tokens
+            amount: balance.amount - quote_executed,  // Deduct paid QUOTE tokens
             committed_amount: balance.committed_amount - quote_committed,  // Release full commitment
         };
 
