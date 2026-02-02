@@ -139,7 +139,7 @@ export function useOffer(offerId: string | null): UseOfferReturn {
             dealData.base_mint
           );
           refundAmt = toHumanAmount(
-            Number(settlement.refundAmt),
+            Number(settlement.quoteRefund),
             dealData.quote_mint
           );
         } catch (e) {

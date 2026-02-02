@@ -1,3 +1,4 @@
+import { useState } from "react";
 import type { DealWithDetails } from "../_lib/types";
 import {
   formatTimeRemaining,
@@ -14,6 +15,13 @@ interface DealDetailsProps {
 }
 
 export const DealDetails = ({ deal, onBack }: DealDetailsProps) => {
+  const [copied, setCopied] = useState(false);
+
+  const handleShare = async () => {
+    await navigator.clipboard.writeText(window.location.href);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
   // For own deals, calculate human-readable values
   const humanAmount =
     deal.isOwner && deal.amount !== undefined
@@ -26,27 +34,70 @@ export const DealDetails = ({ deal, onBack }: DealDetailsProps) => {
 
   return (
     <div className="p-4">
-      {/* Collapse header */}
-      <div
-        className="flex items-center gap-2 mb-6 cursor-pointer group"
-        onClick={onBack}
-      >
-        <svg
-          className="w-5 h-5 text-muted-foreground group-hover:text-foreground transition-colors"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
+      {/* Header with back button and share */}
+      <div className="flex items-center justify-between mb-6">
+        <div
+          className="flex items-center gap-2 cursor-pointer group"
+          onClick={onBack}
         >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M15 19l-7-7 7-7"
-          />
-        </svg>
-        <span className="text-muted-foreground group-hover:text-foreground transition-colors text-sm">
-          Back to Open Market
-        </span>
+          <svg
+            className="w-5 h-5 text-muted-foreground group-hover:text-foreground transition-colors"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M15 19l-7-7 7-7"
+            />
+          </svg>
+          <span className="text-muted-foreground group-hover:text-foreground transition-colors text-sm">
+            Back to Open Market
+          </span>
+        </div>
+
+        <button
+          onClick={handleShare}
+          className="px-2 py-1 text-xs font-medium rounded bg-primary/20 text-primary hover:bg-primary/30 transition-colors flex items-center gap-1 cursor-pointer"
+        >
+          {copied ? (
+            <>
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M5 13l4 4L19 7"
+                />
+              </svg>
+              <span>Copied!</span>
+            </>
+          ) : (
+            <>
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
+                />
+              </svg>
+              <span>Share</span>
+            </>
+          )}
+        </button>
       </div>
 
       {/* Deal Details */}
