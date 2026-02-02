@@ -130,6 +130,7 @@ pub mod otc {
         controller: Pubkey,
         encryption_pubkey: [u8; 32],
         nonce: u128,
+        balance_blob_nonce: u128,
         expires_at: i64,
         allow_partial: bool,
         encrypted_amount: [u8; 32],
@@ -141,6 +142,7 @@ pub mod otc {
             controller,
             encryption_pubkey,
             nonce,
+            balance_blob_nonce,
             expires_at,
             allow_partial,
             encrypted_amount,
@@ -189,6 +191,35 @@ pub mod otc {
         instructions::submit_offer::callback_handler(ctx, output)
     }
 
+    // Announce Balance
+    pub fn init_announce_balance_comp_def(ctx: Context<InitAnnounceBalanceCompDef>) -> Result<()> {
+        instructions::announce_balance::init_comp_def_handler(ctx)
+    }
+
+    pub fn announce_balance(
+        ctx: Context<AnnounceBalance>,
+        computation_offset: u64,
+        controller: Pubkey,
+        encryption_pubkey: [u8; 32],
+        owner_nonce: u128,
+    ) -> Result<()> {
+        instructions::announce_balance::handler(
+            ctx,
+            computation_offset,
+            controller,
+            encryption_pubkey,
+            owner_nonce,
+        )
+    }
+
+    #[arcium_callback(encrypted_ix = "announce_balance")]
+    pub fn announce_balance_callback(
+        ctx: Context<AnnounceBalanceCallback>,
+        output: SignedComputationOutputs<AnnounceBalanceOutput>,
+    ) -> Result<()> {
+        instructions::announce_balance::callback_handler(ctx, output)
+    }
+
     // Crank Deal
     pub fn init_crank_deal_comp_def(ctx: Context<InitCrankDealCompDef>) -> Result<()> {
         instructions::crank_deal::init_comp_def_handler(ctx)
@@ -197,9 +228,10 @@ pub mod otc {
     pub fn crank_deal(
         ctx: Context<CrankDeal>,
         computation_offset: u64,
-        creator_nonce: u128,
+        creator_deal_blob_nonce: u128,
+        creator_balance_blob_nonce: u128,
     ) -> Result<()> {
-        instructions::crank_deal::handler(ctx, computation_offset, creator_nonce)
+        instructions::crank_deal::handler(ctx, computation_offset, creator_deal_blob_nonce, creator_balance_blob_nonce)
     }
 
     #[arcium_callback(encrypted_ix = "crank_deal")]
@@ -218,9 +250,10 @@ pub mod otc {
     pub fn crank_offer(
         ctx: Context<CrankOffer>,
         computation_offset: u64,
-        offeror_nonce: u128,
+        offeror_offer_blob_nonce: u128,
+        offeror_balance_blob_nonce: u128,
     ) -> Result<()> {
-        instructions::crank_offer::handler(ctx, computation_offset, offeror_nonce)
+        instructions::crank_offer::handler(ctx, computation_offset, offeror_offer_blob_nonce, offeror_balance_blob_nonce)
     }
 
     #[arcium_callback(encrypted_ix = "crank_offer")]
@@ -229,5 +262,36 @@ pub mod otc {
         output: SignedComputationOutputs<CrankOfferOutput>,
     ) -> Result<()> {
         instructions::crank_offer::callback_handler(ctx, output)
+    }
+
+    // Top Up
+    pub fn init_top_up_comp_def(ctx: Context<InitTopUpCompDef>) -> Result<()> {
+        instructions::top_up::init_comp_def_handler(ctx)
+    }
+
+    pub fn top_up(
+        ctx: Context<TopUp>,
+        computation_offset: u64,
+        controller: Pubkey,
+        encryption_pubkey: [u8; 32],
+        owner_nonce: u128,
+        amount: u64,
+    ) -> Result<()> {
+        instructions::top_up::handler(
+            ctx,
+            computation_offset,
+            controller,
+            encryption_pubkey,
+            owner_nonce,
+            amount,
+        )
+    }
+
+    #[arcium_callback(encrypted_ix = "top_up")]
+    pub fn top_up_callback(
+        ctx: Context<TopUpCallback>,
+        output: SignedComputationOutputs<TopUpOutput>,
+    ) -> Result<()> {
+        instructions::top_up::callback_handler(ctx, output)
     }
 }

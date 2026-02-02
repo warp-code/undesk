@@ -37,6 +37,42 @@ export type Database = {
   };
   public: {
     Tables: {
+      balances: {
+        Row: {
+          address: string;
+          ciphertexts: string;
+          controller: string;
+          encryption_key: string;
+          indexed_at: string | null;
+          last_signature: string;
+          mint: string;
+          nonce: string;
+          slot: number;
+        };
+        Insert: {
+          address: string;
+          ciphertexts: string;
+          controller: string;
+          encryption_key: string;
+          indexed_at?: string | null;
+          last_signature: string;
+          mint: string;
+          nonce: string;
+          slot: number;
+        };
+        Update: {
+          address?: string;
+          ciphertexts?: string;
+          controller?: string;
+          encryption_key?: string;
+          indexed_at?: string | null;
+          last_signature?: string;
+          mint?: string;
+          nonce?: string;
+          slot?: number;
+        };
+        Relationships: [];
+      };
       deals: {
         Row: {
           address: string;
@@ -155,15 +191,7 @@ export type Database = {
           status?: string;
           submitted_at?: string;
         };
-        Relationships: [
-          {
-            foreignKeyName: "offers_deal_address_fkey";
-            columns: ["deal_address"];
-            isOneToOne: false;
-            referencedRelation: "deals";
-            referencedColumns: ["address"];
-          }
-        ];
+        Relationships: [];
       };
       raw_events: {
         Row: {

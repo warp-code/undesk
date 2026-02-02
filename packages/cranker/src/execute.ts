@@ -24,7 +24,8 @@ export async function executeCrankDeal(
 ): Promise<CrankResult> {
   const deal = new PublicKey(dealAddress);
   const computationOffset = generateComputationOffset();
-  const nonce = generateNonce();
+  const dealBlobNonce = generateNonce();
+  const balanceBlobNonce = generateNonce();
 
   logger.debug("Executing crank_deal", {
     deal: dealAddress,
@@ -32,16 +33,21 @@ export async function executeCrankDeal(
   });
 
   try {
+    // Fetch deal account to get controller and baseMint for balance PDA
+    const dealAccount = await program.account.dealAccount.fetch(deal);
+
     const accounts = buildCrankDealAccounts(
       program.programId,
       payer.publicKey,
       deal,
+      dealAccount.controller,
+      dealAccount.baseMint,
       computationOffset,
       clusterOffset
     );
 
     const signature = await program.methods
-      .crankDeal(computationOffset, nonce)
+      .crankDeal(computationOffset, dealBlobNonce, balanceBlobNonce)
       .accountsPartial(accounts)
       .signers([payer])
       .rpc({ skipPreflight: true, commitment: "confirmed" });
@@ -91,7 +97,8 @@ export async function executeCrankOffer(
   const offer = new PublicKey(offerAddress);
   const deal = new PublicKey(dealAddress);
   const computationOffset = generateComputationOffset();
-  const nonce = generateNonce();
+  const offerBlobNonce = generateNonce();
+  const balanceBlobNonce = generateNonce();
 
   logger.debug("Executing crank_offer", {
     offer: offerAddress,
@@ -100,17 +107,23 @@ export async function executeCrankOffer(
   });
 
   try {
+    // Fetch offer and deal accounts to get controller and quoteMint for balance PDA
+    const offerAccount = await program.account.offerAccount.fetch(offer);
+    const dealAccount = await program.account.dealAccount.fetch(deal);
+
     const accounts = buildCrankOfferAccounts(
       program.programId,
       payer.publicKey,
       deal,
       offer,
+      offerAccount.controller,
+      dealAccount.quoteMint,
       computationOffset,
       clusterOffset
     );
 
     const signature = await program.methods
-      .crankOffer(computationOffset, nonce)
+      .crankOffer(computationOffset, offerBlobNonce, balanceBlobNonce)
       .accountsPartial(accounts)
       .signers([payer])
       .rpc({ skipPreflight: true, commitment: "confirmed" });

@@ -15,6 +15,7 @@ import {
   getExecutingPoolAccAddress,
   getComputationAccAddress,
   getDealAddress,
+  getBalanceAddress,
   RescueCipher,
   deserializeLE,
   x25519,
@@ -58,7 +59,54 @@ describe("Create Deal", () => {
     );
     console.log("Quote mint created:", quoteMint.toBase58());
 
-    // 4. Encrypt amount (u64) and price (u128)
+    // 4. Top up creator's BASE balance before creating deal
+    const creatorBalanceAddress = getBalanceAddress(
+      program,
+      owner.publicKey,
+      baseMint
+    );
+    const topUpNonce = randomBytes(16);
+    const topUpComputationOffset = new anchor.BN(randomBytes(8), "hex");
+
+    await program.methods
+      .topUp(
+        topUpComputationOffset,
+        owner.publicKey, // controller
+        Array.from(publicKey),
+        new anchor.BN(deserializeLE(topUpNonce).toString()),
+        new anchor.BN(10000) // sufficient amount
+      )
+      .accountsPartial({
+        controllerSigner: owner.publicKey,
+        mint: baseMint,
+        balance: creatorBalanceAddress,
+        computationAccount: getComputationAccAddress(
+          arciumEnv.arciumClusterOffset,
+          topUpComputationOffset
+        ),
+        clusterAccount,
+        mxeAccount: getMXEAccAddress(program.programId),
+        mempoolAccount: getMempoolAccAddress(arciumEnv.arciumClusterOffset),
+        executingPool: getExecutingPoolAccAddress(
+          arciumEnv.arciumClusterOffset
+        ),
+        compDefAccount: getCompDefAccAddress(
+          program.programId,
+          Buffer.from(getCompDefAccOffset("top_up")).readUInt32LE()
+        ),
+      })
+      .rpc({ skipPreflight: true, commitment: "confirmed" });
+    console.log("Top up queued");
+
+    await awaitComputationFinalization(
+      provider,
+      topUpComputationOffset,
+      program.programId,
+      "confirmed"
+    );
+    console.log("Creator balance topped up");
+
+    // 5. Encrypt amount (u64) and price (u128)
     const amount = BigInt(1000); // Base amount to sell
     const price = BigInt(2) << BigInt(64); // X64.64 fixed-point: 2.0 as price
     const plaintext = [amount, price];
@@ -67,14 +115,17 @@ describe("Create Deal", () => {
     const ciphertext = cipher.encrypt(plaintext, nonce);
     console.log("Encrypted amount and price");
 
-    // 5. Generate ephemeral create_key
+    // Generate balance blob nonce
+    const balanceBlobNonce = randomBytes(16);
+
+    // 6. Generate ephemeral create_key
     const createKey = Keypair.generate();
 
-    // 6. Set deal parameters
+    // 7. Set deal parameters
     const expiresAt = new anchor.BN(Math.floor(Date.now() / 1000) + 3600); // 1 hour from now
     const allowPartial = true;
 
-    // 7. Queue create_deal computation
+    // 8. Queue create_deal computation
     const computationOffset = new anchor.BN(randomBytes(8), "hex");
     const dealAddress = getDealAddress(program, createKey.publicKey);
 
@@ -86,6 +137,7 @@ describe("Create Deal", () => {
         owner.publicKey, // controller
         Array.from(publicKey),
         new anchor.BN(deserializeLE(nonce).toString()),
+        new anchor.BN(deserializeLE(balanceBlobNonce).toString()),
         expiresAt,
         allowPartial,
         Array.from(ciphertext[0]),
@@ -94,6 +146,7 @@ describe("Create Deal", () => {
       .accountsPartial({
         createKey: createKey.publicKey,
         deal: dealAddress,
+        creatorBalance: creatorBalanceAddress,
         baseMint: baseMint,
         quoteMint: quoteMint,
         computationAccount: getComputationAccAddress(
@@ -115,7 +168,7 @@ describe("Create Deal", () => {
       .rpc({ skipPreflight: true, commitment: "confirmed" });
     console.log("Queue create_deal sig is ", queueSig);
 
-    // 8. Await finalization
+    // 9. Await finalization
     const finalizeSig = await awaitComputationFinalization(
       provider,
       computationOffset,
@@ -124,7 +177,7 @@ describe("Create Deal", () => {
     );
     console.log("Finalize sig is ", finalizeSig);
 
-    // 9. Verify DealCreated event
+    // 10. Verify DealCreated event
     const dealCreatedEvent = await dealCreatedEventPromise;
     console.log("DealCreated event received");
 
@@ -150,7 +203,7 @@ describe("Create Deal", () => {
     expect(decrypted[0]).to.equal(amount);
     expect(decrypted[1]).to.equal(price);
 
-    // 10. Fetch and verify DealAccount state
+    // 11. Fetch and verify DealAccount state
     const dealAccount = await program.account.dealAccount.fetch(dealAddress);
 
     expect(dealAccount.createKey.toBase58()).to.equal(

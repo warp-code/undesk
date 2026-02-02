@@ -257,6 +257,20 @@ export async function awaitEvents<E extends keyof Event>(
 // PDA derivation helpers
 
 /**
+ * Derives the balance account address for a given controller and mint.
+ */
+export function getBalanceAddress(
+  program: Program<Otc>,
+  controller: PublicKey,
+  mint: PublicKey
+): PublicKey {
+  return PublicKey.findProgramAddressSync(
+    [Buffer.from("balance"), controller.toBuffer(), mint.toBuffer()],
+    program.programId
+  )[0];
+}
+
+/**
  * Derives the counter account address for a given owner.
  */
 export function getCounterAddress(
@@ -692,6 +706,104 @@ export async function initCrankOfferCompDef(
     await uploadCircuit(
       provider,
       "crank_offer",
+      program.programId,
+      rawCircuit,
+      true
+    );
+  } else if (!offchainSource) {
+    await finalizeCompDefWithRetry(provider, offset, program.programId, owner);
+  }
+  return sig;
+}
+
+export async function initTopUpCompDef(
+  program: Program<Otc>,
+  provider: anchor.AnchorProvider,
+  owner: anchor.web3.Keypair,
+  uploadRawCircuit: boolean = false,
+  offchainSource: boolean = false
+): Promise<string> {
+  const baseSeedCompDefAcc = getArciumAccountBaseSeed(
+    "ComputationDefinitionAccount"
+  );
+  const offset = getCompDefAccOffset("top_up");
+
+  const compDefPDA = PublicKey.findProgramAddressSync(
+    [baseSeedCompDefAcc, program.programId.toBuffer(), offset],
+    getArciumProgramId()
+  )[0];
+
+  console.log("Top Up comp def pda is ", compDefPDA);
+
+  const sig = await program.methods
+    .initTopUpCompDef()
+    .accounts({
+      compDefAccount: compDefPDA,
+      payer: owner.publicKey,
+      mxeAccount: getMXEAccAddress(program.programId),
+    })
+    .signers([owner])
+    .rpc({
+      commitment: "confirmed",
+    });
+  console.log("Init Top Up computation definition transaction", sig);
+
+  if (uploadRawCircuit) {
+    const { uploadCircuit } = await import("@arcium-hq/client");
+    const rawCircuit = fs.readFileSync("build/top_up.arcis");
+
+    await uploadCircuit(
+      provider,
+      "top_up",
+      program.programId,
+      rawCircuit,
+      true
+    );
+  } else if (!offchainSource) {
+    await finalizeCompDefWithRetry(provider, offset, program.programId, owner);
+  }
+  return sig;
+}
+
+export async function initAnnounceBalanceCompDef(
+  program: Program<Otc>,
+  provider: anchor.AnchorProvider,
+  owner: anchor.web3.Keypair,
+  uploadRawCircuit: boolean = false,
+  offchainSource: boolean = false
+): Promise<string> {
+  const baseSeedCompDefAcc = getArciumAccountBaseSeed(
+    "ComputationDefinitionAccount"
+  );
+  const offset = getCompDefAccOffset("announce_balance");
+
+  const compDefPDA = PublicKey.findProgramAddressSync(
+    [baseSeedCompDefAcc, program.programId.toBuffer(), offset],
+    getArciumProgramId()
+  )[0];
+
+  console.log("Announce Balance comp def pda is ", compDefPDA);
+
+  const sig = await program.methods
+    .initAnnounceBalanceCompDef()
+    .accounts({
+      compDefAccount: compDefPDA,
+      payer: owner.publicKey,
+      mxeAccount: getMXEAccAddress(program.programId),
+    })
+    .signers([owner])
+    .rpc({
+      commitment: "confirmed",
+    });
+  console.log("Init Announce Balance computation definition transaction", sig);
+
+  if (uploadRawCircuit) {
+    const { uploadCircuit } = await import("@arcium-hq/client");
+    const rawCircuit = fs.readFileSync("build/announce_balance.arcis");
+
+    await uploadCircuit(
+      provider,
+      "announce_balance",
       program.programId,
       rawCircuit,
       true

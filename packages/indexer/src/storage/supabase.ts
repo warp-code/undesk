@@ -15,6 +15,7 @@ import type {
   OfferCreatedData,
   DealSettledData,
   OfferSettledData,
+  BalanceUpdatedData,
 } from "../types";
 import { logger } from "../log";
 
@@ -24,6 +25,9 @@ export interface Storage {
   upsertDealSettled(event: EventWithContext<DealSettledData>): Promise<void>;
   upsertOfferCreated(event: EventWithContext<OfferCreatedData>): Promise<void>;
   upsertOfferSettled(event: EventWithContext<OfferSettledData>): Promise<void>;
+  upsertBalanceUpdated(
+    event: EventWithContext<BalanceUpdatedData>
+  ): Promise<void>;
 }
 
 /**
@@ -320,6 +324,71 @@ export function createSupabaseStorage(config?: {
 
       logger.info("Updated offer settlement", {
         address,
+        slot,
+        signature: event.context.signature,
+      });
+    },
+
+    async upsertBalanceUpdated(
+      event: EventWithContext<BalanceUpdatedData>
+    ): Promise<void> {
+      const data = event.data;
+      const address = pubkeyToBase58(data.balance);
+      const slot = event.context.slot;
+
+      const upsertData = {
+        address,
+        controller: pubkeyToBase58(data.controller),
+        mint: pubkeyToBase58(data.mint),
+        encryption_key: bytesToBytea(data.encryption_key),
+        nonce: bytesToBytea(data.nonce),
+        ciphertexts: ciphertextsToBytea(data.ciphertexts),
+        last_signature: event.context.signature,
+        slot,
+        indexed_at: new Date().toISOString(),
+      };
+
+      // Use upsert with onConflict - always update if incoming slot > existing
+      const { error: upsertError } = await client
+        .from("balances")
+        .upsert(upsertData, { onConflict: "address" });
+
+      if (upsertError) {
+        // If conflict on (controller, mint) unique constraint, try update
+        if (upsertError.code === "23505") {
+          const { data: updated, error: updateError } = await client
+            .from("balances")
+            .update(upsertData)
+            .eq("address", address)
+            .lt("slot", slot)
+            .select("address");
+
+          if (updateError) {
+            throw new Error(`Failed to update balance: ${updateError.message}`);
+          }
+
+          if (!updated || updated.length === 0) {
+            logger.debug("Skipped balance upsert (existing slot >= incoming)", {
+              address,
+              incomingSlot: slot,
+            });
+            return;
+          }
+
+          logger.info("Updated balance (newer slot)", {
+            address,
+            slot,
+            signature: event.context.signature,
+          });
+          return;
+        }
+        throw new Error(`Failed to upsert balance: ${upsertError.message}`);
+      }
+
+      logger.info("Upserted balance", {
+        address,
+        controller: upsertData.controller,
+        mint: upsertData.mint,
         slot,
         signature: event.context.signature,
       });

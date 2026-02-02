@@ -18,4 +18,6 @@ pub enum ErrorCode {
     OfferAlreadySettled,
     #[msg("Offer does not belong to this deal")]
     DealMismatch,
+    #[msg("Controller does not match existing balance account")]
+    ControllerMismatch,
 }

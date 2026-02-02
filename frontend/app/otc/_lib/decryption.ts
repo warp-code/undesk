@@ -129,26 +129,28 @@ export function decryptOfferData(
 export interface DecryptedOfferSettlement {
   outcome: number; // 0=EXECUTED, 1=PARTIAL, 2=FAILED
   executedAmt: bigint;
-  refundAmt: bigint;
+  quotePaid: bigint;
+  quoteRefund: bigint;
 }
 
 /**
  * Decrypts offer settlement data from database ciphertexts.
- * Field order: [outcome (u8), executed_amt (u64), refund_amt (u64)]
+ * Field order: [outcome (u8), executed_amt (u64), quote_paid (u64), quote_refund (u64)]
  */
 export function decryptOfferSettlementData(
   ciphertextsHex: string,
   nonceHex: string,
   cipher: RescueCipher
 ): DecryptedOfferSettlement {
-  const ciphertexts = parseCiphertexts(ciphertextsHex, 3);
+  const ciphertexts = parseCiphertexts(ciphertextsHex, 4);
   const nonce = hexToBytes(nonceHex);
   const decrypted = cipher.decrypt(ciphertexts, nonce);
 
   return {
     outcome: Number(decrypted[0]),
     executedAmt: decrypted[1],
-    refundAmt: decrypted[2],
+    quotePaid: decrypted[2],
+    quoteRefund: decrypted[3],
   };
 }
 
@@ -175,5 +177,29 @@ export function decryptDealSettlementData(
     totalFilled: decrypted[0],
     creatorReceives: decrypted[1],
     creatorRefund: decrypted[2],
+  };
+}
+
+export interface DecryptedBalanceData {
+  amount: bigint; // Available balance amount
+  committedAmount: bigint; // Amount committed to open deals/offers
+}
+
+/**
+ * Decrypts balance data from database ciphertexts.
+ * Field order: [amount (u64), committed_amount (u64)]
+ */
+export function decryptBalanceData(
+  ciphertextsHex: string,
+  nonceHex: string,
+  cipher: RescueCipher
+): DecryptedBalanceData {
+  const ciphertexts = parseCiphertexts(ciphertextsHex, 2);
+  const nonce = hexToBytes(nonceHex);
+  const decrypted = cipher.decrypt(ciphertexts, nonce);
+
+  return {
+    amount: decrypted[0],
+    committedAmount: decrypted[1],
   };
 }

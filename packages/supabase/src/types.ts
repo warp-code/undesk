@@ -3,6 +3,10 @@ export type { Database, Json } from "./generated";
 import type { Database } from "./generated";
 
 // Convenience type aliases
+export type BalanceRow = Database["public"]["Tables"]["balances"]["Row"];
+export type BalanceInsert = Database["public"]["Tables"]["balances"]["Insert"];
+export type BalanceUpdate = Database["public"]["Tables"]["balances"]["Update"];
+
 export type DealRow = Database["public"]["Tables"]["deals"]["Row"];
 export type DealInsert = Database["public"]["Tables"]["deals"]["Insert"];
 export type DealUpdate = Database["public"]["Tables"]["deals"]["Update"];

@@ -1,4 +1,5 @@
 pub mod add_together;
+pub mod announce_balance;
 pub mod crank_deal;
 pub mod crank_offer;
 pub mod create_deal;
@@ -6,10 +7,14 @@ pub mod get_counter;
 pub mod increment_counter;
 pub mod init_counter;
 pub mod submit_offer;
+pub mod top_up;
 
 // Re-export account structs and events (not handlers to avoid name conflicts)
 pub use add_together::{
     AddTogether, AddTogetherCallback, AddTogetherOutput, InitAddTogetherCompDef, SumEvent,
+};
+pub use announce_balance::{
+    AnnounceBalance, AnnounceBalanceCallback, AnnounceBalanceOutput, InitAnnounceBalanceCompDef,
 };
 pub use crank_deal::{
     CrankDeal, CrankDealCallback, CrankDealOutput, InitCrankDealCompDef,
@@ -33,6 +38,9 @@ pub use init_counter::{
 pub use submit_offer::{
     InitSubmitOfferCompDef, SubmitOffer, SubmitOfferCallback, SubmitOfferOutput,
 };
+pub use top_up::{
+    InitTopUpCompDef, TopUp, TopUpCallback, TopUpOutput,
+};
 
 // Re-export the hidden __client_accounts_* modules that anchor's #[program] macro expects at crate root
 #[doc(hidden)]
@@ -41,6 +49,12 @@ pub(crate) use add_together::__client_accounts_add_together;
 pub(crate) use add_together::__client_accounts_add_together_callback;
 #[doc(hidden)]
 pub(crate) use add_together::__client_accounts_init_add_together_comp_def;
+#[doc(hidden)]
+pub(crate) use announce_balance::__client_accounts_announce_balance;
+#[doc(hidden)]
+pub(crate) use announce_balance::__client_accounts_announce_balance_callback;
+#[doc(hidden)]
+pub(crate) use announce_balance::__client_accounts_init_announce_balance_comp_def;
 #[doc(hidden)]
 pub(crate) use crank_deal::__client_accounts_crank_deal;
 #[doc(hidden)]
@@ -83,3 +97,9 @@ pub(crate) use submit_offer::__client_accounts_submit_offer;
 pub(crate) use submit_offer::__client_accounts_submit_offer_callback;
 #[doc(hidden)]
 pub(crate) use submit_offer::__client_accounts_init_submit_offer_comp_def;
+#[doc(hidden)]
+pub(crate) use top_up::__client_accounts_top_up;
+#[doc(hidden)]
+pub(crate) use top_up::__client_accounts_top_up_callback;
+#[doc(hidden)]
+pub(crate) use top_up::__client_accounts_init_top_up_comp_def;

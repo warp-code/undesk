@@ -74,13 +74,26 @@ export type OfferSettledData = {
 };
 
 /**
+ * BalanceUpdated event data (snake_case from Anchor BorshCoder)
+ */
+export type BalanceUpdatedData = {
+  balance: PublicKey;
+  controller: PublicKey;
+  mint: PublicKey;
+  encryption_key: number[]; // [u8; 32]
+  nonce: number[]; // [u8; 16]
+  ciphertexts: number[][]; // [[u8; 32]; 2]
+};
+
+/**
  * Union of all event data types
  */
 export type EventData =
   | DealCreatedData
   | OfferCreatedData
   | DealSettledData
-  | OfferSettledData;
+  | OfferSettledData
+  | BalanceUpdatedData;
 
 /**
  * Event names from the OTC program
@@ -89,7 +102,8 @@ export type EventName =
   | "DealCreated"
   | "OfferCreated"
   | "DealSettled"
-  | "OfferSettled";
+  | "OfferSettled"
+  | "BalanceUpdated";
 
 /**
  * Ingestion adapter interface

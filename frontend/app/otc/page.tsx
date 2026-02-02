@@ -4,7 +4,8 @@ import { useState, useEffect, Suspense } from "react";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { MOCK_DEALS, MOCK_MARKET_DEALS, MOCK_OFFERS } from "./_lib/constants";
 import type { Deal, MarketDeal, Offer } from "./_lib/types";
-import { FAQPanel } from "./_components/FAQPanel";
+import { FAQPanelContent } from "./_components/FAQPanel";
+import { BalancesPanel } from "./_components/BalancesPanel";
 import { TabNavigation } from "./_components/TabNavigation";
 import { Navbar } from "./_components/Navbar";
 import { DealsTable } from "./_components/DealsTable";
@@ -310,8 +311,11 @@ function OTCPageContent() {
           </div>
         </div>
 
-        {/* Right Panel - Negotiation */}
-        <FAQPanel />
+        {/* Right Panel - Balances & FAQ */}
+        <div className="shrink-0 w-[380px] border-l border-border p-4 overflow-y-auto">
+          <BalancesPanel />
+          <FAQPanelContent />
+        </div>
       </div>
 
       {/* Footer border */}

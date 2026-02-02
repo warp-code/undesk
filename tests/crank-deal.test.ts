@@ -16,6 +16,7 @@ import {
   getComputationAccAddress,
   getDealAddress,
   getOfferAddress,
+  getBalanceAddress,
   RescueCipher,
   deserializeLE,
   x25519,
@@ -54,9 +55,9 @@ describe("Crank Deal", () => {
     console.log("Quote mint created:", quoteMint.toBase58());
 
     // ==========================================
-    // STEP 1: Create a deal
+    // STEP 1: Top up creator's BASE balance
     // ==========================================
-    console.log("\n--- Creating Deal ---");
+    console.log("\n--- Top Up Creator Balance ---");
 
     // Generate deal creator's encryption keypair (SAVE FOR CRANK)
     const dealCreatorPrivateKey = x25519.utils.randomSecretKey();
@@ -67,6 +68,56 @@ describe("Crank Deal", () => {
     );
     const dealCreatorCipher = new RescueCipher(dealCreatorSharedSecret);
 
+    const creatorBalanceAddress = getBalanceAddress(
+      program,
+      owner.publicKey,
+      baseMint
+    );
+    const creatorTopUpNonce = randomBytes(16);
+    const creatorTopUpComputationOffset = new anchor.BN(randomBytes(8), "hex");
+
+    await program.methods
+      .topUp(
+        creatorTopUpComputationOffset,
+        owner.publicKey,
+        Array.from(dealCreatorPublicKey),
+        new anchor.BN(deserializeLE(creatorTopUpNonce).toString()),
+        new anchor.BN(10000)
+      )
+      .accountsPartial({
+        controllerSigner: owner.publicKey,
+        mint: baseMint,
+        balance: creatorBalanceAddress,
+        computationAccount: getComputationAccAddress(
+          arciumEnv.arciumClusterOffset,
+          creatorTopUpComputationOffset
+        ),
+        clusterAccount,
+        mxeAccount: getMXEAccAddress(program.programId),
+        mempoolAccount: getMempoolAccAddress(arciumEnv.arciumClusterOffset),
+        executingPool: getExecutingPoolAccAddress(
+          arciumEnv.arciumClusterOffset
+        ),
+        compDefAccount: getCompDefAccAddress(
+          program.programId,
+          Buffer.from(getCompDefAccOffset("top_up")).readUInt32LE()
+        ),
+      })
+      .rpc({ skipPreflight: true, commitment: "confirmed" });
+
+    await awaitComputationFinalization(
+      provider,
+      creatorTopUpComputationOffset,
+      program.programId,
+      "confirmed"
+    );
+    console.log("Creator BASE balance topped up");
+
+    // ==========================================
+    // STEP 2: Create a deal
+    // ==========================================
+    console.log("\n--- Creating Deal ---");
+
     // Encrypt deal parameters: amount (u64), price (u128)
     const dealAmount = BigInt(1000);
     const dealPrice = BigInt(2) << BigInt(64); // X64.64: 2.0
@@ -74,6 +125,7 @@ describe("Crank Deal", () => {
 
     const dealNonce = randomBytes(16);
     const dealCiphertext = dealCreatorCipher.encrypt(dealPlaintext, dealNonce);
+    const dealBalanceBlobNonce = randomBytes(16);
 
     const dealCreateKey = Keypair.generate();
     const expiresAt = new anchor.BN(Math.floor(Date.now() / 1000) + 3600);
@@ -90,6 +142,7 @@ describe("Crank Deal", () => {
         owner.publicKey,
         Array.from(dealCreatorPublicKey),
         new anchor.BN(deserializeLE(dealNonce).toString()),
+        new anchor.BN(deserializeLE(dealBalanceBlobNonce).toString()),
         expiresAt,
         allowPartial,
         Array.from(dealCiphertext[0]),
@@ -98,6 +151,7 @@ describe("Crank Deal", () => {
       .accountsPartial({
         createKey: dealCreateKey.publicKey,
         deal: dealAddress,
+        creatorBalance: creatorBalanceAddress,
         baseMint,
         quoteMint,
         computationAccount: getComputationAccAddress(
@@ -129,9 +183,9 @@ describe("Crank Deal", () => {
     console.log("Deal created at:", dealAddress.toBase58());
 
     // ==========================================
-    // STEP 2: Submit an offer that FULLY fills the deal
+    // STEP 3: Top up offeror's QUOTE balance
     // ==========================================
-    console.log("\n--- Submitting Filling Offer ---");
+    console.log("\n--- Top Up Offeror Balance ---");
 
     const offerorPrivateKey = x25519.utils.randomSecretKey();
     const offerorPublicKey = x25519.getPublicKey(offerorPrivateKey);
@@ -140,6 +194,56 @@ describe("Crank Deal", () => {
       mxePublicKey
     );
     const offerorCipher = new RescueCipher(offerorSharedSecret);
+
+    const offerorBalanceAddress = getBalanceAddress(
+      program,
+      owner.publicKey,
+      quoteMint
+    );
+    const offerorTopUpNonce = randomBytes(16);
+    const offerorTopUpComputationOffset = new anchor.BN(randomBytes(8), "hex");
+
+    await program.methods
+      .topUp(
+        offerorTopUpComputationOffset,
+        owner.publicKey,
+        Array.from(offerorPublicKey),
+        new anchor.BN(deserializeLE(offerorTopUpNonce).toString()),
+        new anchor.BN(10000)
+      )
+      .accountsPartial({
+        controllerSigner: owner.publicKey,
+        mint: quoteMint,
+        balance: offerorBalanceAddress,
+        computationAccount: getComputationAccAddress(
+          arciumEnv.arciumClusterOffset,
+          offerorTopUpComputationOffset
+        ),
+        clusterAccount,
+        mxeAccount: getMXEAccAddress(program.programId),
+        mempoolAccount: getMempoolAccAddress(arciumEnv.arciumClusterOffset),
+        executingPool: getExecutingPoolAccAddress(
+          arciumEnv.arciumClusterOffset
+        ),
+        compDefAccount: getCompDefAccAddress(
+          program.programId,
+          Buffer.from(getCompDefAccOffset("top_up")).readUInt32LE()
+        ),
+      })
+      .rpc({ skipPreflight: true, commitment: "confirmed" });
+
+    await awaitComputationFinalization(
+      provider,
+      offerorTopUpComputationOffset,
+      program.programId,
+      "confirmed"
+    );
+    console.log("Offeror QUOTE balance topped up");
+
+    // ==========================================
+    // STEP 4: Submit an offer that FULLY fills the deal
+    // ==========================================
+    console.log("\n--- Submitting Filling Offer ---");
 
     // Offer at same price, same amount to FULLY fill the deal
     const offerPrice = BigInt(2) << BigInt(64); // Same price: 2.0
@@ -172,6 +276,7 @@ describe("Crank Deal", () => {
         createKey: offerCreateKey.publicKey,
         deal: dealAddress,
         offer: offerAddress,
+        offerorBalance: offerorBalanceAddress,
         computationAccount: getComputationAccAddress(
           arciumEnv.arciumClusterOffset,
           offerComputationOffset
@@ -201,23 +306,26 @@ describe("Crank Deal", () => {
     console.log("Offer submitted at:", offerAddress.toBase58());
 
     // ==========================================
-    // STEP 3: Crank the deal
+    // STEP 5: Crank the deal
     // ==========================================
     console.log("\n--- Cranking Deal ---");
 
     const crankComputationOffset = new anchor.BN(randomBytes(8), "hex");
-    const crankNonce = randomBytes(16);
+    const crankDealBlobNonce = randomBytes(16);
+    const crankBalanceBlobNonce = randomBytes(16);
 
     const dealSettledEventPromise = awaitEvent(program, "dealSettled");
 
     await program.methods
       .crankDeal(
         crankComputationOffset,
-        new anchor.BN(deserializeLE(crankNonce).toString()) // Nonce for output encryption
+        new anchor.BN(deserializeLE(crankDealBlobNonce).toString()),
+        new anchor.BN(deserializeLE(crankBalanceBlobNonce).toString())
       )
       .accountsPartial({
         payer: owner.publicKey,
         deal: dealAddress,
+        creatorBalance: creatorBalanceAddress,
         computationAccount: getComputationAccAddress(
           arciumEnv.arciumClusterOffset,
           crankComputationOffset
@@ -246,7 +354,7 @@ describe("Crank Deal", () => {
     console.log("Crank deal finalized");
 
     // ==========================================
-    // STEP 4: Verify DealSettled event
+    // STEP 6: Verify DealSettled event
     // ==========================================
     const dealSettledEvent = await dealSettledEventPromise;
     console.log("DealSettled event received");
@@ -277,7 +385,7 @@ describe("Crank Deal", () => {
     expect(creatorRefund).to.equal(BigInt(0)); // No refund
 
     // ==========================================
-    // STEP 5: Verify DealAccount state
+    // STEP 7: Verify DealAccount state
     // ==========================================
     const dealAccount = await program.account.dealAccount.fetch(dealAddress);
     expect(dealAccount.status).to.equal(1); // EXECUTED

@@ -3,9 +3,11 @@
 import { useState, useMemo } from "react";
 import { type Deal } from "../_lib/types";
 import { sanitizeNumberInput } from "../_lib/format";
-import { MINTS, getTokenSymbol } from "../_lib/tokens";
+import { MINTS, getTokenSymbol, getTokenInfo } from "../_lib/tokens";
 import { TokenDropdown } from "./TokenDropdown";
+import { BalanceIndicator } from "./BalanceIndicator";
 import { useCreateDeal } from "../_hooks/useCreateDeal";
+import { useMyBalances } from "../_providers/MyBalancesProvider";
 import { useDerivedKeysContext } from "../_providers/DerivedKeysProvider";
 
 interface CreateDealFormProps {
@@ -18,7 +20,9 @@ export const CreateDealForm = ({ onDealCreated }: CreateDealFormProps) => {
   const [sellAmount, setSellAmount] = useState("");
   const [pricePerUnit, setPricePerUnit] = useState("");
   const [expiresIn, setExpiresIn] = useState("15");
-  const [expiresUnit, setExpiresUnit] = useState<"minutes" | "hours">("minutes");
+  const [expiresUnit, setExpiresUnit] = useState<"minutes" | "hours">(
+    "minutes"
+  );
   const [allowPartial, setAllowPartial] = useState(true);
   const [isLocked, setIsLocked] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -27,12 +31,36 @@ export const CreateDealForm = ({ onDealCreated }: CreateDealFormProps) => {
   const { createDeal, isCreating } = useCreateDeal();
   const { hasDerivedKeys, deriveKeysFromWallet, isDerivingKeys } =
     useDerivedKeysContext();
+  const { getBalance } = useMyBalances();
 
   const calculatedTotal = useMemo(() => {
     const amount = parseFloat(sellAmount) || 0;
     const price = parseFloat(pricePerUnit) || 0;
     return amount * price;
   }, [sellAmount, pricePerUnit]);
+
+  // Check if user has sufficient balance
+  const { hasSufficientBalance, availableBalance } = useMemo(() => {
+    if (!hasDerivedKeys || !sellAmount || parseFloat(sellAmount) <= 0) {
+      return { hasSufficientBalance: true, availableBalance: BigInt(0) };
+    }
+
+    const balance = getBalance(sellMint);
+    const tokenInfo = getTokenInfo(sellMint);
+    const totalAmount = balance?.amount ?? BigInt(0);
+    const committedAmount = balance?.committedAmount ?? BigInt(0);
+    const available = totalAmount - committedAmount;
+
+    // Convert sellAmount to raw bigint
+    const [whole, frac = ""] = sellAmount.split(".");
+    const paddedFrac = frac.padEnd(tokenInfo.decimals, "0").slice(0, tokenInfo.decimals);
+    const rawAmount = BigInt(whole || "0") * BigInt(10 ** tokenInfo.decimals) + BigInt(paddedFrac || "0");
+
+    return {
+      hasSufficientBalance: available >= rawAmount,
+      availableBalance: available,
+    };
+  }, [hasDerivedKeys, sellAmount, sellMint, getBalance]);
 
   const canSubmit =
     !isLocked &&
@@ -42,7 +70,8 @@ export const CreateDealForm = ({ onDealCreated }: CreateDealFormProps) => {
     parseFloat(sellAmount) > 0 &&
     parseFloat(pricePerUnit) > 0 &&
     parseFloat(expiresIn) > 0 &&
-    sellMint !== quoteMint;
+    sellMint !== quoteMint &&
+    hasSufficientBalance;
 
   const handleSubmit = async () => {
     if (!canSubmit || isLocked) return;
@@ -130,6 +159,10 @@ export const CreateDealForm = ({ onDealCreated }: CreateDealFormProps) => {
               disabled={isLocked}
             />
           </div>
+          <BalanceIndicator
+            mint={sellMint}
+            onClickBalance={isLocked ? undefined : setSellAmount}
+          />
         </div>
 
         {/* Price per sell token */}
@@ -304,6 +337,8 @@ export const CreateDealForm = ({ onDealCreated }: CreateDealFormProps) => {
             ? "Signing..."
             : isLoading
             ? "Creating..."
+            : !hasSufficientBalance && hasDerivedKeys && sellAmount && parseFloat(sellAmount) > 0
+            ? "Insufficient balance"
             : "Create Deal"}
         </button>
       </div>

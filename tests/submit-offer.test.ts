@@ -16,6 +16,7 @@ import {
   getComputationAccAddress,
   getDealAddress,
   getOfferAddress,
+  getBalanceAddress,
   RescueCipher,
   deserializeLE,
   x25519,
@@ -55,9 +56,9 @@ describe("Submit Offer", () => {
     console.log("Quote mint created:", quoteMint.toBase58());
 
     // ==========================================
-    // STEP 1: Create a deal first
+    // STEP 1: Top up creator's BASE balance
     // ==========================================
-    console.log("\n--- Creating Deal ---");
+    console.log("\n--- Top Up Creator Balance ---");
 
     // Generate deal creator's encryption keypair
     const dealCreatorPrivateKey = x25519.utils.randomSecretKey();
@@ -68,6 +69,55 @@ describe("Submit Offer", () => {
     );
     const dealCreatorCipher = new RescueCipher(dealCreatorSharedSecret);
 
+    const creatorBalanceAddress = getBalanceAddress(
+      program,
+      owner.publicKey,
+      baseMint
+    );
+    const creatorTopUpNonce = randomBytes(16);
+    const creatorTopUpComputationOffset = new anchor.BN(randomBytes(8), "hex");
+
+    await program.methods
+      .topUp(
+        creatorTopUpComputationOffset,
+        owner.publicKey,
+        Array.from(dealCreatorPublicKey),
+        new anchor.BN(deserializeLE(creatorTopUpNonce).toString()),
+        new anchor.BN(10000)
+      )
+      .accountsPartial({
+        controllerSigner: owner.publicKey,
+        mint: baseMint,
+        balance: creatorBalanceAddress,
+        computationAccount: getComputationAccAddress(
+          arciumEnv.arciumClusterOffset,
+          creatorTopUpComputationOffset
+        ),
+        clusterAccount,
+        mxeAccount: getMXEAccAddress(program.programId),
+        mempoolAccount: getMempoolAccAddress(arciumEnv.arciumClusterOffset),
+        executingPool: getExecutingPoolAccAddress(
+          arciumEnv.arciumClusterOffset
+        ),
+        compDefAccount: getCompDefAccAddress(
+          program.programId,
+          Buffer.from(getCompDefAccOffset("top_up")).readUInt32LE()
+        ),
+      })
+      .rpc({ skipPreflight: true, commitment: "confirmed" });
+
+    await awaitComputationFinalization(
+      provider,
+      creatorTopUpComputationOffset,
+      program.programId,
+      "confirmed"
+    );
+    console.log("Creator BASE balance topped up");
+
+    // ==========================================
+    // STEP 2: Create a deal
+    // ==========================================
+
     // Encrypt deal parameters: amount (u64), price (u128)
     const dealAmount = BigInt(1000); // Base amount to sell
     const dealPrice = BigInt(2) << BigInt(64); // X64.64 fixed-point: 2.0 as price
@@ -75,6 +125,7 @@ describe("Submit Offer", () => {
 
     const dealNonce = randomBytes(16);
     const dealCiphertext = dealCreatorCipher.encrypt(dealPlaintext, dealNonce);
+    const dealBalanceBlobNonce = randomBytes(16);
     console.log("Encrypted deal amount and price");
 
     // Generate ephemeral create_key for deal
@@ -96,6 +147,7 @@ describe("Submit Offer", () => {
         owner.publicKey, // controller
         Array.from(dealCreatorPublicKey),
         new anchor.BN(deserializeLE(dealNonce).toString()),
+        new anchor.BN(deserializeLE(dealBalanceBlobNonce).toString()),
         expiresAt,
         allowPartial,
         Array.from(dealCiphertext[0]),
@@ -104,6 +156,7 @@ describe("Submit Offer", () => {
       .accountsPartial({
         createKey: dealCreateKey.publicKey,
         deal: dealAddress,
+        creatorBalance: creatorBalanceAddress,
         baseMint: baseMint,
         quoteMint: quoteMint,
         computationAccount: getComputationAccAddress(
@@ -147,9 +200,9 @@ describe("Submit Offer", () => {
     console.log("Deal created with numOffers:", dealAccountBefore.numOffers);
 
     // ==========================================
-    // STEP 2: Submit an offer to the deal
+    // STEP 3: Top up offeror's QUOTE balance
     // ==========================================
-    console.log("\n--- Submitting Offer ---");
+    console.log("\n--- Top Up Offeror Balance ---");
 
     // Generate offeror's encryption keypair (different from deal creator)
     const offerorPrivateKey = x25519.utils.randomSecretKey();
@@ -159,6 +212,56 @@ describe("Submit Offer", () => {
       mxePublicKey
     );
     const offerorCipher = new RescueCipher(offerorSharedSecret);
+
+    const offerorBalanceAddress = getBalanceAddress(
+      program,
+      owner.publicKey,
+      quoteMint
+    );
+    const offerorTopUpNonce = randomBytes(16);
+    const offerorTopUpComputationOffset = new anchor.BN(randomBytes(8), "hex");
+
+    await program.methods
+      .topUp(
+        offerorTopUpComputationOffset,
+        owner.publicKey,
+        Array.from(offerorPublicKey),
+        new anchor.BN(deserializeLE(offerorTopUpNonce).toString()),
+        new anchor.BN(10000)
+      )
+      .accountsPartial({
+        controllerSigner: owner.publicKey,
+        mint: quoteMint,
+        balance: offerorBalanceAddress,
+        computationAccount: getComputationAccAddress(
+          arciumEnv.arciumClusterOffset,
+          offerorTopUpComputationOffset
+        ),
+        clusterAccount,
+        mxeAccount: getMXEAccAddress(program.programId),
+        mempoolAccount: getMempoolAccAddress(arciumEnv.arciumClusterOffset),
+        executingPool: getExecutingPoolAccAddress(
+          arciumEnv.arciumClusterOffset
+        ),
+        compDefAccount: getCompDefAccAddress(
+          program.programId,
+          Buffer.from(getCompDefAccOffset("top_up")).readUInt32LE()
+        ),
+      })
+      .rpc({ skipPreflight: true, commitment: "confirmed" });
+
+    await awaitComputationFinalization(
+      provider,
+      offerorTopUpComputationOffset,
+      program.programId,
+      "confirmed"
+    );
+    console.log("Offeror QUOTE balance topped up");
+
+    // ==========================================
+    // STEP 4: Submit an offer to the deal
+    // ==========================================
+    console.log("\n--- Submitting Offer ---");
 
     // Encrypt offer parameters: price (u128) first, then amount (u64) - as per OfferInput struct order
     const offerPrice = BigInt(25) << BigInt(63); // X64.64 fixed-point: 2.5 as price (higher than deal price of 2.0)
@@ -196,6 +299,7 @@ describe("Submit Offer", () => {
         createKey: offerCreateKey.publicKey,
         deal: dealAddress,
         offer: offerAddress,
+        offerorBalance: offerorBalanceAddress,
         computationAccount: getComputationAccAddress(
           arciumEnv.arciumClusterOffset,
           offerComputationOffset
@@ -225,7 +329,7 @@ describe("Submit Offer", () => {
     console.log("Offer finalize sig is ", offerFinalizeSig);
 
     // ==========================================
-    // STEP 3: Verify OfferCreated event
+    // STEP 5: Verify OfferCreated event
     // ==========================================
     const offerCreatedEvent = await offerCreatedEventPromise;
     console.log("OfferCreated event received");
@@ -249,7 +353,7 @@ describe("Submit Offer", () => {
     // The important thing is that the offer was created successfully
 
     // ==========================================
-    // STEP 4: Verify OfferAccount state
+    // STEP 6: Verify OfferAccount state
     // ==========================================
     const offerAccount = await program.account.offerAccount.fetch(offerAddress);
 
@@ -276,7 +380,7 @@ describe("Submit Offer", () => {
     console.log("  - submitted_at:", offerAccount.submittedAt.toNumber());
 
     // ==========================================
-    // STEP 5: Verify DealAccount.numOffers incremented
+    // STEP 7: Verify DealAccount.numOffers incremented
     // ==========================================
     const dealAccountAfter = await program.account.dealAccount.fetch(
       dealAddress

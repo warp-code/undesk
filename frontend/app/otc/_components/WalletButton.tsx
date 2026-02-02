@@ -7,5 +7,7 @@ export function WalletButton() {
   const { connected } = useWallet();
 
   // Only show "Connect" when not connected; when connected, default behavior shows address
-  return <WalletMultiButton>{connected ? undefined : "Connect"}</WalletMultiButton>;
+  return (
+    <WalletMultiButton>{connected ? undefined : "Connect"}</WalletMultiButton>
+  );
 }

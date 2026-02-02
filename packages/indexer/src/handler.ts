@@ -5,6 +5,7 @@ import type {
   OfferCreatedData,
   DealSettledData,
   OfferSettledData,
+  BalanceUpdatedData,
 } from "./types";
 import { logger } from "./log";
 
@@ -41,6 +42,12 @@ export function createEventHandler(storage: Storage) {
           case "OfferSettled":
             await storage.upsertOfferSettled(
               event as EventWithContext<OfferSettledData>
+            );
+            break;
+
+          case "BalanceUpdated":
+            await storage.upsertBalanceUpdated(
+              event as EventWithContext<BalanceUpdatedData>
             );
             break;
 

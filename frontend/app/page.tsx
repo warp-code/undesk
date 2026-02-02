@@ -18,7 +18,7 @@ const StatusIndicator = () => {
         className="w-1.5 h-1.5 bg-primary rounded-full animate-pulse"
         style={{ boxShadow: '0 0 8px #f97316' }}
       />
-      System Operational
+      Powered by Arcium
     </div>
   );
 };

@@ -2,6 +2,9 @@
 
 # Localnet wallet to airdrop SOL to
 LOCALNET_WALLET="D2vay1cNFWQmiDGUY4m5c6JmpzjmHxHwXiCypqZL8eZk"
+LOCALNET_WALLET_1="oRcZuYcaAafNdoJMkDyLd85veoAuRbZ1HCZkbHQ661Z"
+LOCALNET_WALLET_2="HByg4E56VfpWtcAL8dmdhvFUoYSgrqjL5fErtNkjmeS1"
+LOCALNET_WALLET_3="2kZ5koR9hgvVHuNjEbfoj9ypn29uhLE44sBUbreBGj5E"
 
 clear
 
@@ -101,6 +104,21 @@ trap 'arcium_ready=1' USR2
                     solana airdrop 5 "$LOCALNET_WALLET" -u l >/dev/null 2>&1 && \
                         echo -e "${DIM}Airdropped 5 SOL to $LOCALNET_WALLET${NC}"
                 fi
+                if [ -n "$LOCALNET_WALLET_1" ]; then
+                    sleep 1
+                    solana airdrop 5 "$LOCALNET_WALLET_1" -u l >/dev/null 2>&1 && \
+                        echo -e "${DIM}Airdropped 5 SOL to $LOCALNET_WALLET_1${NC}"
+                fi
+                if [ -n "$LOCALNET_WALLET_2" ]; then
+                    sleep 1
+                    solana airdrop 5 "$LOCALNET_WALLET_2" -u l >/dev/null 2>&1 && \
+                        echo -e "${DIM}Airdropped 5 SOL to $LOCALNET_WALLET_2${NC}"
+                fi
+                if [ -n "$LOCALNET_WALLET_3" ]; then
+                    sleep 1
+                    solana airdrop 5 "$LOCALNET_WALLET_3" -u l >/dev/null 2>&1 && \
+                        echo -e "${DIM}Airdropped 5 SOL to $LOCALNET_WALLET_3${NC}"
+                fi
                 # Signal main script that arcium is ready
                 kill -USR2 "$main_pid" 2>/dev/null
             fi
@@ -116,22 +134,22 @@ while [ "$arcium_ready" = "0" ]; do
 done
 echo -e "${DIM}Arcium ready, starting other services...${NC}"
 
-# Now start other processes (except cranker)
-run_with_prefix "$CYAN"    "indexer " bash -c "cd ./packages/indexer && ARCIUM_CLUSTER_OFFSET=0 yarn start" &
+# Now start other processes (except indexer and cranker which start after tests)
 run_with_prefix "$MAGENTA" "supabase" supabase start &
 run_with_prefix "$BLUE"    "frontend" yarn dev &
 
-# Run tests, then start cranker after tests finish
+# Run tests, then start indexer and cranker after tests finish
 (
-    sleep 20
+    sleep 10
     echo -e "${DIM}[test    ]${NC} Running anchor test..."
     ARCIUM_CLUSTER_OFFSET=0 anchor test --skip-build --skip-deploy --skip-local-validator 2>&1 | while IFS= read -r line; do
         echo -e "${DIM}[test    ]${NC} $line"
     done
     echo -e "${DIM}[test    ]${NC} Anchor test finished"
 
-    # Start cranker after tests
-    echo -e "${DIM}Starting cranker...${NC}"
+    # Start indexer and cranker after tests
+    echo -e "${DIM}Starting indexer and cranker...${NC}"
+    run_with_prefix "$CYAN"   "indexer " bash -c "cd ./packages/indexer && ARCIUM_CLUSTER_OFFSET=0 yarn start" &
     run_with_prefix "$YELLOW" "cranker " bash -c "cd ./packages/cranker && ARCIUM_CLUSTER_OFFSET=0 yarn start"
 ) &
 

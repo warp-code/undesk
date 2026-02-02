@@ -33,10 +33,10 @@ export interface TokenInfo {
 
 // Token metadata by symbol
 const TOKEN_METADATA: Record<string, TokenInfo> = {
-  SOL: { symbol: "SOL", decimals: 9, name: "Wrapped SOL" },
+  SOL: { symbol: "SOL", decimals: 6, name: "Wrapped SOL" },
   USDC: { symbol: "USDC", decimals: 6, name: "USD Coin" },
-  JTO: { symbol: "JTO", decimals: 9, name: "Jito" },
-  META: { symbol: "META", decimals: 9, name: "Meta Token" },
+  JTO: { symbol: "JTO", decimals: 6, name: "Jito" },
+  META: { symbol: "META", decimals: 6, name: "Meta Token" },
 };
 
 // Build token registry dynamically
@@ -73,7 +73,7 @@ export function getTokenInfo(mint: string): TokenInfo {
   console.warn(`Unknown token mint: ${mint}`);
   return {
     symbol: `${mint.slice(0, 4)}...${mint.slice(-4)}`,
-    decimals: 9,
+    decimals: 6,
     name: "Unknown Token",
   };
 }

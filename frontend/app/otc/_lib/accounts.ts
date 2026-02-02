@@ -22,3 +22,15 @@ export function getOfferAddress(
     programId
   )[0];
 }
+
+/** Derive balance PDA: ["balance", controller, mint] */
+export function getBalanceAddress(
+  programId: PublicKey,
+  controller: PublicKey,
+  mint: PublicKey
+): PublicKey {
+  return PublicKey.findProgramAddressSync(
+    [Buffer.from("balance"), controller.toBuffer(), mint.toBuffer()],
+    programId
+  )[0];
+}

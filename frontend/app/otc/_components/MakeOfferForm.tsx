@@ -3,8 +3,10 @@
 import { useState, useMemo } from "react";
 import type { DealWithDetails } from "../_lib/types";
 import { sanitizeNumberInput } from "../_lib/format";
-import { getTokenSymbol } from "../_lib/tokens";
+import { getTokenSymbol, getTokenInfo } from "../_lib/tokens";
+import { BalanceIndicator } from "./BalanceIndicator";
 import { useSubmitOffer } from "../_hooks/useSubmitOffer";
+import { useMyBalances } from "../_providers/MyBalancesProvider";
 import { useDerivedKeysContext } from "../_providers/DerivedKeysProvider";
 
 interface MakeOfferFormProps {
@@ -25,6 +27,7 @@ export const MakeOfferForm = ({
   const { submitOffer, isSubmitting } = useSubmitOffer();
   const { hasDerivedKeys, deriveKeysFromWallet, isDerivingKeys } =
     useDerivedKeysContext();
+  const { getBalance } = useMyBalances();
 
   const offerTotal = useMemo(() => {
     const amount = parseFloat(offerAmount) || 0;
@@ -32,11 +35,33 @@ export const MakeOfferForm = ({
     return amount * price;
   }, [offerAmount, offerPrice]);
 
+  // Check if user has sufficient quote token balance for the total
+  const hasSufficientBalance = useMemo(() => {
+    if (!hasDerivedKeys || offerTotal <= 0) {
+      return true;
+    }
+
+    const balance = getBalance(deal.quoteMint);
+    const tokenInfo = getTokenInfo(deal.quoteMint);
+    const totalAmount = balance?.amount ?? BigInt(0);
+    const committedAmount = balance?.committedAmount ?? BigInt(0);
+    const available = totalAmount - committedAmount;
+
+    // Convert offerTotal to raw bigint
+    const totalStr = offerTotal.toString();
+    const [whole, frac = ""] = totalStr.split(".");
+    const paddedFrac = frac.padEnd(tokenInfo.decimals, "0").slice(0, tokenInfo.decimals);
+    const rawTotal = BigInt(whole || "0") * BigInt(10 ** tokenInfo.decimals) + BigInt(paddedFrac || "0");
+
+    return available >= rawTotal;
+  }, [hasDerivedKeys, offerTotal, deal.quoteMint, getBalance]);
+
   const canPlaceOffer =
     offerAmount &&
     offerPrice &&
     parseFloat(offerAmount) > 0 &&
-    parseFloat(offerPrice) > 0;
+    parseFloat(offerPrice) > 0 &&
+    hasSufficientBalance;
 
   const handlePlaceOffer = async () => {
     if (!canPlaceOffer) return;
@@ -57,6 +82,7 @@ export const MakeOfferForm = ({
       const offerAddress = await submitOffer({
         dealAddress: deal.id,
         baseMint: deal.baseMint,
+        quoteMint: deal.quoteMint,
         amount: parseFloat(offerAmount),
         price: parseFloat(offerPrice),
         derivedKeysOverride: keysToUse,
@@ -166,6 +192,7 @@ export const MakeOfferForm = ({
             </span>
             <span className="text-muted-foreground">{quote}</span>
           </div>
+          <BalanceIndicator mint={deal.quoteMint} />
         </div>
 
         {/* Helper text */}
@@ -210,6 +237,8 @@ export const MakeOfferForm = ({
             ? "Signing..."
             : isOfferLoading
             ? "Submitting..."
+            : !hasSufficientBalance && hasDerivedKeys && offerTotal > 0
+            ? "Insufficient balance"
             : "Place Offer"}
         </button>
       </div>
